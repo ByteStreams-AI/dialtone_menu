@@ -26,7 +26,12 @@ CONTACT_EMAIL = "hello@bytestreams.ai"
 # both DialTone and ByteStreams share one sending domain on Resend
 # (`send.bytestreams.ai`). Distinguishing by SITE_NAME keeps inbox
 # sorting clean.
-SITE_NAME = "DialTone"
+SITE_NAME = "DialToneMenu"
+
+# Supabase configuration for form submission persistence.
+# `/api/contact` is fail-fast for persistence: if SUPABASE_URL or DB key
+# is missing, requests return `503` and do not send email.
+SUPABASE_URL = "https://hltmzafywzqajjzjpqva.supabase.co"
 
 # Required secret (not stored in this file): RESEND_API_KEY
 # The `/api/contact` handler uses this to authenticate with Resend's
@@ -39,6 +44,29 @@ SITE_NAME = "DialTone"
 # If the secret is missing, `/api/contact` returns a user-friendly 503
 # directing submitters to email `hello@bytestreams.ai` manually.
 
+# Required secret (not stored in this file): SUPABASE_KEY
+# The `/api/contact` handler uses this to insert waitlist submissions into
+# Supabase. Set it via:
+#
+#   npx wrangler secret put SUPABASE_KEY
+#
+# Supabase table setup:
+# 1. In Supabase console, create table `waitlist_submissions`:
+#    CREATE TABLE public.waitlist_submissions (
+#      id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+#      email TEXT NOT NULL,
+#      name TEXT NOT NULL,
+#      restaurant_name TEXT NOT NULL,
+#      campaign TEXT NOT NULL DEFAULT 'launch',
+#      comment TEXT,
+#      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+#    );
+# 2. Enable Row Level Security (RLS) and add policy allowing anonymous inserts
+# 3. Get your SUPABASE_URL from Settings → API
+# 4. Use an anon-key or service-role key as SUPABASE_KEY
+# If SUPABASE_KEY/SUPABASE_SERVICE_ROLE_KEY is missing, `/api/contact`
+# returns `503` and no email is sent.
+
 # Assets live under `./public/` so wrangler's dev-server file watcher
 # doesn't observe `.wrangler/` writes (which would cause a self-
 # triggering reload loop). `public/.assetsignore` excludes the design/
@@ -48,7 +76,7 @@ SITE_NAME = "DialTone"
 directory = "./public/"
 # `binding = "ASSETS"` exposes the assets collection to the Worker as
 # `env.ASSETS`, which `worker.js` uses to proxy `/favicon.ico` to
-# `/images/favicon.png` and to resolve unmatched paths. Without this
+# `/images/favicon.svg` and to resolve unmatched paths. Without this
 # binding, `env.ASSETS` is undefined and those fallbacks 404 silently.
 binding = "ASSETS"
 # not_found_handling = "404-page" — this is a static multi-page site,
@@ -58,7 +86,7 @@ not_found_handling = "404-page"
 # With `not_found_handling = "404-page"`, non-asset requests are
 # short-circuited to `/404.html` without invoking the Worker. The
 # Worker owns these dynamic paths (robots.txt, sitemap.xml, favicon
-# fallback to /images/favicon.png, security.txt, contact form), so
+# fallback to /images/favicon.svg, security.txt, contact form), so
 # force them to run through the Worker first instead of being
 # treated as missing assets.
 run_worker_first = [
@@ -67,6 +95,17 @@ run_worker_first = [
   "/favicon.ico",
   "/.well-known/*",
   "/api/*"
+]
+
+# Declares the secret names required by this Worker.
+# `wrangler deploy` and `wrangler dev` will warn if any are absent.
+# These are *names only* — values are never stored here.
+# Upload values with: bash developer/ci/deploy-prod-secrets.sh
+[secrets]
+required = [
+  "RESEND_API_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "SUPABASE_KEY"
 ]
 
 # Keep Worker observability settings in source control so dashboard and

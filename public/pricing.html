@@ -16,27 +16,30 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..500&family=Instrument+Sans:wght@400..600&family=JetBrains+Mono:wght@400..500&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap" />
 
   <style>
     *, *::before, *::after { box-sizing: border-box; }
 
     :root {
-      --vermillion: #c8391a;
-      --ember: #e04d2e;
-      --brick: #a52e14;
-      --ink: #1a1410;
-      --paper: #f5efe6;
-      --paper-warm: #ebe3d5;
-      --parchment: #ddd4c4;
-      --muted: #6b5d4f;
-      --line: #2a211a;
-      --line-soft: rgba(42, 33, 26, 0.18);
-      --gold: #b89968;
+      --navy: #06234B;
+      --navy2: #0A3260;
+      --blue: #1155CC;
+      --blue2: #2271E8;
+      --gold: #E8A020;
+      --gold2: #F5C14A;
+      --cream: #FAF7F2;
+      --warm: #F2EDE4;
+      --text: #1A1A2E;
+      --muted: #6B7280;
+      --white: #FFFFFF;
+      --r: 12px;
+      --line: rgba(6, 35, 75, 0.12);
+      --line-soft: rgba(6, 35, 75, 0.06);
 
-      --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
-      --font-body: 'Instrument Sans', 'Segoe UI', -apple-system, sans-serif;
-      --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+      --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+      --font-body: 'DM Sans', 'Segoe UI', -apple-system, sans-serif;
+      --font-mono: 'DM Sans', 'Segoe UI', -apple-system, sans-serif;
 
       --max-content: 820px;
       --max-wide: 1240px;
@@ -45,8 +48,8 @@
     html, body {
       margin: 0;
       padding: 0;
-      background: var(--paper);
-      color: var(--ink);
+      background: var(--cream);
+      color: var(--text);
       font-family: var(--font-body);
       font-size: 16px;
       line-height: 1.6;
@@ -63,7 +66,16 @@
 
     /* Navigation */
     .nav {
-      border-bottom: 1px solid var(--line);
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(250,247,242,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(6,35,75,0.08);
     }
     .nav-inner {
       max-width: var(--max-wide);
@@ -75,30 +87,22 @@
     }
     .logo {
       font-family: var(--font-display);
-      font-weight: 700;
+      font-weight: 900;
       font-size: 1.35rem;
-      color: var(--ink);
+      color: var(--navy);
       text-decoration: none;
       display: inline-flex;
       align-items: center;
-      gap: 0.55rem;
+      gap: 0;
       line-height: 1;
       letter-spacing: -0.01em;
     }
     .logo-bullet {
-      display: inline-block;
-      width: 0.7em;
-      height: 0.7em;
-      background: var(--vermillion);
-      border-radius: 50%;
+      display: none;
     }
+    .logo span { color: var(--gold); }
     .logo-tag {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: var(--vermillion);
-      font-weight: 400;
+      display: none;
     }
     .nav-meta {
       font-family: var(--font-mono);
@@ -117,11 +121,11 @@
       font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.15em;
-      color: var(--ink);
+      color: var(--navy);
       text-decoration: none;
       transition: color 150ms ease-out;
     }
-    .nav-link:hover { color: var(--vermillion); }
+    .nav-link:hover { color: var(--blue); }
 
     /* Hero */
     .hero {
@@ -137,7 +141,7 @@
       font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.22em;
-      color: var(--vermillion);
+      color: var(--gold);
       margin: 0 0 1rem;
     }
     h1 {
@@ -146,13 +150,13 @@
       font-size: clamp(2.2rem, 4.5vw, 3.5rem);
       line-height: 1.05;
       letter-spacing: -0.03em;
-      color: var(--ink);
+      color: var(--navy);
       margin: 0 0 1.25rem;
       max-width: 900px;
     }
     h1 em {
       font-style: italic;
-      color: var(--vermillion);
+      color: var(--gold);
       font-weight: 500;
     }
     .lede {
@@ -162,7 +166,7 @@
       max-width: 640px;
       margin: 0;
     }
-    .lede strong { color: var(--ink); font-weight: 600; }
+    .lede strong { color: var(--navy); font-weight: 600; }
 
     /* Tiers */
     .tiers {
@@ -187,13 +191,13 @@
       font-size: 1.7rem;
       line-height: 1.3;
       letter-spacing: -0.02em;
-      color: var(--ink);
+      color: var(--navy);
       margin: 0;
     }
     .tiers-head h2 .num {
       font-family: var(--font-mono);
       font-weight: 400;
-      color: var(--vermillion);
+      color: var(--gold);
       font-size: 0.8em;
       letter-spacing: 0;
       margin-right: 0.5rem;
@@ -224,10 +228,10 @@
       flex-direction: column;
       position: relative;
       min-height: 560px;
-      background: var(--paper);
+      background: var(--cream);
     }
     .tier.featured {
-      background: var(--paper-warm);
+      background: var(--warm);
     }
     .tier-no {
       font-family: var(--font-mono);
@@ -237,13 +241,13 @@
       text-transform: uppercase;
       margin: 0 0 1rem;
     }
-    .tier.featured .tier-no { color: var(--vermillion); }
+    .tier.featured .tier-no { color: var(--gold); }
     .tier-name {
       font-family: var(--font-display);
       font-weight: 500;
       font-size: 1.75rem;
       letter-spacing: -0.01em;
-      color: var(--ink);
+      color: var(--navy);
       margin: 0 0 0.35rem;
     }
     .tier-tag {
@@ -258,7 +262,7 @@
       font-size: 2.6rem;
       letter-spacing: -0.02em;
       line-height: 1;
-      color: var(--ink);
+      color: var(--navy);
       margin: 0 0 0.25rem;
     }
     .tier-price .from {
@@ -286,7 +290,7 @@
       padding-bottom: 1.5rem;
       border-bottom: 1px dashed var(--line-soft);
     }
-    .tier-fee strong { color: var(--ink); font-weight: 600; }
+    .tier-fee strong { color: var(--navy); font-weight: 600; }
 
     .tier-features {
       list-style: none;
@@ -296,7 +300,7 @@
     }
     .tier-features li {
       font-size: 0.92rem;
-      color: var(--ink);
+      color: var(--navy);
       line-height: 1.5;
       padding: 0.4rem 0 0.4rem 1.25rem;
       position: relative;
@@ -306,7 +310,7 @@
       position: absolute;
       left: 0;
       top: 0.4rem;
-      color: var(--vermillion);
+      color: var(--gold);
       font-family: var(--font-mono);
       font-size: 0.85rem;
     }
@@ -319,8 +323,8 @@
       justify-content: center;
       gap: 0.5rem;
       padding: 0.85rem 1.25rem;
-      border: 1px solid var(--ink);
-      color: var(--ink);
+      border: 1px solid var(--navy);
+      color: var(--navy);
       background: transparent;
       font-family: var(--font-mono);
       font-size: 0.72rem;
@@ -331,17 +335,17 @@
       transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
     }
     .tier-cta:hover {
-      background: var(--ink);
-      color: var(--paper);
+      background: var(--navy);
+      color: var(--cream);
     }
     .tier.featured .tier-cta {
-      background: var(--vermillion);
-      color: var(--paper);
-      border-color: var(--vermillion);
+      background: var(--gold);
+      color: var(--cream);
+      border-color: var(--gold);
     }
     .tier.featured .tier-cta:hover {
-      background: var(--brick);
-      border-color: var(--brick);
+      background: var(--blue);
+      border-color: var(--blue);
     }
 
     .pilot-badge {
@@ -352,8 +356,8 @@
       font-size: 0.65rem;
       letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: var(--vermillion);
-      border: 1px solid var(--vermillion);
+      color: var(--gold);
+      border: 1px solid var(--gold);
       padding: 0.2rem 0.55rem;
       border-radius: 100px;
     }
@@ -373,7 +377,7 @@
       font-size: 1.7rem;
       line-height: 1.3;
       letter-spacing: -0.02em;
-      color: var(--ink);
+      color: var(--navy);
       margin: 0 0 2.5rem;
       display: flex;
       align-items: baseline;
@@ -383,7 +387,7 @@
     .details h2 .num {
       font-family: var(--font-mono);
       font-weight: 400;
-      color: var(--vermillion);
+      color: var(--gold);
       font-size: 0.8em;
       letter-spacing: 0;
     }
@@ -403,7 +407,7 @@
       font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.15em;
-      color: var(--vermillion);
+      color: var(--gold);
       margin: 0 0 0.75rem;
     }
     .detail-title {
@@ -411,28 +415,28 @@
       font-weight: 500;
       font-size: 1.15rem;
       letter-spacing: -0.01em;
-      color: var(--ink);
+      color: var(--navy);
       margin: 0 0 0.75rem;
     }
     .detail-body p {
       font-size: 1rem;
-      color: var(--ink);
+      color: var(--navy);
       margin: 0 0 0.9rem;
     }
     .detail-body p:last-child { margin-bottom: 0; }
     .detail-body strong { font-weight: 600; }
     .detail-body a {
-      color: var(--vermillion);
+      color: var(--gold);
       text-decoration: underline;
       text-decoration-thickness: 1px;
       text-underline-offset: 3px;
     }
-    .detail-body a:hover { color: var(--ink); }
+    .detail-body a:hover { color: var(--navy); }
 
     /* CTA */
     .cta {
-      background: var(--ink);
-      color: var(--paper);
+      background: var(--navy);
+      color: var(--cream);
     }
     .cta-inner {
       max-width: var(--max-wide);
@@ -452,7 +456,7 @@
       line-height: 1.1;
       margin: 0;
       max-width: 720px;
-      color: var(--paper);
+      color: var(--cream);
     }
     .cta h2 em {
       font-style: italic;
@@ -464,26 +468,26 @@
       align-items: center;
       gap: 0.6rem;
       padding: 1rem 1.75rem;
-      background: var(--vermillion);
-      color: var(--paper);
+      background: var(--gold);
+      color: var(--cream);
       font-family: var(--font-mono);
       font-size: 0.78rem;
       text-transform: uppercase;
       letter-spacing: 0.12em;
-      border: 1px solid var(--vermillion);
+      border: 1px solid var(--gold);
       text-decoration: none;
       transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
       white-space: nowrap;
     }
     .cta-button:hover {
-      background: var(--ember);
-      border-color: var(--ember);
-      color: var(--paper);
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--cream);
     }
 
     /* Footer */
     footer {
-      background: var(--ink);
+      background: var(--navy);
       margin-top: auto;
       border-top: 1px solid rgba(245, 239, 230, 0.1);
     }
@@ -520,11 +524,7 @@
 <body>
   <nav class="nav">
     <div class="nav-inner">
-      <a class="logo" href="/" aria-label="DialTone home">
-        <span class="logo-bullet" aria-hidden="true"></span>
-        <span>DialTone</span>
-        <span class="logo-tag">menu</span>
-      </a>
+      <a class="logo" href="/" aria-label="DialTone.Menu home">Dial<span>Tone</span>.Menu</a>
       <span class="nav-right">
         <span class="nav-meta">Pricing</span>
         <a class="nav-link" href="/">Home</a>
@@ -709,7 +709,6 @@
       <span>&copy; 2026 DialTone · ByteStreams LLC</span>
       <span class="footer-links">
         <a href="/">Home</a>
-        <a href="/pricing.html">Pricing</a>
         <a href="/privacy.html">Privacy</a>
         <a href="/terms.html">Terms</a>
       </span>

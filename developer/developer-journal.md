@@ -33,3 +33,132 @@
 - Tightened `.assetsignore` so internal project files are not deployed as public assets (`.wrangler/`, `tests/`, `AGENTS.md`, `CLAUDE.md`).
 - Tightened `.assetsignore` further so only `images/favicon.png` remains publicly deployed from `images/`; all other image files are now excluded.
 - Excluded accidental root temp file `tmp-convo.md` after deploy output showed it was being published as a public asset.
+
+## 2026-04-26 (Rebranding)
+- **Rebranded entire website from old design (vermillion/ink palette, Fraunces fonts) to new design (navy/blue/gold palette, Playfair Display + DM Sans fonts)**
+- Updated `public/index.html`:
+  - Replaced complete landing page with new design from `docs/dialtone-landing.html`
+  - Applied new color palette: Navy (#06234B), Blue (#1155CC), Gold (#E8A020), Cream (#FAF7F2), Warm (#F2EDE4)
+  - Updated typography: Playfair Display (display), DM Sans (body/UI)
+  - Preserved demo section with "Real Call. No Script." heading and play-button placeholder for audio (user to provide MP4/audio later)
+  - Implemented scroll-reveal animations with IntersectionObserver
+  - Updated form handling and signature validation
+- Updated `public/pricing.html`:
+  - Migrated color palette from --vermillion/--ink/--paper to --navy/--blue/--gold/--cream
+  - Updated font imports from Fraunces/Instrument Sans to Playfair Display/DM Sans
+  - Updated logo from multi-element structure to split "Dial<span>Tone</span>" with gold accent
+  - Maintained pricing table structure and all content
+  - Kept separate from main landing page navigation (no pricing link in nav)
+- Updated `public/privacy.html` and `public/terms.html`:
+  - Applied same color palette migration
+  - Updated typography to new font stack
+  - Updated logo styling to match new branding
+  - Preserved all policy content with new visual design
+- **Validated compatibility:**
+  - ✅ Cloudflare Pages free tier supports audio files (25 MiB max per file, 20,000 files max, global CDN)
+  - ✅ Supabase storage supports audio with global CDN delivery for future backend integration
+- Bulk sed replacements to efficiently update all old color variable references across pages
+- Follow-up polish for launch readiness:
+  - Removed all public-facing `/pricing.html` links from `public/404.html`, `public/privacy.html`, `public/terms.html`, and the pricing footer itself so pricing is direct-URL only.
+  - Deleted accidental `public/index.html.bak` backup file to prevent unintended public access to stale page content.
+
+## 2026-04-26 (Waitlist Form & Supabase Integration)
+- **Replaced simple email-only waitlist form with full contact form:**
+  - Landing page now captures: Restaurant name, email, comment (optional)
+  - Form submits to existing `/api/contact` Worker endpoint via async fetch
+  - Updated form handler `handleClaimSpot()` with validation, loading states, and success/error responses
+  - Form shows "Submitting..." during submission, "✓ Spot claimed!" on success
+  - Auto-resets after 3 seconds to allow another submission
+- **Extended Worker `/api/contact` handler with Supabase persistence:**
+  - Now accepts name, email, comment (message) from form payload
+  - Sends email via Resend (existing flow preserved)
+  - Saves submission to Supabase `waitlist_submissions` table with created_at timestamp
+  - Supabase save errors are logged but don't fail email response (graceful degradation)
+- **Updated CSS for multi-field form layout:**
+  - Changed `.waitlist-form` from inline flex to flex column layout
+  - Added textarea styling with min-height: 80px, vertical resize allowed
+  - Input and textarea share consistent padding (14px 18px), borders (1.5px), and focus colors
+- **Added Supabase configuration to wrangler.toml:**
+  - New var: `SUPABASE_URL` (example: https://your-project.supabase.co)
+  - New secret: `SUPABASE_KEY` (set via `npx wrangler secret put SUPABASE_KEY`)
+  - Included SQL schema example and Row Level Security (RLS) setup instructions in comments
+  - Configuration is optional — submissions still email if Supabase env vars missing
+- **Created new Worker helper function `saveToSupabase()`:**
+  - POST to `{SUPABASE_URL}/rest/v1/waitlist_submissions` via PostgREST API
+  - Sends: email, name, comment, created_at (ISO 8601 timestamp)
+  - Uses Bearer token auth + apikey header for anonymous access with RLS policy
+  - Returns parsed JSON on success or throws on HTTP errors
+- **Executed Supabase setup helper successfully:**
+  - Ran `./developer/supabase/setup-supabase.sh`
+  - Linked Supabase project via `supabase link`
+  - Uploaded Cloudflare Worker secret `SUPABASE_KEY` to worker `dawn-pine-d058`
+  - Updated `wrangler.toml` `SUPABASE_URL` to `https://hltmzafywzqajjzjpqva.supabase.co`
+- **Improved Supabase setup helper for multi-project reuse:**
+  - Updated `developer/supabase/setup-supabase.sh` to prompt interactively for `SUPABASE_URL`, `SUPABASE_PROJECT_REF`, and `SUPABASE_ANON_KEY`.
+  - Script now auto-loads existing `.env.supabase` values and uses them as prompt defaults.
+  - Added project-ref auto-derivation from Supabase URL when possible.
+  - Added docs updates in `developer/supabase/README.md` for prompt-based flow and optional non-interactive mode.
+- **Supabase insert reliability hardening:**
+  - Updated `worker.js` to prefer `SUPABASE_SERVICE_ROLE_KEY` for DB inserts and fallback to `SUPABASE_KEY`.
+  - Added explicit log when Supabase save is skipped due to missing URL/secret.
+  - Updated `developer/supabase/01_waitlist_schema.sql` with explicit grants and insert policies for both `anon` and `authenticated` roles.
+  - Extended setup script to optionally prompt for and set `SUPABASE_SERVICE_ROLE_KEY`.
+  - Updated setup README with remediation steps for "email sent but no DB row".
+- **Contact API fail-fast behavior update:**
+  - Updated `worker.js` so `/api/contact` now returns `503` when Supabase URL/DB key config is missing.
+  - Updated `worker.js` so `/api/contact` now returns `502` when Supabase insert fails.
+  - Insert now occurs before email send, so successful response implies a persisted DB row.
+  - Added runtime health log booleans (`hasSupabaseUrl`, `hasSupabaseDbKey`, key source flags) for quick diagnosis.
+- **Setup script UX polish:**
+  - Added intro banner to `developer/supabase/setup-supabase.sh` to clearly announce mode/options and context.
+  - Added exit banners for success, cancel (`130`), and generic failure states with next-step hints.
+  - Changed `SUPABASE_ANON_KEY` prompt to visible input to avoid hidden-paste terminal issues.
+  - Added confirmation summary screen (masked keys) with explicit user confirmation before applying changes.
+  - Added required-field validation loops for project ref and anon key prompts.
+  - Added `--yes` / `-y` flag to skip confirmation prompt for CI/scripted non-interactive runs; interactive confirmation remains default.
+- **Site naming refinement:**
+  - Changed default `SITE_NAME` from `DialTone` to `DialToneMenu` in runtime/local-dev config examples to keep future DialTone-branded sites distinguishable in contact-email subjects and sender display names.
+- **Lead capture refinement:**
+  - Split the public waitlist form into separate contact name and restaurant name fields.
+  - Updated the Worker, outbound email formatting, and Supabase schema to persist both values distinctly.
+  - Removed the duplicate hero form and replaced it with a CTA link that jumps to the bottom waitlist form to keep one clear submission path.
+- **Hero polish test:**
+  - Darkened the emphasized hero headline word color slightly for a closer match to the reference art direction; kept as a single-line CSS tweak for easy rollback.
+- **Waitlist CTA polish:**
+  - Added a gold `Join the Launch Team` line above the bottom waitlist form using the same gold token as key stat highlights.
+  - Updated copy to `Join Our Launch Team` and switched it to the same Playfair headline style as `50 Restaurants.` at 50% scale.
+- **Header brand polish:**
+  - Updated the left header brand link text from `DialTone` to `DialToneMenu`, preserving the alternating color treatment via existing logo span styling.
+- **Footer brand polish:**
+  - Updated the footer brand text from `DialTone` to `DialToneMenu`, preserving the same alternating color treatment via existing logo span styling.
+- **Legal pages brand polish:**
+  - Updated header and footer branding in `public/privacy.html` and `public/terms.html` to `DialToneMenu` with the same alternating color treatment used on the landing page.
+- **Header spacing/brand text polish:**
+  - Normalized header brand text to `DialTone.Menu` across public pages while preserving the existing alternating color treatment on `Tone`.
+- **CI/runtime compatibility fix:**
+  - Aligned favicon route expectations to `images/favicon.svg` in `tests/robots.test.mjs` and synced stale `wrangler.toml` comments that still referenced `favicon.png`.
+- **GitHub Actions deploy hardening:**
+  - Added `developer/ci/validate-cloudflare-config.mjs` to fail fast when critical Cloudflare/Supabase config wiring drifts.
+  - Added `pnpm run validate:deploy` script and inserted it before deploy in `.github/workflows/deploy.yml`.
+  - Validation now checks for required deploy-secret wiring (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`), Worker Supabase fail-fast env usage, and core `wrangler.toml` values (`SUPABASE_URL`, assets binding, API passthrough).
+  - Added strict Supabase project-ref enforcement so CI fails if `SUPABASE_URL` does not point to the expected project (`hltmzafywzqajjzjpqva`).
+- **Production secret deployment:**
+  - Created `developer/ci/deploy-prod-secrets.sh` to interactively prompt for and upload `RESEND_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_KEY` to Cloudflare via `wrangler secret put`.
+  - Script never writes secrets to disk, masks values in confirmation summary, validates at least one Supabase DB key is provided, and verifies the full secret list at the end.
+  - Added `[secrets]` enforcement block to `wrangler.toml` declaring required secret names — Wrangler will warn on deploy if any are absent.
+  - Added CI `Verify required Worker secrets exist in Cloudflare` step in `.github/workflows/deploy.yml` that runs `wrangler secret list` before deploy and fails if `RESEND_API_KEY` or both Supabase keys are missing.
+  - Updated `validate-cloudflare-config.mjs` to assert `[secrets]` block and all three required secret names are present in `wrangler.toml`.
+- **Campaign tracking default:**
+  - Added `campaign` column to Supabase `waitlist_submissions` schema with `NOT NULL DEFAULT 'launch'`, including backfill for existing rows.
+  - Updated `worker.js` insert payload so form submissions persist `campaign: 'launch'` server-side without any frontend field changes.
+- **Secret deploy script exit handling fix:**
+  - Updated `developer/ci/deploy-prod-secrets.sh` to show success only when the full upload/verification flow completes.
+  - Added signal traps and explicit completion state so interrupted runs (Ctrl+C/termination) show `Process terminated without completion` instead of a success banner.
+  - Changed secret prompt input mode to visible by default to avoid terminals that appear unresponsive in hidden-entry mode; added optional `--hide-input` flag when hidden entry is preferred.
+  - Added immediate per-field confirmation output in masked form (`Value Entered: xxxx...xxxx`) after each secret input is captured.
+
+- **Post-update review pass:**
+  - Confirmed landing page now uses one canonical submission form at the bottom waitlist section with the hero using a CTA link.
+  - Confirmed DB schema + Worker + UI are aligned on separate `name` and `restaurant_name` values.
+  - Corrected historical behavior note: contact flow no longer uses graceful degradation for DB persistence; it is now fail-fast (`503` on missing config, `502` on insert failure).
+  - Updated `wrangler.toml` Supabase comments to match current fail-fast behavior and include `restaurant_name` in the schema snippet.
