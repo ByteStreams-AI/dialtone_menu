@@ -1302,6 +1302,7 @@
       demoAudio.addEventListener('ended', () => {
         demoFrame.classList.remove('is-playing');
         demoPlayBtn.hidden = false;
+        demoAudio.classList.remove('is-active');
         if (demoSubtitle) {
           demoSubtitle.textContent = '';
           demoSubtitle.classList.remove('is-active');
