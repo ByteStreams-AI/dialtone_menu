@@ -82,19 +82,19 @@ async function run() {
     ASSETS: {
       fetch: async (req) => {
         const url = new URL(req.url);
-        if (url.pathname === '/images/favicon.png') {
-          return new Response('PNG', { status: 200, headers: { 'content-type': 'image/png' } });
+        if (url.pathname === '/images/favicon.svg') {
+          return new Response('<svg/>', { status: 200, headers: { 'content-type': 'image/svg+xml' } });
         }
         return new Response('Not Found', { status: 404 });
       }
     }
   };
   const explicitFaviconResponse = await worker.fetch(explicitFaviconRequest, faviconAssetsEnv);
-  assert.equal(explicitFaviconResponse.status, 200, 'Favicon handler should proxy /images/favicon.png from assets');
+  assert.equal(explicitFaviconResponse.status, 200, 'Favicon handler should proxy /images/favicon.svg from assets');
   assert.equal(
     explicitFaviconResponse.headers.get('content-type'),
-    'image/png',
-    'Favicon handler should return image/png content type'
+    'image/svg+xml',
+    'Favicon handler should return image/svg+xml content type'
   );
 
   const explicitFaviconMissingResponse = await worker.fetch(explicitFaviconRequest, throwingAssetsEnv);
