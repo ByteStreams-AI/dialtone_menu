@@ -162,3 +162,13 @@
   - Confirmed DB schema + Worker + UI are aligned on separate `name` and `restaurant_name` values.
   - Corrected historical behavior note: contact flow no longer uses graceful degradation for DB persistence; it is now fail-fast (`503` on missing config, `502` on insert failure).
   - Updated `wrangler.toml` Supabase comments to match current fail-fast behavior and include `restaurant_name` in the schema snippet.
+
+## 2026-04-27 (PR #23 Merge and Project Sign-off)
+- Merged PR #23 (`feat/rebrand`) after addressing review findings and resolving branch conflicts.
+- Removed sensitive files from repository history (`.env.supabase`, `supabase/.temp/`) and force-updated branch during remediation.
+- Added and retained `/api/contact` per-IP rate limiting using `CF-Connecting-IP` to reduce abuse risk against Resend quota.
+- Validated production end-to-end flow:
+  - Waitlist submission accepted in production.
+  - Resend email sent and received successfully.
+  - Supabase row insert verified in production.
+- Marked the project implementation complete and ready for operational maintenance mode.

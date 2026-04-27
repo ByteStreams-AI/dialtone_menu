@@ -18,3 +18,9 @@
 	- `503` when Supabase config is incomplete.
 	- `502` when Supabase insert or provider send fails.
 	- `200` only when persistence succeeds and email send succeeds.
+
+## Production Baseline (Post PR #23)
+- The rebrand + waitlist pipeline shipped and is now the production baseline on `main`.
+- Keep `/api/contact` IP rate limiting in place using `CF-Connecting-IP` before DB/email calls.
+- Keep secrets out of git (`.env.supabase`, `supabase/.temp/`); rotate immediately if exposure is suspected.
+- Preserve CI deploy secret checks (`RESEND_API_KEY` and at least one Supabase DB key).

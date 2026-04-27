@@ -15,11 +15,12 @@
   <meta name="twitter:title" content="DialTone — Your Phone Just Got a Full-Time Employee" />
   <meta name="twitter:description" content="DialTone answers every call, takes every order, and sends it straight to your kitchen. No app. No tablet. No extra staff." />
 
-  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg" />
+  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg?v=20260427" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="/media/dialtone-menu-vtt.css" rel="stylesheet" />
   <style>
     /* ── Reset & Variables ─────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -562,11 +563,27 @@
       box-shadow: 0 40px 80px rgba(6,35,75,0.2);
     }
 
+    .demo-thumb {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .video-frame.is-playing .demo-thumb {
+      opacity: 0;
+      pointer-events: none;
+    }
+
     .video-frame::before {
       content: '';
       position: absolute;
       inset: 0;
       background: radial-gradient(ellipse at center, rgba(34,113,232,0.2), transparent 70%);
+      z-index: 1;
     }
 
     .play-btn {
@@ -576,9 +593,10 @@
       display: flex; align-items: center; justify-content: center;
       cursor: pointer;
       position: relative;
-      z-index: 1;
+      z-index: 2;
       box-shadow: 0 8px 32px rgba(0,0,0,0.3);
       transition: transform 0.2s, box-shadow 0.2s;
+      border: none;
     }
     .play-btn:hover { transform: scale(1.1); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
 
@@ -589,6 +607,47 @@
       border-bottom: 14px solid transparent;
       border-left: 22px solid var(--navy);
       margin-left: 4px;
+    }
+
+    .demo-audio {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      width: min(92%, 620px);
+      z-index: 3;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .demo-audio.is-active {
+      opacity: 0.95;
+      pointer-events: auto;
+    }
+
+    .demo-subtitle {
+      position: absolute;
+      left: 50%;
+      bottom: 84px;
+      transform: translateX(-50%);
+      width: min(90%, 680px);
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(10, 15, 36, 0.82);
+      color: #DCE1EB;
+      font-size: 1rem;
+      line-height: 1.45;
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+      z-index: 4;
+      opacity: 0;
+      transition: opacity 0.18s ease;
+      pointer-events: none;
+    }
+
+    .demo-subtitle.is-active {
+      opacity: 1;
     }
 
     .video-caption {
@@ -1027,10 +1086,17 @@
         <h2 class="section-h2" style="color:var(--navy); margin-bottom:14px;">Real Call. No Script.</h2>
         <p class="section-sub">This is a live DialTone demo. No edits. That's just what it sounds like.</p>
       </div>
-      <div class="video-frame reveal">
-        <div class="play-btn" title="Demo audio coming soon"></div>
+      <div class="video-frame reveal" id="demoFrame">
+        <img class="demo-thumb" src="/media/dialtone_order.svg" alt="DialTone call demo thumbnail" loading="lazy" />
+        <button class="play-btn" id="demoPlayBtn" type="button" title="Play demo audio" aria-label="Play demo audio"></button>
+        <div class="demo-subtitle" id="demoSubtitle" aria-live="polite"></div>
+        <audio class="demo-audio" id="demoAudio" preload="none" controls>
+          <source src="/media/dialtonemenu-order.mp3" type="audio/mpeg" />
+          <track kind="captions" srclang="en" src="/media/dialtonemenu-order.vtt" label="English" default />
+          Your browser does not support audio playback.
+        </audio>
       </div>
-      <p class="video-caption reveal">Demo audio coming soon — join the waitlist to be notified first</p>
+      <p class="video-caption reveal">Real DialTone call demo — tap play to listen</p>
     </div>
   </section>
 
@@ -1123,6 +1189,123 @@
       });
     }, { threshold: 0.12 });
     reveals.forEach(el => observer.observe(el));
+
+    // Demo audio handler
+    const demoFrame = document.getElementById('demoFrame');
+    const demoPlayBtn = document.getElementById('demoPlayBtn');
+    const demoAudio = document.getElementById('demoAudio');
+    const demoSubtitle = document.getElementById('demoSubtitle');
+    let demoCues = [];
+
+    function parseVttTimestamp(value) {
+      const parts = value.split(':').map((part) => Number(part));
+      if (parts.length === 3) {
+        return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+      }
+      if (parts.length === 2) {
+        return (parts[0] * 60) + parts[1];
+      }
+      return Number.NaN;
+    }
+
+    function parseVtt(text) {
+      const blocks = text.replace(/\r/g, '').split(/\n\n+/);
+      const cues = [];
+      for (const block of blocks) {
+        const lines = block.split('\n').map((line) => line.trim()).filter(Boolean);
+        if (lines.length === 0 || lines[0] === 'WEBVTT' || lines[0].startsWith('NOTE')) {
+          continue;
+        }
+
+        const timingIndex = lines.findIndex((line) => line.includes('-->'));
+        if (timingIndex === -1) {
+          continue;
+        }
+
+        const timingLine = lines[timingIndex];
+        const timeParts = timingLine.split('-->');
+        if (timeParts.length !== 2) {
+          continue;
+        }
+
+        const start = parseVttTimestamp(timeParts[0].trim());
+        const end = parseVttTimestamp(timeParts[1].trim().split(/\s+/)[0]);
+        if (!Number.isFinite(start) || !Number.isFinite(end)) {
+          continue;
+        }
+
+        const cueText = lines
+          .slice(timingIndex + 1)
+          .join(' ')
+          .replace(/<[^>]*>/g, '')
+          .trim();
+        if (!cueText) {
+          continue;
+        }
+
+        cues.push({ start, end, text: cueText });
+      }
+
+      return cues;
+    }
+
+    function renderDemoSubtitle() {
+      if (!demoSubtitle || demoCues.length === 0) {
+        return;
+      }
+
+      const now = demoAudio.currentTime;
+      const cue = demoCues.find((item) => now >= item.start && now <= item.end);
+      if (!cue) {
+        demoSubtitle.textContent = '';
+        demoSubtitle.classList.remove('is-active');
+        return;
+      }
+
+      demoSubtitle.textContent = cue.text;
+      demoSubtitle.classList.add('is-active');
+    }
+
+    async function loadDemoSubtitles() {
+      if (!demoSubtitle) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/media/dialtonemenu-order.vtt', { cache: 'no-store' });
+        if (!response.ok) {
+          return;
+        }
+        demoCues = parseVtt(await response.text());
+      } catch (error) {
+        console.log('Demo subtitle load failed:', String(error));
+      }
+    }
+
+    if (demoFrame && demoPlayBtn && demoAudio) {
+      loadDemoSubtitles();
+
+      demoPlayBtn.addEventListener('click', async () => {
+        try {
+          await demoAudio.play();
+          demoFrame.classList.add('is-playing');
+          demoAudio.classList.add('is-active');
+          demoPlayBtn.hidden = true;
+          renderDemoSubtitle();
+        } catch (error) {
+          console.log('Demo audio play failed:', String(error));
+        }
+      });
+
+      demoAudio.addEventListener('timeupdate', renderDemoSubtitle);
+      demoAudio.addEventListener('seeked', renderDemoSubtitle);
+      demoAudio.addEventListener('ended', () => {
+        if (demoSubtitle) {
+          demoSubtitle.textContent = '';
+          demoSubtitle.classList.remove('is-active');
+        }
+      });
+    }
 
     // Form handler for claim spot
     async function handleClaimSpot(e) {

@@ -1,0 +1,248 @@
+/* ============================================================
+   DIALTONE.MENU — WebVTT Caption Style Guide
+   Brand-aligned CSS for .vtt subtitle / caption files
+   Version: 1.0 | April 2026
+   ============================================================
+
+   PALETTE REFERENCE
+   ─────────────────
+   Navy (BG):       #0A0F24
+   Dark BG:         #0F142A
+   Card:            #1E2945
+   Blue Accent:     #3B82F6
+   Green Accent:    #22C55E
+   White:           #FFFFFF
+   Light:           #DCE1EB
+   Muted:           #94A3B8
+   Divider:         #374165
+
+   USAGE
+   ─────
+   Link this stylesheet alongside your <video> element:
+
+     <style> @import url('dialtone-menu-vtt.css'); </style>
+
+   Or embed directly in a <style> block. Then reference
+   classes inside your .vtt file like so:
+
+     00:00:01.000 --> 00:00:04.000
+     <v DialTone>Thanks for calling Rosie's Kitchen!</v>
+
+     00:00:05.000 --> 00:00:08.000
+     <v Customer>Can I get a large pepperoni pizza?</v>
+
+   ============================================================ */
+
+
+/* ────────────────────────────────────────────────────────────
+   1. BASE CUE STYLING
+   Default appearance for all captions / subtitles.
+   ──────────────────────────────────────────────────────────── */
+
+::cue {
+  font-family: "Inter", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 1.15em;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #DCE1EB;                          /* Light — primary caption text  */
+  background-color: rgba(10, 15, 36, 0.85); /* Navy with slight transparency */
+  border-radius: 6px;
+  padding: 0.3em 0.6em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  white-space: pre-line;
+}
+
+
+/* ────────────────────────────────────────────────────────────
+   2. SPEAKER VOICES
+   Use <v SpeakerName> tags in .vtt to assign speaker styles.
+
+   VTT example:
+     <v DialTone>I'm DialTone, your ordering assistant.</v>
+     <v Customer>Can I get a large pepperoni?</v>
+     <v Narrator>DialTone handles over 200 orders a day.</v>
+   ──────────────────────────────────────────────────────────── */
+
+/* DialTone AI — green accent (the product speaking) */
+::cue(v[voice="DialTone"]) {
+  color: #22C55E;
+  font-weight: 600;
+  background-color: rgba(10, 15, 36, 0.92);
+}
+
+/* Customer — white, clean and neutral */
+::cue(v[voice="Customer"]) {
+  color: #FFFFFF;
+  font-weight: 400;
+  background-color: rgba(10, 15, 36, 0.85);
+}
+
+/* Narrator / Voiceover — muted, understated */
+::cue(v[voice="Narrator"]) {
+  color: #94A3B8;
+  font-weight: 400;
+  font-style: italic;
+  background-color: rgba(10, 15, 36, 0.80);
+}
+
+/* Host / Presenter — blue accent for authority */
+::cue(v[voice="Host"]) {
+  color: #3B82F6;
+  font-weight: 600;
+  background-color: rgba(10, 15, 36, 0.92);
+}
+
+
+/* ────────────────────────────────────────────────────────────
+   3. EMPHASIS & INLINE TAGS
+   Standard HTML tags supported inside VTT cues.
+
+   VTT example:
+     This is <b>bold</b> and this is <i>italic</i>.
+     This is <u>underlined</u>.
+   ──────────────────────────────────────────────────────────── */
+
+::cue(b) {
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+::cue(i) {
+  color: #94A3B8;
+  font-style: italic;
+}
+
+::cue(u) {
+  color: #DCE1EB;
+  text-decoration: underline;
+  text-decoration-color: #3B82F6;
+  text-underline-offset: 3px;
+}
+
+
+/* ────────────────────────────────────────────────────────────
+   4. CLASS-BASED CUE STYLES
+   Apply via <c.classname> inside your .vtt cues.
+
+   VTT example:
+     <c.highlight>Order captured!</c>
+     <c.brand>DialTone.Menu</c>
+     <c.price>$18.99</c>
+     <c.success>Sent to kitchen.</c>
+     <c.cta>Join the waitlist today.</c>
+   ──────────────────────────────────────────────────────────── */
+
+/* Highlight — blue accent for key phrases */
+::cue(.highlight) {
+  color: #3B82F6;
+  font-weight: 600;
+}
+
+/* Brand mention — green accent */
+::cue(.brand) {
+  color: #22C55E;
+  font-weight: 700;
+}
+
+/* Price / numerical callout */
+::cue(.price) {
+  color: #FFFFFF;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Success state — order confirmed, sent to kitchen */
+::cue(.success) {
+  color: #22C55E;
+  font-weight: 600;
+}
+
+/* Error / alert state */
+::cue(.error) {
+  color: #EF4444;
+  font-weight: 600;
+}
+
+/* CTA — call to action text */
+::cue(.cta) {
+  color: #3B82F6;
+  font-weight: 700;
+}
+
+/* Muted — fine print, disclaimers */
+::cue(.muted) {
+  color: #94A3B8;
+  font-size: 0.9em;
+  font-weight: 400;
+}
+
+/* Card-style background — elevated surface feel */
+::cue(.card) {
+  background-color: rgba(30, 41, 69, 0.92);
+  color: #FFFFFF;
+}
+
+
+/* ────────────────────────────────────────────────────────────
+   5. POSITIONAL VARIANTS
+   Control caption placement via VTT positioning settings.
+   These are set in the .vtt file itself, not CSS, but
+   documented here for reference.
+
+   VTT position syntax:
+     00:00:01.000 --> 00:00:04.000 position:10% align:start
+     Top-left aligned caption.
+
+     00:00:05.000 --> 00:00:08.000 line:0 position:50% align:center
+     Top-center caption.
+
+     00:00:09.000 --> 00:00:12.000 line:-1 position:50% align:center
+     Bottom-center caption (default).
+
+   Common placements for DialTone.Menu videos:
+   ─ Bottom center (default):  line:-1 position:50% align:center
+   ─ Lower third:              line:80% position:50% align:center
+   ─ Top banner:               line:0 position:50% align:center
+   ─ Speaker left:             line:-1 position:20% align:start
+   ─ Speaker right:            line:-1 position:80% align:end
+   ──────────────────────────────────────────────────────────── */
+
+
+/* ────────────────────────────────────────────────────────────
+   6. SAMPLE .VTT FILE
+   Copy this into a .vtt file for quick testing.
+
+   ─── dialtone-demo.vtt ─────────────────────────────────────
+
+   WEBVTT
+
+   NOTE Styled with dialtone-menu-vtt.css
+
+   00:00:01.000 --> 00:00:04.500
+   <v DialTone>Thanks for calling Rosie's Kitchen!</v>
+
+   00:00:04.500 --> 00:00:06.000
+   <v DialTone>I'm <c.brand>DialTone</c>, your ordering assistant.</v>
+
+   00:00:06.500 --> 00:00:09.000
+   <v Customer>Can I get a large pepperoni pizza for pickup?</v>
+
+   00:00:09.500 --> 00:00:12.500
+   <v DialTone>One large pepperoni — <c.price>$18.99</c>. Name for the order?</v>
+
+   00:00:13.000 --> 00:00:15.000
+   <v Customer>Marcus. About 20 minutes?</v>
+
+   00:00:15.500 --> 00:00:18.000
+   <v DialTone>Perfect, Marcus — see you in 20!</v>
+
+   00:00:18.500 --> 00:00:20.500
+   <c.success>Order Captured</c>
+
+   00:00:20.500 --> 00:00:22.500
+   <c.muted>Sent to kitchen.</c>
+
+   00:00:23.000 --> 00:00:27.000
+   <v Narrator><c.brand>DialTone.Menu</c> — <c.cta>Your phone just got a full-time employee.</c></v>
+
+   ──────────────────────────────────────────────────────────── */
