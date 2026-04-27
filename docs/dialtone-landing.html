@@ -4,19 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DialTone — Your Phone Just Got a Full-Time Employee</title>
-  <meta name="description" content="AI voice ordering for restaurants. DialTone answers every call, takes every order, and sends it straight to your kitchen." />
-
-  <meta property="og:title" content="DialTone — Your Phone Just Got a Full-Time Employee" />
-  <meta property="og:description" content="DialTone answers every call, takes every order, and sends it straight to your kitchen. No app. No tablet. No extra staff." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://dialtone.menu" />
-
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="DialTone — Your Phone Just Got a Full-Time Employee" />
-  <meta name="twitter:description" content="DialTone answers every call, takes every order, and sends it straight to your kitchen. No app. No tablet. No extra staff." />
-
-  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg" />
-
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -48,6 +35,10 @@
       overflow-x: hidden;
     }
 
+    /* ── Typography ────────────────────────────────────────────── */
+    .serif { font-family: 'Playfair Display', serif; }
+
+    /* ── Utility ───────────────────────────────────────────────── */
     .container {
       max-width: 1100px;
       margin: 0 auto;
@@ -104,14 +95,18 @@
       overflow: hidden;
     }
 
+    /* Background texture */
     #hero::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(ellipse 80% 60% at 70% 40%, rgba(17,85,204,0.07) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 20% 80%, rgba(232,160,32,0.06) 0%, transparent 60%);
+      background:
+        radial-gradient(ellipse 80% 60% at 70% 40%, rgba(17,85,204,0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 20% 80%, rgba(232,160,32,0.06) 0%, transparent 60%);
       pointer-events: none;
     }
 
+    /* Decorative ring */
     #hero::after {
       content: '';
       position: absolute;
@@ -180,7 +175,17 @@
 
     .hero-h1 em {
       font-style: normal;
-      color: #3D56C9;
+      color: var(--blue);
+      position: relative;
+    }
+
+    .hero-h1 em::after {
+      content: '';
+      position: absolute;
+      left: 0; bottom: 4px;
+      width: 100%; height: 3px;
+      background: var(--gold);
+      border-radius: 2px;
     }
 
     .hero-sub {
@@ -196,18 +201,26 @@
 
     .hero-form {
       display: flex;
-      flex-direction: column;
       gap: 10px;
       max-width: 460px;
       opacity: 0;
       animation: fadeUp 0.7s ease 0.45s forwards;
     }
 
-    .hero-cta-link {
-      display: inline-block;
-      opacity: 0;
-      animation: fadeUp 0.7s ease 0.45s forwards;
+    .hero-form input {
+      flex: 1;
+      padding: 14px 18px;
+      border: 1.5px solid rgba(6,35,75,0.15);
+      border-radius: var(--r);
+      background: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
     }
+    .hero-form input::placeholder { color: #9CA3AF; }
+    .hero-form input:focus { border-color: var(--blue); }
 
     .btn-primary {
       background: var(--navy);
@@ -236,6 +249,7 @@
       animation: fadeUp 0.7s ease 0.55s forwards;
     }
 
+    /* Hero right — phone mockup */
     .hero-visual {
       display: flex;
       justify-content: center;
@@ -460,6 +474,7 @@
     .how-header { text-align: center; margin-bottom: 70px; }
     #how .section-h2 { color: var(--navy); }
     #how .section-label { color: var(--blue); }
+    #how .section-h2 { margin-bottom: 16px; }
 
     .how-sub {
       font-size: 1.05rem;
@@ -483,7 +498,7 @@
     }
 
     .step:first-child { border-radius: var(--r) 0 0 var(--r); }
-    .step:last-child { border-radius: 0 var(--r) var(--r) 0; }
+    .step:last-child  { border-radius: 0 var(--r) var(--r) 0; }
 
     .step-connector {
       position: absolute;
@@ -653,6 +668,7 @@
       transform: rotate(45deg) translate(-1px, -1px);
     }
 
+    /* FAQ card side */
     .faq-stack { display: flex; flex-direction: column; gap: 12px; }
 
     .faq-card {
@@ -749,31 +765,18 @@
 
     .perk-icon { font-size: 1rem; }
 
-    .waitlist-launch-line {
-      color: var(--gold);
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(1.1rem, 2.25vw, 1.7rem);
-      font-weight: 900;
-      line-height: 1.1;
-      letter-spacing: -0.5px;
-      margin: 0 0 18px;
-      position: relative;
-      z-index: 1;
-    }
-
     .waitlist-form {
       display: flex;
-      flex-direction: column;
-      gap: 14px;
+      gap: 10px;
       max-width: 500px;
       margin: 0 auto;
       position: relative;
       z-index: 1;
     }
 
-    .waitlist-form input,
-    .waitlist-form textarea {
-      padding: 14px 18px;
+    .waitlist-form input {
+      flex: 1;
+      padding: 16px 20px;
       border-radius: var(--r);
       border: 1.5px solid rgba(255,255,255,0.15);
       background: rgba(255,255,255,0.06);
@@ -783,15 +786,8 @@
       outline: none;
       transition: border-color 0.2s;
     }
-    .waitlist-form input::placeholder,
-    .waitlist-form textarea::placeholder { color: rgba(255,255,255,0.35); }
-    .waitlist-form input:focus,
-    .waitlist-form textarea:focus { border-color: rgba(255,255,255,0.4); }
-    
-    .waitlist-form textarea {
-      min-height: 80px;
-      resize: vertical;
-    }
+    .waitlist-form input::placeholder { color: rgba(255,255,255,0.35); }
+    .waitlist-form input:focus { border-color: rgba(255,255,255,0.4); }
 
     .btn-gold {
       background: var(--gold);
@@ -861,14 +857,15 @@
     /* ── Animations ────────────────────────────────────────────── */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes fadeIn {
       from { opacity: 0; }
-      to { opacity: 1; }
+      to   { opacity: 1; }
     }
 
+    /* Scroll reveal */
     .reveal {
       opacity: 0;
       transform: translateY(28px);
@@ -887,10 +884,11 @@
       .problem-grid { grid-template-columns: 1fr; gap: 40px; }
       .steps { grid-template-columns: 1fr; gap: 2px; }
       .step:first-child { border-radius: var(--r) var(--r) 0 0; }
-      .step:last-child { border-radius: 0 0 var(--r) var(--r); }
+      .step:last-child  { border-radius: 0 0 var(--r) var(--r); }
       .step-connector { display: none; }
       .who-grid { grid-template-columns: 1fr; }
       .waitlist-form { flex-direction: column; }
+      .hero-form { flex-direction: column; }
       footer { flex-direction: column; align-items: flex-start; }
       .stats-grid { grid-template-columns: 1fr; }
       .stat-card:first-child { grid-column: auto; }
@@ -912,7 +910,10 @@
         <div class="hero-label">Pre-Launch · Nashville, TN</div>
         <h1 class="hero-h1">Your Phone Just Got a <em>Full-Time Employee</em></h1>
         <p class="hero-sub">DialTone answers every call, takes every order, and reads back the total — even during the dinner rush. No app. No tablet. No extra staff.</p>
-        <a class="btn-primary hero-cta-link" href="#waitlist">Go To Full Waitlist Form</a>
+        <form class="hero-form" onsubmit="handleSignup(event)">
+          <input type="email" placeholder="Your email address" required />
+          <button type="submit" class="btn-primary">Join Waitlist</button>
+        </form>
         <p class="hero-note">No credit card · No commitment · First 50 restaurants get 60 days free</p>
       </div>
 
@@ -1019,7 +1020,7 @@
     </div>
   </section>
 
-  <!-- DEMO: REAL CALL, NO SCRIPT -->
+  <!-- DEMO -->
   <section id="demo">
     <div class="container">
       <div class="reveal">
@@ -1028,9 +1029,9 @@
         <p class="section-sub">This is a live DialTone demo. No edits. That's just what it sounds like.</p>
       </div>
       <div class="video-frame reveal">
-        <div class="play-btn" title="Demo audio coming soon"></div>
+        <div class="play-btn" title="Demo video coming soon"></div>
       </div>
-      <p class="video-caption reveal">Demo audio coming soon — join the waitlist to be notified first</p>
+      <p class="video-caption reveal">Demo video coming soon — join the waitlist to be notified first</p>
     </div>
   </section>
 
@@ -1087,26 +1088,21 @@
         <div class="perk"><span class="perk-icon">🚀</span> Priority onboarding & setup</div>
       </div>
 
-      <p class="waitlist-launch-line">Join Our Launch Team</p>
-
-      <form class="waitlist-form" id="claimForm" onsubmit="handleClaimSpot(event)">
-          <input type="text" name="name" placeholder="Your name" required />
-          <input type="text" name="restaurantName" placeholder="Restaurant name" required />
-        <input type="email" name="email" placeholder="your@restaurant.com" required />
-        <textarea name="comment" placeholder="Tell us a bit about your restaurant (optional)"></textarea>
+      <form class="waitlist-form" onsubmit="handleSignup(event)">
+        <input type="email" placeholder="your@restaurant.com" required />
         <button type="submit" class="btn-gold">Claim Your Spot</button>
       </form>
-      <p class="waitlist-note" id="claimNote">No credit card required · Unsubscribe anytime</p>
+      <p class="waitlist-note">No credit card required · Unsubscribe anytime</p>
     </div>
   </section>
 
   <!-- FOOTER -->
   <footer>
-    <div class="footer-logo">Dial<span>Tone</span>Menu</div>
+    <div class="footer-logo">Dial<span>Tone</span>.Menu</div>
     <div class="footer-links">
       <a href="mailto:hello@dialtone.menu">hello@dialtone.menu</a>
-      <a href="/privacy.html">Privacy</a>
-      <a href="/terms.html">Terms</a>
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
     </div>
     <div class="footer-copy">© 2026 DialTone · Built in Nashville, TN · Operated by ByteStreams LLC (Tennessee)</div>
   </footer>
@@ -1124,59 +1120,20 @@
     }, { threshold: 0.12 });
     reveals.forEach(el => observer.observe(el));
 
-    // Form handler for claim spot
-    async function handleClaimSpot(e) {
+    // Form handler
+    function handleSignup(e) {
       e.preventDefault();
-      const form = e.target;
-      const btn = form.querySelector('button');
-      const note = document.getElementById('claimNote');
-      
-      const name = form.querySelector('input[name="name"]').value.trim();
-      const restaurantName = form.querySelector('input[name="restaurantName"]').value.trim();
-      const email = form.querySelector('input[name="email"]').value.trim();
-      const comment = form.querySelector('textarea[name="comment"]').value.trim();
-      const message = comment || 'No additional notes provided.';
-      
-      if (!name || !restaurantName || !email) {
-        alert('Please fill out your name, restaurant name, and email');
-        return;
-      }
-      
+      const input = e.target.querySelector('input[type="email"]');
+      const btn   = e.target.querySelector('button');
+      const email = input.value;
+      btn.textContent = '✓ You\'re on the list!';
+      btn.style.background = '#22C55E';
+      btn.style.color = '#fff';
+      input.value = '';
+      input.disabled = true;
       btn.disabled = true;
-      const originalText = btn.textContent;
-      btn.textContent = 'Submitting...';
-      
-      try {
-        const response = await fetch('/api/contact', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, restaurantName, email, message })
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok || !data.ok) {
-          throw new Error(data.error || 'Submission failed');
-        }
-        
-        btn.textContent = '✓ Spot claimed!';
-        btn.style.background = '#22C55E';
-        btn.style.color = '#fff';
-        form.reset();
-        note.textContent = 'Check your email for next steps!';
-        
-        setTimeout(() => {
-          btn.textContent = originalText;
-          btn.style.background = '';
-          btn.style.color = '';
-          btn.disabled = false;
-          note.textContent = 'No credit card required · Unsubscribe anytime';
-        }, 3000);
-      } catch (error) {
-        alert('Error: ' + error.message);
-        btn.textContent = originalText;
-        btn.disabled = false;
-      }
+      // TODO: wire to your actual email capture (Mailchimp, ConvertKit, Supabase, etc.)
+      console.log('Waitlist signup:', email);
     }
   </script>
 
