@@ -1272,7 +1272,7 @@
       }
 
       try {
-        const response = await fetch('/media/dialtonemenu-order.vtt', { cache: 'no-store' });
+        const response = await fetch('/media/dialtonemenu-order.vtt');
         if (!response.ok) {
           return;
         }
@@ -1300,6 +1300,8 @@
       demoAudio.addEventListener('timeupdate', renderDemoSubtitle);
       demoAudio.addEventListener('seeked', renderDemoSubtitle);
       demoAudio.addEventListener('ended', () => {
+        demoFrame.classList.remove('is-playing');
+        demoPlayBtn.hidden = false;
         if (demoSubtitle) {
           demoSubtitle.textContent = '';
           demoSubtitle.classList.remove('is-active');
