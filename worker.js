@@ -124,6 +124,7 @@ async function handleFavicon(request, env) {
   // correct `image/svg+xml` content-type from the assets binding.
   const faviconUrl = new URL(request.url);
   faviconUrl.pathname = '/images/favicon.svg';
+  faviconUrl.search = 'v=20260427';
   const faviconRequest = new Request(faviconUrl.toString(), request);
   try {
     const response = await env.ASSETS.fetch(faviconRequest);
