@@ -2,6 +2,22 @@ const JSON_HEADERS = {
   'content-type': 'application/json; charset=utf-8'
 };
 
+// Per-isolate in-memory rate limiter: max 5 submissions per IP per 60 seconds.
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const rateLimitMap = new Map();
+
+function isRateLimited(ip) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now - entry.windowStart >= RATE_LIMIT_WINDOW_MS) {
+    rateLimitMap.set(ip, { windowStart: now, count: 1 });
+    return false;
+  }
+  entry.count += 1;
+  return entry.count > RATE_LIMIT_MAX;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -159,6 +175,11 @@ function handleSitemap(url) {
 async function handleContact(request, env) {
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
+
+  const clientIp = request.headers.get('CF-Connecting-IP') || 'unknown';
+  if (isRateLimited(clientIp)) {
+    return jsonResponse({ error: 'Too many requests. Please try again later.' }, 429);
   }
 
   let payload;
