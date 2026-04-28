@@ -1,5 +1,9 @@
 # Developer Journal
 
+## 2026-04-28
+- Updated the hero CTA text in `public/index.html` from "Go To Full Waitlist Form" to "Join the Waitlist" to match the requested landing-page copy.
+- Removed underline styling from the shared primary CTA class in `public/index.html` so the hero "Join the Waitlist" button renders as a button instead of a default underlined link.
+
 ## 2026-04-23
 - Added `robots.txt` at project root using the requested policy pattern.
 - Allowed general crawling except `/admin/` and `/api/`.
