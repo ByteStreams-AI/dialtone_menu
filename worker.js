@@ -382,7 +382,7 @@ async function saveToSupabase({ email, name, restaurantName, comment, supabaseUr
       email,
       name,
       restaurant_name: restaurantName,
-      campaign: 'launch',
+      campaign: 'Menu Launch',
       comment: comment || null,
       created_at: new Date().toISOString()
     })

@@ -172,3 +172,6 @@
   - Resend email sent and received successfully.
   - Supabase row insert verified in production.
 - Marked the project implementation complete and ready for operational maintenance mode.
+
+## 2026-04-28
+- Updated Supabase waitlist insert payload in `worker.js` to persist `campaign: 'Menu Launch'` instead of `campaign: 'launch'`.
