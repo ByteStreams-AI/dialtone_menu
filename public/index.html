@@ -751,6 +751,11 @@
       overflow: hidden;
     }
 
+    #waitlist .container {
+      position: relative;
+      z-index: 1;
+    }
+
     #waitlist::before {
       content: '';
       position: absolute;
@@ -759,6 +764,7 @@
       background: radial-gradient(circle, rgba(34,113,232,0.15), transparent 60%);
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
+      pointer-events: none;
     }
 
     #waitlist .section-label { color: var(--gold); margin-bottom: 20px; }
@@ -776,7 +782,7 @@
     }
 
     .waitlist-sub {
-      font-size: 1.05rem;
+      font-size: 1.575rem;
       color: rgba(255,255,255,0.6);
       max-width: 520px;
       margin: 0 auto 50px;
@@ -962,17 +968,16 @@
   <!-- NAV -->
   <nav>
     <a href="#" class="nav-logo">Dial<span>Tone</span>.Menu</a>
-    <a href="#waitlist" class="nav-cta">Join the Waitlist</a>
+    <a href="/features.html" class="nav-cta">See Features</a>
   </nav>
 
   <!-- HERO -->
   <section id="hero">
     <div class="hero-inner">
       <div class="hero-content">
-        <div class="hero-label">Pre-Launch · Nashville, TN</div>
         <h1 class="hero-h1">Your Phone Just Got a <em>Full-Time Employee</em></h1>
         <p class="hero-sub">DialTone answers every call, takes every order, and reads back the total — even during the dinner rush. No app. No tablet. No extra staff.</p>
-        <a class="btn-primary hero-cta-link" href="#waitlist">Join the Waitlist</a>
+        <a class="btn-primary hero-cta-link" href="/features.html">See Features</a>
         <p class="hero-note">No credit card · No commitment · First 50 restaurants get 30 days free</p>
       </div>
 
@@ -1140,30 +1145,17 @@
     </div>
   </section>
 
-  <!-- WAITLIST -->
+  <!-- LIVE -->
   <section id="waitlist">
     <div class="container">
-      <div class="section-label">Limited Spots</div>
-      <h2 class="waitlist-h2">50 Restaurants.<br/>That's All We're Taking at Launch.</h2>
-      <p class="waitlist-sub">We're onboarding a small first cohort to make sure every restaurant gets proper setup support before we open wider.</p>
+      <div class="section-label">Ready to Serve</div>
+      <h2 class="waitlist-h2">We're Live.</h2>
+      <p class="waitlist-sub">DialTone is taking orders. Start answering every call today.</p>
 
-      <div class="perks">
-        <div class="perk"><span class="perk-icon">🎁</span> 30 days completely free</div>
-        <div class="perk"><span class="perk-icon">🔒</span> Founder pricing locked for life</div>
-        <div class="perk"><span class="perk-icon">🤝</span> Direct line to the founding team</div>
-        <div class="perk"><span class="perk-icon">🚀</span> Priority onboarding & setup</div>
+      <div style="display: flex; gap: 16px; justify-content: center; margin-top: 32px;">
+        <a href="/features.html" class="btn-gold" style="padding: 14px 32px; text-decoration: none;">See Features</a>
+        <a href="/pricing.html" class="btn-primary" style="padding: 14px 32px; text-decoration: none; border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 12px;">View Pricing</a>
       </div>
-
-      <p class="waitlist-launch-line">Join Our Launch Team</p>
-
-      <form class="waitlist-form" id="claimForm" onsubmit="handleClaimSpot(event)">
-          <input type="text" name="name" placeholder="Your name" required />
-          <input type="text" name="restaurantName" placeholder="Restaurant name" required />
-        <input type="email" name="email" placeholder="your@restaurant.com" required />
-        <textarea name="comment" placeholder="Tell us a bit about your restaurant (optional)"></textarea>
-        <button type="submit" class="btn-gold">Claim Your Spot</button>
-      </form>
-      <p class="waitlist-note" id="claimNote">No credit card required · Unsubscribe anytime</p>
     </div>
   </section>
 

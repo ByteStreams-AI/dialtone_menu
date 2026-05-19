@@ -33,6 +33,19 @@ SITE_NAME = "DialToneMenu"
 # is missing, requests return `503` and do not send email.
 SUPABASE_URL = "https://hltmzafywzqajjzjpqva.supabase.co"
 
+# Optional durable rate limiting storage for /api/contact.
+# If this binding is configured, `worker.js` will prefer KV-backed rate
+# limiting and fall back to in-memory limits if KV is unavailable.
+#
+# Setup:
+# 1) Create namespace: `npx wrangler kv namespace create RATE_LIMIT_KV`
+# 2) Replace both placeholder IDs below with the returned IDs.
+# 3) Deploy.
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "40a06e879d7b4cb3aa9752af39cf4de8"
+preview_id = "be9cdfc34c7344d4966b2b6b55a02389"
+
 # Required secret (not stored in this file): RESEND_API_KEY
 # The `/api/contact` handler uses this to authenticate with Resend's
 # API. Set it once per environment via:

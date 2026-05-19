@@ -1,5 +1,11 @@
 # Exclude design/concept images from being served publicly.
-# Only `favicon.svg` should reach the internet — the rest are kept in
-# the repo as design-history references.
+# Only favicon and production screenshots should reach the internet.
 images/*
 !images/favicon.svg
+!images/kitchen-orders.png
+!images/admin-orders.png
+!images/admin-orders01.png
+!images/admin-orders02.png
+!images/admin-orders03.png
+!images/order_review_sms.jpg
+!images/payment_received_sms.jpg

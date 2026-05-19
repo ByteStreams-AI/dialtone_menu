@@ -1,5 +1,57 @@
 # Developer Journal
 
+## 2026-05-18
+- Updated "Book a 15-Minute Call" CTAs in [public/pricing.html](public/pricing.html) (Pro tier) and [public/features.html](public/features.html) (final CTA section) to link to `#contact` anchor instead of `mailto:` links, enabling in-page contact form submission flow.
+- Added a new roadmap pill `Tap to Pay` to the “We ship constantly.” section in [public/features.html](public/features.html).
+
+- Fixed Cloudflare deploy blocker by creating real Workers KV namespaces for `RATE_LIMIT_KV` and updating [wrangler.toml](wrangler.toml) `id`/`preview_id` from placeholder zeros to valid namespace IDs.
+
+- Replaced static admin dashboard image in [public/features.html](public/features.html) with a slideshow cycling through admin-orders01.png, admin-orders02.png, and admin-orders03.png, including next/prev controls and keyboard navigation.
+
+- Updated Pilot trial duration copy in [public/pricing.html](public/pricing.html) from 60 days to 14 days across all related references (tier tagline, price unit, Pilot footnote, and Pilot program detail copy including conversion timing at day 15).
+
+- Updated pricing-page copy in [public/pricing.html](public/pricing.html) from the source brief at `~/dev/notes/projects/dialtone/pricing-page-copy.md`: changed hero headline/subtitle, updated all four tier prices/fees/features/CTAs (including Starter $99 and Pro $279), added explicit call-cost passthrough lines per tier, inserted the below-grid call-cost + transaction-fee explainer block, and renamed the follow-on section heading to `02 - Questions you might have`.
+
+- Added a local dev convenience script in [package.json](package.json): `dev:wrangler` now runs `wrangler dev` so local Worker development can be started with `pnpm run dev:wrangler` (or `npm run dev:wrangler`).
+
+- Fixed READY TO SERVE CTA clickability in [public/index.html](public/index.html) by ensuring the section's decorative radial overlay cannot intercept pointer events and by elevating the section container above the pseudo-element.
+
+- Cleaned launch-facing content in [public/features.html](public/features.html): removed the defensive "roadmap context" sentence and deleted internal build artifacts (capture checklist and Issue 1-8 status chips) from the public page.
+
+- Made the Kitchen card preview image clickable in [public/features.html](public/features.html) so it opens the full screenshot in a new tab.
+
+- Updated READY TO SERVE copy in [public/index.html](public/index.html) to remove "at restaurants" and increased `.waitlist-sub` font size by 50% for stronger launch emphasis.
+
+- Updated live-state copy in [public/index.html](public/index.html) by removing "across Nashville" from the READY TO SERVE section sentence.
+
+- Aligned [public/features.html](public/features.html) with the primary site brand system: switched to Playfair Display + DM Sans, replaced the dark blue visual theme with the cream/navy/gold palette, and converted feature/screenshot panels to light surfaces for a consistent launch presentation.
+- Updated [public/.assetsignore](public/.assetsignore) to allow production screenshots (`kitchen-orders.png`, `admin-orders.png`, `order_review_sms.jpg`, `payment_received_sms.jpg`) in addition to `favicon.svg`, so features-page images render in local/prod asset serving.
+- Removed waitlist-oriented homepage messaging in [public/index.html](public/index.html) for launch readiness by replacing nav/hero CTAs and the waitlist form block with live-state CTAs (`See Features`, `View Pricing`).
+
+## 2026-05-13
+- Hardened request throttling in [worker.js](worker.js) with an optional Cloudflare KV-backed rate limiter (`RATE_LIMIT_KV`) and automatic fallback to the existing in-memory limiter if KV is not configured or unavailable.
+- Normalized Supabase campaign persistence in [worker.js](worker.js) back to `campaign: 'launch'` to stay aligned with the schema default and avoid reporting splits.
+- Updated [developer/ci/validate-cloudflare-config.mjs](developer/ci/validate-cloudflare-config.mjs) to make Supabase project-ref enforcement environment-aware: it now validates only when `EXPECTED_SUPABASE_PROJECT_REF` or `EXPECTED_SUPABASE_PROJECT_REFS` is set.
+- Added optional `RATE_LIMIT_KV` namespace placeholders to [wrangler.toml](wrangler.toml) so durable cross-isolate throttling can be enabled by swapping in real KV namespace IDs.
+- Implemented Issue 1 page scaffold by adding [public/features.html](public/features.html) with canonical `/features` metadata, Open Graph/Twitter tags, and Product JSON-LD schema.
+- Added canonical route handling for `/features` in [worker.js](worker.js) and updated sitemap output to include `/features`.
+- Implemented Issue 2 hero in [public/features.html](public/features.html): final headline/subhead copy, CTA pair (`See pricing` + `Talk to us`), and a prominent voice-sample player using `public/media/dialtonemenu-order.mp3`.
+- Added a hero voice selector UI shell (Warm/Upbeat/Refined) to support future multi-voice sample expansion without changing hero layout.
+- Implemented Issue 3 in [public/features.html](public/features.html): added the full Section 1 "The phone never stops ringing. Neither does DialTone." narrative with the requested lunch-rush framing.
+- Added equal-weight proof metric blocks (`<1 second`, `24/7`, `0 missed calls`) and a simple before/after missed-call visual panel to complete the right-column section layout on desktop and stacked mobile.
+- Implemented Issue 4 in [public/features.html](public/features.html): added the full kitchen-handoff section copy plus three supporting proof cards (modifiers, allergen flags, real order numbers).
+- Added a high-fidelity screenshot placeholder panel marked `replace-with-production-screenshot` with an order-card mock so layout can ship now and be replaced with a real kitchen screenshot before launch.
+- Implemented Issue 5 in [public/features.html](public/features.html): added the full payment-flow section copy (`They tap. You're paid.`), payment methods row, and tip behavior callout.
+- Added two production-style placeholders (`replace-with-production-screenshot`) for SMS receipt/pay-link and Stripe checkout visuals so we can continue buildout now and replace with real captures later.
+- Implemented Issue 6 in [public/features.html](public/features.html): added the admin visibility section (`Every call, every order, every dollar - in one place.`) with supporting copy and three proof cards.
+- Added a production-style admin dashboard placeholder panel (`replace-with-production-screenshot`) including KPI and order-table mocks so section structure is complete while waiting for final UI captures.
+- Implemented Issue 7 in [public/features.html](public/features.html): added the configuration triad section (`Built for your menu. Your hours. Your voice.`) with full copy for voice selection, menu setup, and hours configuration.
+- Added three production-style micro placeholders (`replace-with-production-screenshot`) so each configuration column can be swapped to real UI captures later without changing layout.
+- Implemented Issue 8 in [public/features.html](public/features.html): added the low-emphasis roadmap section (`We ship constantly.`) and final conversion close (`Ready to pick up every call?`) with CTA pair.
+- Replaced the old roadmap/final-CTA scaffold placeholder with a concrete replacement checklist section so remaining launch tasks are explicit (real screenshot swaps only).
+- Replaced Issue 5 payment placeholders in [public/features.html](public/features.html) with real captures from [public/images/order_review_sms.jpg](public/images/order_review_sms.jpg) and [public/images/payment_received_sms.jpg](public/images/payment_received_sms.jpg).
+- Updated payment card labels to `production-screenshot` and added descriptive image alt text for accessibility.
+
 ## 2026-04-28
 - Updated the hero CTA text in `public/index.html` from "Go To Full Waitlist Form" to "Join the Waitlist" to match the requested landing-page copy.
 - Removed underline styling from the shared primary CTA class in `public/index.html` so the hero "Join the Waitlist" button renders as a button instead of a default underlined link.

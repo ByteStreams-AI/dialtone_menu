@@ -7,7 +7,7 @@ const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const rateLimitMap = new Map();
 
-function isRateLimited(ip) {
+function isRateLimitedInMemory(ip) {
   const now = Date.now();
   const entry = rateLimitMap.get(ip);
   if (!entry || now - entry.windowStart >= RATE_LIMIT_WINDOW_MS) {
@@ -16,6 +16,43 @@ function isRateLimited(ip) {
   }
   entry.count += 1;
   return entry.count > RATE_LIMIT_MAX;
+}
+
+function toRateLimitIp(ip) {
+  return normalizeText(ip || 'unknown', 80) || 'unknown';
+}
+
+async function isRateLimitedWithKv(ip, kvNamespace) {
+  // KV is optional and best-effort; it improves cross-isolate limiting while
+  // preserving compatibility when no namespace is configured.
+  const windowId = Math.floor(Date.now() / RATE_LIMIT_WINDOW_MS);
+  const key = `rl:${ip}:${windowId}`;
+
+  const rawCount = await kvNamespace.get(key);
+  const currentCount = Number.parseInt(rawCount || '0', 10);
+  if (currentCount >= RATE_LIMIT_MAX) {
+    return true;
+  }
+
+  await kvNamespace.put(key, String(currentCount + 1), {
+    expirationTtl: Math.ceil(RATE_LIMIT_WINDOW_MS / 1000) + 5
+  });
+
+  return false;
+}
+
+async function isRateLimited(ip, env) {
+  const normalizedIp = toRateLimitIp(ip);
+
+  if (env.RATE_LIMIT_KV && typeof env.RATE_LIMIT_KV.get === 'function' && typeof env.RATE_LIMIT_KV.put === 'function') {
+    try {
+      return await isRateLimitedWithKv(normalizedIp, env.RATE_LIMIT_KV);
+    } catch (error) {
+      console.log('KV rate limiter unavailable, falling back to in-memory limiter:', String(error));
+    }
+  }
+
+  return isRateLimitedInMemory(normalizedIp);
 }
 
 export default {
@@ -28,6 +65,10 @@ export default {
 
 async function routeRequest(request, env, url) {
   // Explicit handlers for known dynamic paths.
+  if (url.pathname === '/features' || url.pathname === '/features/') {
+    return serveStaticPage(request, env, '/features.html');
+  }
+
   if (url.pathname === '/robots.txt') {
     return handleRobots(url);
   }
@@ -51,6 +92,14 @@ async function routeRequest(request, env, url) {
   // For all paths not explicitly handled above, delegate to the assets binding
   // and normalize missing lookups to 404.
   return handleAssetRequest(request, env);
+}
+
+async function serveStaticPage(request, env, pathname) {
+  const pageUrl = new URL(request.url);
+  pageUrl.pathname = pathname;
+  pageUrl.search = '';
+  const pageRequest = new Request(pageUrl.toString(), request);
+  return handleAssetRequest(pageRequest, env);
 }
 
 async function handleAssetRequest(request, env) {
@@ -157,7 +206,7 @@ function handleSecurityTxt() {
 }
 
 function handleSitemap(url) {
-  const pages = ['/', '/pricing.html', '/privacy.html', '/terms.html'];
+  const pages = ['/', '/features', '/pricing.html', '/privacy.html', '/terms.html'];
   const body = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
@@ -179,7 +228,7 @@ async function handleContact(request, env) {
   }
 
   const clientIp = request.headers.get('CF-Connecting-IP') || 'unknown';
-  if (isRateLimited(clientIp)) {
+  if (await isRateLimited(clientIp, env)) {
     return jsonResponse({ error: 'Too many requests. Please try again later.' }, 429);
   }
 
@@ -382,7 +431,7 @@ async function saveToSupabase({ email, name, restaurantName, comment, supabaseUr
       email,
       name,
       restaurant_name: restaurantName,
-      campaign: 'Menu Launch',
+      campaign: 'launch',
       comment: comment || null,
       created_at: new Date().toISOString()
     })

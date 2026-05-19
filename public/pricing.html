@@ -210,6 +210,21 @@
       letter-spacing: 0.12em;
     }
 
+    .tiers-explainer {
+      margin: 1.25rem 0 0;
+      padding: 1.25rem 1.5rem;
+      border: 1px solid var(--line);
+      background: var(--warm);
+    }
+    .tiers-explainer p {
+      margin: 0 0 0.75rem;
+      font-size: 0.95rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .tiers-explainer p:last-child { margin-bottom: 0; }
+    .tiers-explainer strong { color: var(--navy); }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -536,9 +551,9 @@
     <section class="hero">
       <div class="hero-inner">
         <p class="eyebrow">§00 · For restaurants</p>
-        <h1>Pay <em>when the phone rings.</em> Not before.</h1>
+        <h1>Simple pricing. <em>No surprises.</em></h1>
         <p class="lede">
-          DialTone charges a small fee on the orders we help you capture, plus a flat monthly subscription that scales with the features you need. <strong>No setup fees. No annual contracts. No charge for missed calls.</strong>
+          Monthly subscription that scales with the features you need. <strong>No setup fees. No annual contracts. No charge for missed calls.</strong> Call costs are passed through at cost from our carrier and AI partners - typically $30-80 per month depending on your call volume.
         </p>
       </div>
     </section>
@@ -546,7 +561,7 @@
     <section class="tiers">
       <div class="tiers-inner">
         <div class="tiers-head">
-          <h2><span class="num">01</span>Four ways to run DialTone</h2>
+          <h2><span class="num">01 -</span>Four ways to run DialTone</h2>
           <span class="tiers-note">All prices USD · Billed monthly · Cancel anytime</span>
         </div>
 
@@ -555,22 +570,23 @@
             <span class="pilot-badge">Limited spots</span>
             <p class="tier-no">Tier 01</p>
             <h3 class="tier-name">Pilot</h3>
-            <p class="tier-tag">Free 60-day trial for design-partner restaurants helping shape v1.0.</p>
+            <p class="tier-tag">Free 14-day trial for design-partner restaurants helping shape v1.0.</p>
             <div class="tier-price">
               <span class="from">Starting at</span>
-              $0<span class="unit"> / 60 days</span>
+              $0<span class="unit"> / 14 days</span>
             </div>
-            <p class="tier-fee">Transaction fee · <strong>4%</strong> on orders paid by card</p>
+            <p class="tier-fee">Transaction fee: <strong>4%</strong> on orders paid by card<br />Call costs: at cost (passthrough)</p>
 
             <ul class="tier-features">
               <li>Voice ordering on one phone number</li>
               <li>Menu &amp; hours dashboard</li>
               <li>SMS payment links via Stripe</li>
+              <li>Walk-up and dine-in order entry</li>
               <li>Direct line to the founder</li>
-              <li class="muted">Must convert to paid by day 61</li>
+              <li class="muted">After 14 days, choose any paid tier to continue.</li>
             </ul>
 
-            <a class="tier-cta" href="mailto:hello@dialtone.menu?subject=DialTone%20Pilot%20Application">Apply for pilot →</a>
+            <a class="tier-cta" href="mailto:hello@dialtone.menu?subject=DialTone%20Pilot%20Application">Apply for Pilot →</a>
           </div>
 
           <div class="tier">
@@ -579,42 +595,44 @@
             <p class="tier-tag">For independent restaurants that want to stop missing phone orders.</p>
             <div class="tier-price">
               <span class="from">Starting at</span>
-              $89<span class="unit"> / month</span>
+              $99<span class="unit"> / month</span>
             </div>
-            <p class="tier-fee">Transaction fee · <strong>3%</strong> on orders paid by card</p>
+            <p class="tier-fee">Transaction fee: <strong>3%</strong> on orders paid by card<br />Call costs: at cost (passthrough)</p>
 
             <ul class="tier-features">
               <li>Voice ordering, one location</li>
               <li>Menu, modifiers, hours</li>
               <li>Kitchen tablet view</li>
-              <li>SMS payment &amp; confirmations</li>
+              <li>SMS payment links &amp; confirmations</li>
+              <li>Walk-up and dine-in order entry</li>
               <li>Order history &amp; exports</li>
               <li>Email support</li>
             </ul>
 
-            <a class="tier-cta" href="mailto:hello@dialtone.menu?subject=DialTone%20Starter%20-%20Waitlist">Join waitlist →</a>
+            <a class="tier-cta" href="mailto:hello@dialtone.menu?subject=DialTone%20Starter%20Inquiry">Get Started →</a>
           </div>
 
           <div class="tier featured">
             <p class="tier-no">Tier 03 · Most common</p>
             <h3 class="tier-name">Pro</h3>
-            <p class="tier-tag">For restaurants doing real volume — phone orders and table reservations in one place.</p>
+            <p class="tier-tag">For restaurants doing real volume - phone orders, walk-ups, and dine-in in one place.</p>
             <div class="tier-price">
               <span class="from">Starting at</span>
-              $229<span class="unit"> / month</span>
+              $279<span class="unit"> / month</span>
             </div>
-            <p class="tier-fee">Transaction fee · <strong>2%</strong> on orders paid by card</p>
+            <p class="tier-fee">Transaction fee: <strong>2%</strong> on orders paid by card<br />Call costs: at cost (passthrough)</p>
 
             <ul class="tier-features">
               <li>Everything in Starter</li>
               <li>Table reservations &amp; reminders</li>
               <li>Returning-caller recognition</li>
+              <li>Tap-to-pay &amp; card terminal support</li>
               <li>Basic analytics &amp; weekly summary</li>
               <li>Custom voice personality</li>
               <li>Priority email support</li>
             </ul>
 
-            <a class="tier-cta" href="mailto:hello@dialtone.menu?subject=DialTone%20Pro%20-%20Waitlist">Join waitlist →</a>
+            <a class="tier-cta" href="#contact">Book a 15-Minute Call →</a>
           </div>
 
           <div class="tier">
@@ -625,7 +643,7 @@
               <span class="from">Custom</span>
               Let's talk
             </div>
-            <p class="tier-fee">Transaction fee · <strong>Custom</strong>, volume-based</p>
+            <p class="tier-fee">Transaction fee: <strong>Custom</strong>, volume-based<br />Call costs: bundled or passthrough</p>
 
             <ul class="tier-features">
               <li>Everything in Pro</li>
@@ -636,15 +654,20 @@
               <li>Dedicated support channel</li>
             </ul>
 
-            <a class="tier-cta" href="mailto:hello@dialtone.menu?subject=DialTone%20Enterprise%20Inquiry">Contact sales →</a>
+            <a class="tier-cta" href="mailto:hello@dialtone.menu?subject=DialTone%20Enterprise%20Inquiry">Contact Sales →</a>
           </div>
+        </div>
+
+        <div class="tiers-explainer">
+          <p><strong>About call costs.</strong> DialTone uses Telnyx for phone service and Vapi for AI voice processing. We pay them per call and pass that cost to you with no markup - typically $30-80 per month for an active restaurant. You can see exact charges in your Billing dashboard.</p>
+          <p><strong>About transaction fees.</strong> Charged only on orders paid by card. No fee on cash orders or no-shows. Stripe processing fees are separate and standard (2.9% + $0.30 on most cards).</p>
         </div>
       </div>
     </section>
 
     <section class="details">
       <div class="details-inner">
-        <h2><span class="num">02</span>The fine print, made less fine.</h2>
+        <h2><span class="num">02 -</span>Questions you might have</h2>
 
         <div class="detail-block">
           <p class="detail-label">01 · How payment works</p>
@@ -665,8 +688,8 @@
         <div class="detail-block">
           <p class="detail-label">03 · Pilot program</p>
           <div class="detail-body">
-            <p>The Pilot tier is a curated program for restaurants willing to give real feedback during v1.0. We're taking a small number of design-partner restaurants and working closely with each of them. You pay no subscription for 60 days; Stripe's standard processing fees and our 4% transaction fee still apply on card orders.</p>
-            <p>At day 61, pilots convert to Starter or Pro — or off DialTone entirely, no hard feelings. Pilot spots require a short application so we can make sure we're a mutual fit.</p>
+            <p>The Pilot tier is a curated program for restaurants willing to give real feedback during v1.0. We're taking a small number of design-partner restaurants and working closely with each of them. You pay no subscription for 14 days; Stripe's standard processing fees and our 4% transaction fee still apply on card orders.</p>
+            <p>At day 15, pilots convert to Starter or Pro — or off DialTone entirely, no hard feelings. Pilot spots require a short application so we can make sure we're a mutual fit.</p>
           </div>
         </div>
 

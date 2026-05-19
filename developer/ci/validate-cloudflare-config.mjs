@@ -5,7 +5,14 @@ const root = process.cwd();
 const wranglerPath = path.join(root, 'wrangler.toml');
 const workerPath = path.join(root, 'worker.js');
 const workflowPath = path.join(root, '.github', 'workflows', 'deploy.yml');
-const expectedSupabaseProjectRef = process.env.EXPECTED_SUPABASE_PROJECT_REF || 'hltmzafywzqajjzjpqva';
+const expectedSupabaseProjectRefs = [
+  process.env.EXPECTED_SUPABASE_PROJECT_REFS,
+  process.env.EXPECTED_SUPABASE_PROJECT_REF
+]
+  .filter(Boolean)
+  .flatMap((value) => value.split(','))
+  .map((value) => value.trim())
+  .filter(Boolean);
 
 const failures = [];
 
@@ -43,9 +50,9 @@ function validateWrangler(content) {
     try {
       const host = new URL(supabaseUrl).hostname;
       const projectRef = host.split('.')[0] || '';
-      if (projectRef !== expectedSupabaseProjectRef) {
+      if (expectedSupabaseProjectRefs.length > 0 && !expectedSupabaseProjectRefs.includes(projectRef)) {
         failures.push(
-          `wrangler.toml: SUPABASE_URL project ref must be ${expectedSupabaseProjectRef}, found ${projectRef}`
+          `wrangler.toml: SUPABASE_URL project ref must be one of [${expectedSupabaseProjectRefs.join(', ')}], found ${projectRef}`
         );
       }
     } catch {
