@@ -1,7 +1,7 @@
 # Developer Journal
 
 ## 2026-05-18
-- Updated "Book a 15-Minute Call" CTAs in [public/pricing.html](public/pricing.html) (Pro tier) and [public/features.html](public/features.html) (final CTA section) to link to `#contact` anchor instead of `mailto:` links, enabling in-page contact form submission flow.
+- Updated "Book a 15-Minute Call" CTAs in [public/pricing.html](public/pricing.html) (Pro tier) and [public/features.html](public/features.html) (final CTA section) to point to the homepage contact form anchor (`/#contact`) instead of `mailto:` links.
 - Added a new roadmap pill `Tap to Pay` to the “We ship constantly.” section in [public/features.html](public/features.html).
 
 - Fixed Cloudflare deploy blocker by creating real Workers KV namespaces for `RATE_LIMIT_KV` and updating [wrangler.toml](wrangler.toml) `id`/`preview_id` from placeholder zeros to valid namespace IDs.

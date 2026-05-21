@@ -3,19 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DialTone — Your Phone Just Got a Full-Time Employee</title>
-  <meta name="description" content="AI voice ordering for restaurants. DialTone answers every call, takes every order, and sends it straight to your kitchen." />
+  <title>DialTone — Voice AI Agent &amp; Agentic Workflow for Restaurants</title>
+  <meta name="description" content="DialTone is a voice AI agent and complete agentic workflow for restaurants — answers every call, takes every order, and sends it straight to your kitchen, 24/7." />
 
-  <meta property="og:title" content="DialTone — Your Phone Just Got a Full-Time Employee" />
-  <meta property="og:description" content="DialTone answers every call, takes every order, and sends it straight to your kitchen. No app. No tablet. No extra staff." />
+  <meta property="og:title" content="DialTone — Voice AI Agent &amp; Agentic Workflow for Restaurants" />
+  <meta property="og:description" content="DialTone is a voice AI agent and complete agentic workflow for restaurants — answers every call, takes every order, and sends it straight to your kitchen, 24/7." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://dialtone.menu" />
+  <meta property="og:image" content="https://dialtone.menu/images/dialtone-banner.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
 
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="DialTone — Your Phone Just Got a Full-Time Employee" />
-  <meta name="twitter:description" content="DialTone answers every call, takes every order, and sends it straight to your kitchen. No app. No tablet. No extra staff." />
+  <meta name="twitter:title" content="DialTone — Voice AI Agent &amp; Agentic Workflow for Restaurants" />
+  <meta name="twitter:description" content="DialTone is a voice AI agent and complete agentic workflow for restaurants — answers every call, takes every order, and sends it straight to your kitchen, 24/7." />
 
+  <link rel="canonical" href="https://dialtone.menu/" />
   <link rel="icon" type="image/svg+xml" href="/images/favicon.svg?v=20260427" />
+
+  <meta name="keywords" content="voice ai agent for restaurants, agentic workflow for restaurants, restaurant phone ordering ai, ai phone answering for restaurants, automated phone ordering system, restaurant voice assistant, ai order taking for restaurants, voice ai restaurant technology" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "DialTone",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Any",
+    "description": "DialTone is a voice AI agent and complete agentic workflow for restaurants that answers every inbound call, takes phone orders, handles substitutions, and sends orders directly to the kitchen — 24/7, with no extra staff.",
+    "url": "https://dialtone.menu",
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    },
+    "provider": {
+      "@type": "Organization",
+      "name": "ByteStreams LLC",
+      "url": "https://dialtone.menu",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "hello@dialtone.menu",
+        "contactType": "sales"
+      }
+    },
+    "audience": {
+      "@type": "Audience",
+      "audienceType": "Independent restaurants and small restaurant chains"
+    }
+  }
+  </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -658,6 +695,73 @@
       font-style: italic;
     }
 
+    /* ── CONTACT ──────────────────────────────────────────────── */
+    #contact {
+      padding: 100px 24px;
+      background: var(--cream);
+      border-top: 1px solid rgba(6,35,75,0.06);
+      border-bottom: 1px solid rgba(6,35,75,0.06);
+    }
+
+    .contact-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 56px;
+      align-items: start;
+    }
+
+    #contact .section-label { color: var(--blue); }
+    #contact .section-h2 { color: var(--navy); margin-bottom: 16px; }
+
+    .contact-sub {
+      font-size: 1.02rem;
+      color: #3D4B5E;
+      line-height: 1.7;
+      max-width: 540px;
+    }
+
+    .contact-form {
+      background: var(--white);
+      border: 1px solid rgba(6,35,75,0.1);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 16px 36px rgba(6,35,75,0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .contact-form input,
+    .contact-form textarea {
+      padding: 13px 14px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(6,35,75,0.12);
+      background: #fff;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .contact-form textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .contact-form input:focus,
+    .contact-form textarea:focus {
+      border-color: rgba(17,85,204,0.5);
+      box-shadow: 0 0 0 3px rgba(17,85,204,0.12);
+    }
+
+    .contact-note {
+      margin-top: 6px;
+      font-size: 0.84rem;
+      color: var(--muted);
+      min-height: 1.25rem;
+    }
+
     /* ── WHO IT'S FOR ──────────────────────────────────────────── */
     #who {
       padding: 100px 24px;
@@ -951,6 +1055,7 @@
       .hero-visual { order: -1; }
       .phone-card { width: 100%; max-width: 340px; }
       .problem-grid { grid-template-columns: 1fr; gap: 40px; }
+      .contact-wrap { grid-template-columns: 1fr; gap: 28px; }
       .steps { grid-template-columns: 1fr; gap: 2px; }
       .step:first-child { border-radius: var(--r) var(--r) 0 0; }
       .step:last-child { border-radius: 0 0 var(--r) var(--r); }
@@ -976,7 +1081,9 @@
     <div class="hero-inner">
       <div class="hero-content">
         <h1 class="hero-h1">Your Phone Just Got a <em>Full-Time Employee</em></h1>
-        <p class="hero-sub">DialTone answers every call, takes every order, and reads back the total — even during the dinner rush. No app. No tablet. No extra staff.</p>
+        <p class="hero-sub">DialTone is a voice AI agent for restaurants that answers every call, takes every order, and reads back the total — even during the dinner rush.</p>
+        <p class="hero-sub">DialTone.Menu is your complete agentic workflow for restaurants. Every inbound call is answered, every order is captured, and every ticket goes straight to your kitchen — automatically.</p>
+        <p class="hero-sub">Less time on the phone. More time running your restaurant.</p>
         <a class="btn-primary hero-cta-link" href="/features.html">See Features</a>
         <p class="hero-note">No credit card · No commitment · First 50 restaurants get 30 days free</p>
       </div>
@@ -1071,7 +1178,7 @@
           <div class="step-num">02</div>
           <div class="step-icon">🎙️</div>
           <h3>DialTone Answers</h3>
-          <p>Our voice AI greets them, takes their order, handles substitutions, and reads back the total. Just like a real person would.</p>
+          <p>Our voice AI agent greets them, takes their order, handles substitutions, and reads back the total. Just like a real person would.</p>
           <div class="step-connector">→</div>
         </div>
         <div class="step">
@@ -1103,6 +1210,26 @@
         </audio>
       </div>
       <p class="video-caption reveal">Real DialTone call demo — tap play to listen</p>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="container contact-wrap">
+      <div class="reveal">
+        <div class="section-label">Book a Call</div>
+        <h2 class="section-h2">Talk to us about your restaurant.</h2>
+        <p class="contact-sub">Tell us about your restaurant and we will follow up to schedule a 15-minute call. This sends directly to the DialTone team so you do not need to open your email app.</p>
+      </div>
+
+      <form class="contact-form reveal" onsubmit="handleClaimSpot(event)">
+        <input type="text" name="name" placeholder="Your name" required />
+        <input type="text" name="restaurantName" placeholder="Restaurant name" required />
+        <input type="email" name="email" placeholder="Work email" required />
+        <textarea name="comment" placeholder="Anything we should know before the call?"></textarea>
+        <button type="submit" class="btn-primary">Book a 15-minute call</button>
+        <p id="claimNote" class="contact-note">We usually reply the same day.</p>
+      </form>
     </div>
   </section>
 
