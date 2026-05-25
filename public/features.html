@@ -915,6 +915,44 @@
       background: rgba(31, 139, 76, 0.09);
     }
 
+    /* ── FOOTER ────────────────────────────────────────────────── */
+    footer {
+      background: #030F1E;
+      padding: 40px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: rgba(255,255,255,0.7);
+    }
+    .footer-logo span { color: var(--gold); }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.35);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: rgba(255,255,255,0.7); }
+
+    .footer-copy {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.2);
+      width: 100%;
+    }
+
     @media (max-width: 720px) {
       main {
         padding-top: 24px;
@@ -1283,5 +1321,16 @@
       </section>
     </div>
   </main>
+
+  <footer>
+    <div class="footer-logo">Dial<span>Tone</span>Menu</div>
+    <div class="footer-links">
+      <a href="/#contact">hello@dialtone.menu</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/terms.html">Terms</a>
+    </div>
+    <div class="footer-copy">© 2026 DialTone · Built in Nashville, TN · Operated by ByteStreams LLC (Tennessee)</div>
+  </footer>
+
 </body>
 </html>
