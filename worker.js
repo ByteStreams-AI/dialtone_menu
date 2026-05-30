@@ -381,7 +381,7 @@ function buildMenuSuccessResponse(payload, slug) {
     '    .alcohol-pill { margin-left: 8px; font-size: 0.72rem; color: #8a2d12; background: #ffe3d8; border: 1px solid #ffc5af; padding: 2px 8px; border-radius: 999px; vertical-align: middle; }',
     '    .item-description { margin: 7px 0 0; color: #5a6c83; }',
     '    .price { font-weight: 700; color: #132743; white-space: nowrap; }',
-    '    .price del { color: #6b7685; margin-right: 8px; }',
+    '    .price .special-label { color: #b00020; font-size: 0.72em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 6px; }',
     '    .modifiers { margin-top: 10px; display: grid; gap: 8px; }',
     '    .modifier-group { background: #f6f9fc; border: 1px solid rgba(6, 35, 75, 0.08); border-radius: 10px; padding: 9px 10px; }',
     '    .modifier-header { display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.85rem; color: #334b69; }',
@@ -494,11 +494,13 @@ function renderMenuItem(item) {
   const hasAlcohol = Boolean(safeItem.is_alcohol);
   const modifierGroups = Array.isArray(safeItem.modifier_groups) ? safeItem.modifier_groups : [];
 
+  // On special when there's a special price (distinct from the base).
+  // Special items show a "Special" label + the special price; regular
+  // items show their price plainly. No strikethrough.
+  const onSpecial = specialPriceCents !== null && basePriceCents !== null;
   const priceMarkup = activePrice === null
     ? ''
-    : specialPriceCents !== null && basePriceCents !== null
-      ? `<span class="price"><del>${escapeHtml(formatCurrency(basePriceCents))}</del>${escapeHtml(formatCurrency(activePrice))}</span>`
-      : `<span class="price">${escapeHtml(formatCurrency(activePrice))}</span>`;
+    : `<span class="price">${onSpecial ? '<span class="special-label">Special</span>' : ''}${escapeHtml(formatCurrency(activePrice))}</span>`;
 
   const modifiersMarkup = modifierGroups.length
     ? `<div class="modifiers">${modifierGroups.map((group) => renderModifierGroup(group)).join('')}</div>`
@@ -551,6 +553,12 @@ function renderModifierOption(option) {
 }
 
 function normalizeCents(value) {
+  // null/undefined/'' must stay null — NOT 0. Number(null) === 0 (finite),
+  // which previously made a null special_price_cents render as "$0.00"
+  // with the base struck through for every non-special item.
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) {
     return null;
