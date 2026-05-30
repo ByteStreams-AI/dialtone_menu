@@ -33,6 +33,17 @@ SITE_NAME = "DialToneMenu"
 # is missing, requests return `503` and do not send email.
 SUPABASE_URL = "https://hltmzafywzqajjzjpqva.supabase.co"
 
+# Public menu route (`/m/<slug>`) backend configuration:
+# - Reads menu data from Supabase RPC `get_public_menu_by_slug` in the dialtone project.
+# - PUBLIC_MENU_SUPABASE_ANON_KEY must be set as a Worker secret (never committed).
+#   Run: npx wrangler secret put PUBLIC_MENU_SUPABASE_ANON_KEY
+#
+# Response behavior for `/m/<slug>`:
+# - Friendly `404` page when the slug is unknown/inactive.
+# - `503` when the target Supabase project is missing the RPC function
+#   (`PGRST202` / function-not-found), indicating environment mismatch.
+PUBLIC_MENU_SUPABASE_URL = "https://mxhyvvgjtqllohpvrwon.supabase.co"
+
 # Optional durable rate limiting storage for /api/contact.
 # If this binding is configured, `worker.js` will prefer KV-backed rate
 # limiting and fall back to in-memory limits if KV is unavailable.
@@ -107,6 +118,7 @@ run_worker_first = [
   "/sitemap.xml",
   "/favicon.ico",
   "/.well-known/*",
+  "/m/*",
   "/api/*"
 ]
 

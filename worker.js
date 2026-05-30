@@ -2,6 +2,11 @@ const JSON_HEADERS = {
   'content-type': 'application/json; charset=utf-8'
 };
 
+const PUBLIC_MENU_CACHE_SECONDS = 300;
+const FALLBACK_PRIMARY = '#06234B';
+const FALLBACK_SECONDARY = '#E8A020';
+const SYSTEM_FONT_STACK = "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+
 // Per-isolate in-memory rate limiter: max 5 submissions per IP per 60 seconds.
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -56,17 +61,22 @@ async function isRateLimited(ip, env) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    return routeRequest(request, env, url);
+    return routeRequest(request, env, url, ctx);
   }
 };
 
-async function routeRequest(request, env, url) {
+async function routeRequest(request, env, url, ctx) {
   // Explicit handlers for known dynamic paths.
   if (url.pathname === '/features' || url.pathname === '/features/') {
     return serveStaticPage(request, env, '/features.html');
+  }
+
+  const menuSlug = extractMenuSlug(url.pathname);
+  if (menuSlug !== null) {
+    return handlePublicMenuPage(request, env, url, menuSlug, ctx);
   }
 
   if (url.pathname === '/robots.txt') {
@@ -92,6 +102,530 @@ async function routeRequest(request, env, url) {
   // For all paths not explicitly handled above, delegate to the assets binding
   // and normalize missing lookups to 404.
   return handleAssetRequest(request, env);
+}
+
+function extractMenuSlug(pathname) {
+  const match = pathname.match(/^\/m\/([^/]+)\/?$/);
+  if (!match) {
+    return null;
+  }
+
+  try {
+    const decoded = decodeURIComponent(match[1]).trim();
+    return decoded || '';
+  } catch {
+    return '';
+  }
+}
+
+async function handlePublicMenuPage(request, env, url, slug, ctx) {
+  if (!isLookupMethod(request.method)) {
+    return new Response('Method Not Allowed', {
+      status: 405,
+      headers: {
+        'content-type': 'text/plain; charset=utf-8',
+        'allow': 'GET, HEAD'
+      }
+    });
+  }
+
+  if (!slug) {
+    return buildMenuNotFoundResponse();
+  }
+
+  const edgeCache = getEdgeCache();
+  const cacheKey = new Request(menuCacheKeyUrl(url, slug), { method: 'GET' });
+  const shouldUseCache = request.method === 'GET' && edgeCache;
+
+  if (shouldUseCache) {
+    const cachedResponse = await edgeCache.match(cacheKey);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+  }
+
+  const response = await buildPublicMenuResponse(env, slug);
+
+  if (shouldUseCache && isMenuResponseCacheable(response.status)) {
+    const cachePut = edgeCache.put(cacheKey, response.clone());
+    if (ctx && typeof ctx.waitUntil === 'function') {
+      ctx.waitUntil(cachePut);
+    } else {
+      await cachePut;
+    }
+  }
+
+  if (request.method === 'HEAD') {
+    return toHeadResponse(response);
+  }
+
+  return response;
+}
+
+function menuCacheKeyUrl(url, slug) {
+  const cacheUrl = new URL(url.toString());
+  cacheUrl.pathname = `/m/${encodeURIComponent(slug)}`;
+  cacheUrl.search = '';
+  return cacheUrl.toString();
+}
+
+function getEdgeCache() {
+  if (!globalThis.caches || !globalThis.caches.default) {
+    return null;
+  }
+  return globalThis.caches.default;
+}
+
+function isMenuResponseCacheable(status) {
+  return status === 200 || status === 404;
+}
+
+function toHeadResponse(response) {
+  return new Response(null, {
+    status: response.status,
+    headers: response.headers
+  });
+}
+
+async function buildPublicMenuResponse(env, slug) {
+  const supabaseUrl = normalizeText(env.PUBLIC_MENU_SUPABASE_URL || env.SUPABASE_URL || '', 500);
+  const supabaseAnonKey = normalizeText(
+    env.PUBLIC_MENU_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || env.SUPABASE_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '',
+    2000
+  );
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return new Response('Menu is temporarily unavailable.', {
+      status: 503,
+      headers: {
+        'content-type': 'text/plain; charset=utf-8',
+        'cache-control': 'no-store'
+      }
+    });
+  }
+
+  let rpcResponse;
+  try {
+    rpcResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/get_public_menu_by_slug`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'apikey': supabaseAnonKey,
+        'authorization': `Bearer ${supabaseAnonKey}`
+      },
+      body: JSON.stringify({ p_slug: slug })
+    });
+  } catch (error) {
+    console.log('Public menu RPC network error:', String(error));
+    return new Response('Menu is temporarily unavailable.', {
+      status: 502,
+      headers: {
+        'content-type': 'text/plain; charset=utf-8',
+        'cache-control': 'no-store'
+      }
+    });
+  }
+
+  if (!rpcResponse.ok) {
+    const rpcErrorText = await rpcResponse.text();
+    console.log('Public menu RPC failed:', rpcResponse.status, rpcErrorText);
+    if (rpcResponse.status === 404) {
+      const normalizedError = String(rpcErrorText || '').toLowerCase();
+      const missingFunction =
+        normalizedError.includes('get_public_menu_by_slug') ||
+        normalizedError.includes('could not find function') ||
+        normalizedError.includes('pgrst202');
+
+      if (!missingFunction) {
+        return buildMenuNotFoundResponse();
+      }
+
+      return new Response('Menu is temporarily unavailable.', {
+        status: 503,
+        headers: {
+          'content-type': 'text/plain; charset=utf-8',
+          'cache-control': 'no-store'
+        }
+      });
+    }
+
+    return new Response('Menu is temporarily unavailable.', {
+      status: 502,
+      headers: {
+        'content-type': 'text/plain; charset=utf-8',
+        'cache-control': 'no-store'
+      }
+    });
+  }
+
+  let payload = null;
+  try {
+    payload = await rpcResponse.json();
+  } catch {
+    payload = null;
+  }
+
+  if (!payload) {
+    return buildMenuNotFoundResponse();
+  }
+
+  return buildMenuSuccessResponse(payload, slug);
+}
+
+function buildMenuNotFoundResponse() {
+  const body = [
+    '<!doctype html>',
+    '<html lang="en">',
+    '<head>',
+    '  <meta charset="utf-8">',
+    '  <meta name="viewport" content="width=device-width, initial-scale=1">',
+    '  <title>Menu not found | DialTone</title>',
+    '  <meta name="robots" content="index,follow">',
+    '  <style>',
+    '    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #faf7f2; color: #06234B; }',
+    '    main { max-width: 680px; margin: 0 auto; padding: 48px 24px; text-align: center; }',
+    '    h1 { margin: 0 0 12px; font-size: 2rem; }',
+    '    p { margin: 0; color: #4a5f7d; }',
+    '  </style>',
+    '</head>',
+    '<body>',
+    '  <main>',
+    '    <h1>Menu not found</h1>',
+    '    <p>This menu link may be inactive or no longer available.</p>',
+    '  </main>',
+    '</body>',
+    '</html>'
+  ].join('\n');
+
+  return new Response(body, {
+    status: 404,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': `public, max-age=0, s-maxage=${PUBLIC_MENU_CACHE_SECONDS}`
+    }
+  });
+}
+
+function buildMenuSuccessResponse(payload, slug) {
+  const restaurant = payload.restaurant && typeof payload.restaurant === 'object' ? payload.restaurant : {};
+  const categories = Array.isArray(payload.categories) ? payload.categories : [];
+
+  const restaurantName = normalizeText(restaurant.name, 160) || 'Restaurant';
+  const displayName = normalizeText(restaurant.display_name, 160);
+  const wordmark = displayName || restaurantName;
+  const tagline = normalizeText(restaurant.tagline, 240);
+  const timezone = normalizeText(restaurant.timezone, 120);
+  const websiteUrl = safeLogoUrl(restaurant.website_url || '');
+  const logoUrl = safeLogoUrl(restaurant.logo_url || '');
+  const primaryColor = sanitizeHexColor(restaurant.primary_color, FALLBACK_PRIMARY);
+  const secondaryColor = sanitizeHexColor(restaurant.secondary_color, FALLBACK_SECONDARY);
+  const pageTitle = `${wordmark} Menu | DialTone`;
+  const pageDescription = tagline || `Browse the latest menu from ${restaurantName}.`;
+
+  const fontFamily = safeFontFamily(normalizeText(restaurant.font, 120));
+  const fontHref = googleFontHref(normalizeText(restaurant.font, 120));
+
+  const categoryHtml = categories.length
+    ? categories.map((category) => renderMenuCategory(category, timezone)).join('')
+    : '<p class="empty-state">No menu items are currently available.</p>';
+
+  const logoMarkup = logoUrl
+    ? `<img class="brand-logo" src="${escapeHtml(logoUrl)}" alt="${escapeHtml(wordmark)} logo">`
+    : `<div class="brand-wordmark">${escapeHtml(wordmark)}</div>`;
+
+  const websiteCtaMarkup = websiteUrl
+    ? `<a class="site-link" href="${escapeHtml(websiteUrl)}" target="_blank" rel="noopener noreferrer">Visit our site</a>`
+    : '';
+
+  const body = [
+    '<!doctype html>',
+    '<html lang="en">',
+    '<head>',
+    '  <meta charset="utf-8">',
+    '  <meta name="viewport" content="width=device-width, initial-scale=1">',
+    `  <title>${escapeHtml(pageTitle)}</title>`,
+    `  <meta name="description" content="${escapeHtml(pageDescription)}">`,
+    '  <meta name="robots" content="index,follow">',
+    `  <meta property="og:title" content="${escapeHtml(pageTitle)}">`,
+    `  <meta property="og:description" content="${escapeHtml(pageDescription)}">`,
+    '  <meta property="og:type" content="website">',
+    `  <meta property="og:url" content="https://dialtone.menu/m/${encodeURIComponent(slug)}">`,
+    `  <meta property="og:image" content="${escapeHtml(logoUrl || 'https://dialtone.menu/images/dialtone-banner.png')}">`,
+    '  <meta name="twitter:card" content="summary_large_image">',
+    `  <meta name="twitter:title" content="${escapeHtml(pageTitle)}">`,
+    `  <meta name="twitter:description" content="${escapeHtml(pageDescription)}">`,
+    fontHref ? `  <link rel="preconnect" href="https://fonts.googleapis.com">` : '',
+    fontHref ? `  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>` : '',
+    fontHref ? `  <link rel="stylesheet" href="${escapeHtml(fontHref)}">` : '',
+    '  <style>',
+    `    :root { --brand-primary: ${primaryColor}; --brand-secondary: ${secondaryColor}; --brand-soft: ${hexToRgba(primaryColor, 0.08)}; }`,
+    `    body { margin: 0; color: #122236; background: radial-gradient(circle at top right, ${hexToRgba(secondaryColor, 0.18)}, transparent 40%), #faf7f2; font-family: ${fontFamily}; }`,
+    '    main { max-width: 980px; margin: 0 auto; padding: 24px 20px 56px; }',
+    '    .menu-header { display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 18px 20px; border: 1px solid rgba(6, 35, 75, 0.16); border-radius: 16px; background: #ffffff; box-shadow: 0 10px 32px rgba(6, 35, 75, 0.08); }',
+    '    .brand-block { display: flex; flex-direction: column; gap: 8px; min-width: 0; }',
+    '    .brand-logo { max-height: 72px; max-width: min(40vw, 220px); width: auto; border-radius: 8px; object-fit: contain; }',
+    '    .brand-wordmark { font-size: clamp(1.8rem, 3vw, 2.3rem); line-height: 1.05; font-weight: 700; color: var(--brand-primary); }',
+    '    .tagline { margin: 0; color: #4f5e73; }',
+    '    .site-link { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; background: var(--brand-primary); color: #fff; border-radius: 999px; padding: 11px 18px; font-weight: 700; white-space: nowrap; }',
+    '    .categories { margin-top: 24px; display: grid; gap: 18px; }',
+    '    .category { background: #fff; border: 1px solid rgba(6, 35, 75, 0.12); border-radius: 14px; padding: 18px; }',
+    '    .category-header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 10px; }',
+    '    .category-title-wrap h2 { margin: 0; color: var(--brand-primary); font-size: clamp(1.35rem, 2.5vw, 1.65rem); }',
+    '    .category-description { margin: 6px 0 0; color: #5a6c83; }',
+    '    .served-label { font-size: 0.84rem; font-weight: 700; padding: 6px 10px; border-radius: 999px; color: var(--brand-primary); background: var(--brand-soft); border: 1px solid rgba(6, 35, 75, 0.2); }',
+    '    .served-label.later { opacity: 0.72; }',
+    '    .item { padding: 14px 0; border-top: 1px solid rgba(6, 35, 75, 0.12); }',
+    '    .item:first-of-type { border-top: 0; }',
+    '    .item-head { display: flex; justify-content: space-between; gap: 14px; align-items: baseline; }',
+    '    .item-name { margin: 0; font-size: 1.05rem; color: #132743; }',
+    '    .alcohol-pill { margin-left: 8px; font-size: 0.72rem; color: #8a2d12; background: #ffe3d8; border: 1px solid #ffc5af; padding: 2px 8px; border-radius: 999px; vertical-align: middle; }',
+    '    .item-description { margin: 7px 0 0; color: #5a6c83; }',
+    '    .price { font-weight: 700; color: #132743; white-space: nowrap; }',
+    '    .price del { color: #6b7685; margin-right: 8px; }',
+    '    .modifiers { margin-top: 10px; display: grid; gap: 8px; }',
+    '    .modifier-group { background: #f6f9fc; border: 1px solid rgba(6, 35, 75, 0.08); border-radius: 10px; padding: 9px 10px; }',
+    '    .modifier-header { display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.85rem; color: #334b69; }',
+    '    .modifier-options { margin: 6px 0 0; padding-left: 18px; color: #4f6178; }',
+    '    .modifier-options li { margin: 2px 0; }',
+    '    .empty-state { margin: 10px 0 0; color: #4f6178; background: #fff; border: 1px dashed rgba(6, 35, 75, 0.25); border-radius: 12px; padding: 16px; text-align: center; }',
+    '    @media (max-width: 720px) {',
+    '      .menu-header { flex-direction: column; align-items: flex-start; }',
+    '      .site-link { width: 100%; }',
+    '      .category-header { flex-direction: column; }',
+    '    }',
+    '  </style>',
+    '</head>',
+    '<body>',
+    '  <main>',
+    '    <header class="menu-header">',
+    `      <div class="brand-block">${logoMarkup}${tagline ? `<p class="tagline">${escapeHtml(tagline)}</p>` : ''}</div>`,
+    `      ${websiteCtaMarkup}`,
+    '    </header>',
+    `    <section class="categories" data-restaurant-timezone="${escapeHtml(timezone)}">${categoryHtml}</section>`,
+    '  </main>',
+    '  <script>',
+    '    (() => {',
+    '      const categories = document.querySelectorAll(".category[data-start][data-end]");',
+    '      const section = document.querySelector(".categories");',
+    '      if (!section || !categories.length) return;',
+    '      const timezone = section.dataset.restaurantTimezone;',
+    '      if (!timezone) return;',
+    '      const nowParts = new Intl.DateTimeFormat("en-US", {',
+    '        hour: "2-digit",',
+    '        minute: "2-digit",',
+    '        hour12: false,',
+    '        timeZone: timezone',
+    '      }).formatToParts(new Date());',
+    '      const hour = Number(nowParts.find((p) => p.type === "hour")?.value ?? "0");',
+    '      const minute = Number(nowParts.find((p) => p.type === "minute")?.value ?? "0");',
+    '      const nowMinutes = hour * 60 + minute;',
+    '      const toMinutes = (value) => {',
+    '        const [h, m] = String(value).split(":").map((part) => Number(part));',
+    '        if (!Number.isFinite(h) || !Number.isFinite(m)) return null;',
+    '        return h * 60 + m;',
+    '      };',
+    '      categories.forEach((category) => {',
+    '        const start = toMinutes(category.dataset.start);',
+    '        const end = toMinutes(category.dataset.end);',
+    '        const label = category.querySelector(".served-label");',
+    '        if (start === null || end === null || !label) return;',
+    '        const wrapsMidnight = end < start;',
+    '        const isNow = wrapsMidnight',
+    '          ? nowMinutes >= start || nowMinutes <= end',
+    '          : nowMinutes >= start && nowMinutes <= end;',
+    '        if (!isNow) {',
+    '          label.classList.add("later");',
+    '          label.textContent = `${label.textContent} • Served later`;',
+    '        }',
+    '      });',
+    '    })();',
+    '  </script>',
+    '</body>',
+    '</html>'
+  ].filter(Boolean).join('\n');
+
+  return new Response(body, {
+    status: 200,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': `public, max-age=0, s-maxage=${PUBLIC_MENU_CACHE_SECONDS}`
+    }
+  });
+}
+
+function renderMenuCategory(category, timezone) {
+  const safeCategory = category && typeof category === 'object' ? category : {};
+  const name = normalizeText(safeCategory.name, 160) || 'Menu Category';
+  const description = normalizeText(safeCategory.description, 500);
+  const start = normalizeText(safeCategory.serving_start_time, 10);
+  const end = normalizeText(safeCategory.serving_end_time, 10);
+  const hasWindow = Boolean(start && end && isValidServingTime(start) && isValidServingTime(end));
+  const items = Array.isArray(safeCategory.items) ? safeCategory.items : [];
+
+  const servedLabel = hasWindow
+    ? `<span class="served-label">Served ${formatServingRange(start, end, timezone)}</span>`
+    : '';
+
+  const itemHtml = items.length
+    ? items.map((item) => renderMenuItem(item)).join('')
+    : '<p class="empty-state">No items in this category right now.</p>';
+
+  return [
+    `<article class="category"${hasWindow ? ` data-start="${escapeHtml(start)}" data-end="${escapeHtml(end)}"` : ''}>`,
+    '  <div class="category-header">',
+    '    <div class="category-title-wrap">',
+    `      <h2>${escapeHtml(name)}</h2>`,
+    description ? `      <p class="category-description">${escapeHtml(description)}</p>` : '',
+    '    </div>',
+    `    ${servedLabel}`,
+    '  </div>',
+    `  ${itemHtml}`,
+    '</article>'
+  ].filter(Boolean).join('');
+}
+
+function renderMenuItem(item) {
+  const safeItem = item && typeof item === 'object' ? item : {};
+  const name = normalizeText(safeItem.name, 160) || 'Menu Item';
+  const description = normalizeText(safeItem.description, 1200);
+  const basePriceCents = normalizeCents(safeItem.base_price_cents);
+  const specialPriceCents = normalizeCents(safeItem.special_price_cents);
+  const activePrice = specialPriceCents === null ? basePriceCents : specialPriceCents;
+  const hasAlcohol = Boolean(safeItem.is_alcohol);
+  const modifierGroups = Array.isArray(safeItem.modifier_groups) ? safeItem.modifier_groups : [];
+
+  const priceMarkup = activePrice === null
+    ? ''
+    : specialPriceCents !== null && basePriceCents !== null
+      ? `<span class="price"><del>${escapeHtml(formatCurrency(basePriceCents))}</del>${escapeHtml(formatCurrency(activePrice))}</span>`
+      : `<span class="price">${escapeHtml(formatCurrency(activePrice))}</span>`;
+
+  const modifiersMarkup = modifierGroups.length
+    ? `<div class="modifiers">${modifierGroups.map((group) => renderModifierGroup(group)).join('')}</div>`
+    : '';
+
+  return [
+    '<article class="item">',
+    '  <div class="item-head">',
+    `    <h3 class="item-name">${escapeHtml(name)}${hasAlcohol ? '<span class="alcohol-pill">21+</span>' : ''}</h3>`,
+    `    ${priceMarkup}`,
+    '  </div>',
+    description ? `  <p class="item-description">${escapeHtml(description)}</p>` : '',
+    `  ${modifiersMarkup}`,
+    '</article>'
+  ].filter(Boolean).join('');
+}
+
+function renderModifierGroup(group) {
+  const safeGroup = group && typeof group === 'object' ? group : {};
+  const name = normalizeText(safeGroup.name, 120) || 'Modifier';
+  const isRequired = Boolean(safeGroup.is_required);
+  const minSelections = Number.isFinite(Number(safeGroup.min_selections)) ? Number(safeGroup.min_selections) : null;
+  const maxSelections = Number.isFinite(Number(safeGroup.max_selections)) ? Number(safeGroup.max_selections) : null;
+  const options = Array.isArray(safeGroup.options) ? safeGroup.options : [];
+
+  const optionMarkup = options.length
+    ? `<ul class="modifier-options">${options.map((option) => renderModifierOption(option)).join('')}</ul>`
+    : '';
+
+  return [
+    '<section class="modifier-group">',
+    '  <div class="modifier-header">',
+    `    <strong>${escapeHtml(name)}</strong>`,
+    isRequired ? '<span>Required</span>' : '<span>Optional</span>',
+    minSelections !== null && maxSelections !== null
+      ? `<span>Choose ${escapeHtml(String(minSelections))}-${escapeHtml(String(maxSelections))}</span>`
+      : '',
+    '  </div>',
+    `  ${optionMarkup}`,
+    '</section>'
+  ].filter(Boolean).join('');
+}
+
+function renderModifierOption(option) {
+  const safeOption = option && typeof option === 'object' ? option : {};
+  const name = normalizeText(safeOption.name, 120) || 'Option';
+  const delta = normalizeCents(safeOption.price_delta_cents);
+  const priceDeltaLabel = delta && delta > 0 ? ` (+${formatCurrency(delta)})` : '';
+  return `<li>${escapeHtml(name)}${escapeHtml(priceDeltaLabel)}</li>`;
+}
+
+function normalizeCents(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+  return Math.round(parsed);
+}
+
+function formatCurrency(cents) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 2
+  }).format(cents / 100);
+}
+
+function isValidServingTime(value) {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(value));
+}
+
+function formatServingRange(start, end) {
+  return `${format12Hour(start)}-${format12Hour(end)}`;
+}
+
+function format12Hour(value) {
+  const [hoursText, minutesText] = String(value).split(':');
+  const hours = Number.parseInt(hoursText, 10);
+  const minutes = Number.parseInt(minutesText, 10);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) {
+    return escapeHtml(String(value));
+  }
+
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const normalizedHour = hours % 12 || 12;
+  return `${normalizedHour}:${String(minutes).padStart(2, '0')} ${period}`;
+}
+
+function sanitizeHexColor(value, fallback) {
+  const normalized = normalizeText(value || '', 7);
+  return /^#[0-9A-Fa-f]{6}$/.test(normalized) ? normalized : fallback;
+}
+
+function safeFontFamily(font) {
+  const cleaned = String(font || '').replace(/[^a-zA-Z0-9 -]/g, '').trim();
+  if (!cleaned) {
+    return SYSTEM_FONT_STACK;
+  }
+  return `'${cleaned}', ${SYSTEM_FONT_STACK}`;
+}
+
+function googleFontHref(font) {
+  const cleaned = String(font || '').replace(/[^a-zA-Z0-9 -]/g, '').trim();
+  if (!cleaned) {
+    return null;
+  }
+  const family = cleaned.replace(/\s+/g, '+');
+  return `https://fonts.googleapis.com/css2?family=${family}:wght@400;600;700&display=swap`;
+}
+
+function safeLogoUrl(url) {
+  const normalized = normalizeText(url || '', 2000);
+  if (!/^https?:\/\//i.test(normalized)) {
+    return null;
+  }
+  return normalized;
+}
+
+function hexToRgba(hex, alpha) {
+  const normalizedAlpha = Math.max(0, Math.min(1, Number(alpha) || 0));
+  if (!/^#[0-9A-Fa-f]{6}$/.test(String(hex))) {
+    return hex;
+  }
+  const red = Number.parseInt(hex.slice(1, 3), 16);
+  const green = Number.parseInt(hex.slice(3, 5), 16);
+  const blue = Number.parseInt(hex.slice(5, 7), 16);
+  return `rgba(${red}, ${green}, ${blue}, ${normalizedAlpha})`;
 }
 
 async function serveStaticPage(request, env, pathname) {

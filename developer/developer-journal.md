@@ -1,5 +1,18 @@
 # Developer Journal
 
+## 2026-05-30
+- Implemented Issue #27 in [worker.js](worker.js) by adding a new dynamic public menu route at `/m/<slug>` that fetches menu data via Supabase RPC (`get_public_menu_by_slug`) and server-renders a branded HTML page.
+- Added request-driven edge caching for menu pages and unknown-slug responses with `Cache-Control: public, max-age=0, s-maxage=300`, keeping freshness tied to traffic rather than a scheduled republish flow.
+- Added security hardening for tenant-authored content in [worker.js](worker.js): HTML escaping for restaurant/category/item/modifier text, `safeLogoUrl` URL scheme checks, `safeFontFamily` and `googleFontHref` sanitization, and color fallbacks with strict `#RRGGBB` validation.
+- Added menu UX details in [worker.js](worker.js): branding header (logo or text wordmark), optional `Visit our site` CTA, category serving-hours labels, special-price rendering with struck-through base price, modifier-group rendering, and client-side "served later" tagging using restaurant-local timezone with cross-midnight handling.
+- Updated [wrangler.toml](wrangler.toml) to include `/m/*` in `run_worker_first` so menu routes are always handled by the Worker (not static-asset fallback) in production.
+- Added test coverage in [tests/public-menu.test.mjs](tests/public-menu.test.mjs) and a script in [package.json](package.json) (`test:menu`) to validate RPC wiring, escaping, pricing display, serving-hours labels, website-link attributes, 404 behavior, and config-failure handling.
+- Added local-env compatibility fallback in [worker.js](worker.js) so menu RPC auth key resolution also checks existing `SUPABASE_KEY`/`SUPABASE_SERVICE_ROLE_KEY` when dedicated public-menu anon variables are not set.
+- Updated [worker.js](worker.js) 404 handling for Supabase RPC responses: when RPC 404 indicates missing `get_public_menu_by_slug` (`PGRST202` / function-not-found text), return `503 Service Unavailable`; otherwise map to the friendly menu-not-found `404` page for slug-miss UX consistency.
+- Updated [wrangler.toml](wrangler.toml) comments to document public-menu env wiring and response semantics clearly: slug misses return friendly `404`, while RPC/function-missing environment mismatches return `503`; added local `.dev.vars` override examples for `PUBLIC_MENU_SUPABASE_URL` / `PUBLIC_MENU_SUPABASE_ANON_KEY`.
+- Added commented local placeholders to [.dev.vars](.dev.vars) for `PUBLIC_MENU_SUPABASE_URL` and `PUBLIC_MENU_SUPABASE_ANON_KEY` so menu route testing can be enabled quickly without touching committed runtime vars.
+- Validation run: `pnpm run test:robots && pnpm run test:menu` passed.
+
 ## 2026-05-18
 - Updated "Book a 15-Minute Call" CTAs in [public/pricing.html](public/pricing.html) (Pro tier) and [public/features.html](public/features.html) (final CTA section) to point to the homepage contact form anchor (`/#contact`) instead of `mailto:` links.
 - Added a new roadmap pill `Tap to Pay` to the “We ship constantly.” section in [public/features.html](public/features.html).
