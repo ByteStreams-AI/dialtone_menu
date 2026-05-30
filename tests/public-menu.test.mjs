@@ -50,6 +50,16 @@ function samplePayload() {
                 options: [
                   { name: 'Avocado', price_delta_cents: 150 }
                 ]
+              },
+              {
+                name: 'Egg style',
+                is_required: true,
+                min_selections: 1,
+                max_selections: 1,
+                options: [
+                  { name: 'Scrambled', price_delta_cents: 0 },
+                  { name: 'Over easy', price_delta_cents: 0 }
+                ]
               }
             ]
           },
@@ -119,6 +129,11 @@ async function run() {
   assert.match(html, /\$12\.99/, 'Regular-priced item should show its base price plainly');
   assert.doesNotMatch(html, /\$0\.00/, 'A null special_price_cents must not render as $0.00');
   assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/, 'Untrusted font input should be sanitized');
+  // Selection-rule phrasing: no awkward "Choose 1-1" / "Choose 0-2".
+  assert.match(html, /Choose 1<\/span>/, 'min===max should read "Choose 1"');
+  assert.match(html, /Choose up to 2<\/span>/, 'min 0 should read "Choose up to <max>"');
+  assert.doesNotMatch(html, /Choose 1-1/, 'should not render "Choose 1-1"');
+  assert.doesNotMatch(html, /Choose 0-2/, 'should not render "Choose 0-<max>"');
 
   globalThis.fetch = async () => new Response('null', {
     status: 200,

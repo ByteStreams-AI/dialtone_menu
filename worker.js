@@ -518,6 +518,17 @@ function renderMenuItem(item) {
   ].filter(Boolean).join('');
 }
 
+// Human-readable selection rule. Avoids awkward "Choose 1-1" / "Choose 0-1":
+//   min === max      -> "Choose 1"
+//   min === 0        -> "Choose up to 2"   (the "Optional" label covers 0)
+//   otherwise        -> "Choose 1-3"
+function formatSelectionRule(min, max) {
+  if (min === null || max === null) return '';
+  if (min === max) return `Choose ${min}`;
+  if (min === 0) return `Choose up to ${max}`;
+  return `Choose ${min}-${max}`;
+}
+
 function renderModifierGroup(group) {
   const safeGroup = group && typeof group === 'object' ? group : {};
   const name = normalizeText(safeGroup.name, 120) || 'Modifier';
@@ -530,14 +541,14 @@ function renderModifierGroup(group) {
     ? `<ul class="modifier-options">${options.map((option) => renderModifierOption(option)).join('')}</ul>`
     : '';
 
+  const selectionRule = formatSelectionRule(minSelections, maxSelections);
+
   return [
     '<section class="modifier-group">',
     '  <div class="modifier-header">',
     `    <strong>${escapeHtml(name)}</strong>`,
     isRequired ? '<span>Required</span>' : '<span>Optional</span>',
-    minSelections !== null && maxSelections !== null
-      ? `<span>Choose ${escapeHtml(String(minSelections))}-${escapeHtml(String(maxSelections))}</span>`
-      : '',
+    selectionRule ? `<span>${escapeHtml(selectionRule)}</span>` : '',
     '  </div>',
     `  ${optionMarkup}`,
     '</section>'
