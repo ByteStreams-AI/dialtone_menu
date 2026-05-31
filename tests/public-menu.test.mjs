@@ -50,8 +50,26 @@ function samplePayload() {
                 options: [
                   { name: 'Avocado', price_delta_cents: 150 }
                 ]
+              },
+              {
+                name: 'Egg style',
+                is_required: true,
+                min_selections: 1,
+                max_selections: 1,
+                options: [
+                  { name: 'Scrambled', price_delta_cents: 0 },
+                  { name: 'Over easy', price_delta_cents: 0 }
+                ]
               }
             ]
+          },
+          {
+            name: 'House Granola',
+            description: 'No special price',
+            base_price_cents: 1299,
+            special_price_cents: null,
+            is_alcohol: false,
+            modifier_groups: []
           }
         ]
       }
@@ -103,8 +121,19 @@ async function run() {
   assert.match(html, /target="_blank"/, 'Website CTA should open in a new tab');
   assert.match(html, /rel="noopener noreferrer"/, 'Website CTA should enforce safe rel attributes');
   assert.match(html, /Served 7:00 AM-11:00 AM/, 'Serving window label should be rendered');
-  assert.match(html, /<del>\$9\.99<\/del>\$8\.50/, 'Special price should strike through base price');
+  // Special item: a "Special" label + the special price, no strikethrough.
+  assert.match(html, /class="special-label">Special<\/span>\$8\.50/, 'Special item should show a "Special" label + the special price');
+  assert.doesNotMatch(html, /<del>/, 'Special pricing should no longer use a strikethrough');
+  assert.doesNotMatch(html, /\$9\.99/, 'The struck-through base price should no longer appear for a special item');
+  // Regular item: plain base price, never $0.00 from a null special.
+  assert.match(html, /\$12\.99/, 'Regular-priced item should show its base price plainly');
+  assert.doesNotMatch(html, /\$0\.00/, 'A null special_price_cents must not render as $0.00');
   assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/, 'Untrusted font input should be sanitized');
+  // Selection-rule phrasing: no awkward "Choose 1-1" / "Choose 0-2".
+  assert.match(html, /Choose 1<\/span>/, 'min===max should read "Choose 1"');
+  assert.match(html, /Choose up to 2<\/span>/, 'min 0 should read "Choose up to <max>"');
+  assert.doesNotMatch(html, /Choose 1-1/, 'should not render "Choose 1-1"');
+  assert.doesNotMatch(html, /Choose 0-2/, 'should not render "Choose 0-<max>"');
 
   globalThis.fetch = async () => new Response('null', {
     status: 200,
