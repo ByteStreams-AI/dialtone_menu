@@ -20,7 +20,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://dialtone.menu/pricing.html" />
 
-  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg?v=20260427" />
+  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg?v=20260605" />
   <link rel="canonical" href="https://dialtone.menu/pricing.html" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -78,7 +78,7 @@
       position: fixed;
       top: 0; left: 0; right: 0;
       z-index: 100;
-      padding: 18px 24px;
+      padding: 18px 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -124,6 +124,8 @@
     .nav-right {
       display: inline-flex;
       align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
       gap: 1.25rem;
     }
     .nav-link {
@@ -170,10 +172,10 @@
       font-weight: 500;
     }
     .lede {
-      font-size: 1.125rem;
-      line-height: 1.55;
+      font-size: 1.02rem;
+      line-height: 1.5;
       color: var(--muted);
-      max-width: 640px;
+      max-width: 760px;
       margin: 0;
     }
     .lede strong { color: var(--navy); font-weight: 600; }
@@ -279,7 +281,7 @@
       font-size: 0.9rem;
       color: var(--muted);
       margin: 0 0 1.75rem;
-      min-height: 2.5rem;
+      min-height: 5rem;
     }
     .tier-price {
       font-family: var(--font-display);
@@ -553,6 +555,8 @@
       <span class="nav-right">
         <a class="nav-link" href="/features.html">Features</a>
         <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/privacy.html">Privacy</a>
+        <a class="nav-link" href="/terms.html">Terms</a>
       </span>
     </div>
   </nav>
@@ -561,9 +565,9 @@
     <section class="hero">
       <div class="hero-inner">
         <p class="eyebrow">§00 · For restaurants</p>
-        <h1>Simple pricing. <em>No surprises.</em></h1>
+        <h1>One Price. <em>The Same Every Month.</em></h1>
         <p class="lede">
-          Monthly subscription that scales with the features you need. <strong>No setup fees. No annual contracts. No charge for missed calls.</strong> Phone and delivery costs are passed through at cost from carrier and delivery partners.
+          One flat monthly price — $99 or $279. the same every month.<strong> No setup fees. No annual contracts. No per-minute charges.</strong> Plus a small fee only on the orders we bring you.
         </p>
       </div>
     </section>
@@ -580,20 +584,20 @@
             <span class="pilot-badge">Limited spots</span>
             <p class="tier-no">Tier 01</p>
             <h3 class="tier-name">Pilot</h3>
-            <p class="tier-tag">Free 7-day trial for design-partner restaurants helping shape v1.0.</p>
+            <p class="tier-tag">Free 15-day trial for design-partner restaurants helping shape v1.0.</p>
             <div class="tier-price">
               <span class="from">Starting at</span>
-              $0<span class="unit"> / 7 days</span>
+              $0<span class="unit"> / 15 days</span>
             </div>
-            <p class="tier-fee">Transaction fee: <strong>4%</strong> on orders paid by card<br />Call costs: at cost (passthrough)</p>
 
             <ul class="tier-features">
-              <li>Voice ordering on one phone number</li>
-              <li>Menu &amp; hours dashboard</li>
+              <li>Voice ordering, one location</li>
+              <li>Live Menu &amp; hours dashboard</li>
+              <li>Kitchen Display</li>
               <li>SMS payment links via Stripe</li>
               <li>Walk-up and dine-in order entry</li>
               <li>Direct line to the founder</li>
-              <li class="muted">After 7 days, choose any paid tier to continue.</li>
+              <li class="muted">After 15 days, choose any paid tier to continue.</li>
             </ul>
 
             <a class="tier-cta" href="/#contact">Apply for Pilot →</a>
@@ -607,12 +611,11 @@
               <span class="from">Starting at</span>
               $99<span class="unit"> / month</span>
             </div>
-            <p class="tier-fee">Transaction fee: <strong>3%</strong> on orders paid by card<br />Call costs: at cost (passthrough)</p>
+            <p class="tier-fee">Transaction fee: <strong>1.5%</strong><br/>on the orders we bring to you. </p>
 
             <ul class="tier-features">
               <li>Voice ordering, one location</li>
-              <li>Menu, modifiers, hours</li>
-              <li>Kitchen tablet view</li>
+              <li>Live Menu - set hours per category</li>
               <li>SMS payment links &amp; confirmations</li>
               <li>Walk-up and dine-in order entry</li>
               <li>Order history &amp; exports</li>
@@ -625,19 +628,22 @@
           <div class="tier featured">
             <p class="tier-no">Tier 03 · Most common</p>
             <h3 class="tier-name">Pro</h3>
-            <p class="tier-tag">For restaurants doing real volume - phone orders, walk-ups, and dine-in in one place.</p>
+            <p class="tier-tag">For restaurants doing real volume - phone orders, walk-ups, and dine-in one place.</p>
             <div class="tier-price">
               <span class="from">Starting at</span>
               $279<span class="unit"> / month</span>
             </div>
-            <p class="tier-fee">Transaction fee: <strong>2%</strong> on orders paid by card<br />Call costs: at cost (passthrough)</p>
+            <p class="tier-fee">Transaction fee: <strong>1.5%</strong><br/>on the orders we bring to you. </p>
 
             <ul class="tier-features">
               <li>Everything in Starter</li>
-              <li>Table reservations &amp; reminders</li>
               <li>Returning-caller recognition</li>
-              <li>Tap-to-pay &amp; card terminal support</li>
-              <li>Basic analytics &amp; weekly summary</li>
+              <li>Item specials & sale pricing</li>
+              <li>Modifiers & add-ons, handled on the call</li>
+              <li>DoorDash delivery, dispatched automatically</li>
+              <li>Table reservations &amp; reminders</li>
+              <li>Reservation timeline with table & cover management</li>
+              <!-- <li>Basic analytics &amp; weekly summary</li> -->
               <li>Custom voice personality</li>
               <li>Priority email support</li>
             </ul>
@@ -648,17 +654,16 @@
           <div class="tier">
             <p class="tier-no">Tier 04</p>
             <h3 class="tier-name">Enterprise</h3>
-            <p class="tier-tag">Multi-location groups, franchises, and POS-integrated restaurants.</p>
+            <p class="tier-tag">Multi-location groups, franchises.</p>
             <div class="tier-price">
               <span class="from">Custom</span>
               Let's talk
             </div>
-            <p class="tier-fee">Transaction fee: <strong>Custom</strong>, volume-based<br />Call costs: bundled or passthrough</p>
+            <p class="tier-fee">Transaction fee: <strong>Custom</strong><br />Volume-based on the orders we bring to you.</p>
 
             <ul class="tier-features">
               <li>Everything in Pro</li>
               <li>Multi-location support</li>
-              <li>POS integrations (Toast, Square, &amp;c.)</li>
               <li>SSO &amp; role-based admin</li>
               <li>Custom SLA &amp; uptime commitments</li>
               <li>Dedicated support channel</li>
@@ -666,11 +671,6 @@
 
             <a class="tier-cta" href="/#contact">Contact Sales →</a>
           </div>
-        </div>
-
-        <div class="tiers-explainer">
-          <p><strong>About call costs.</strong> DialTone uses Telnyx for phone service and Vapi for AI voice processing. We pay them per call and pass that cost to you with no markup - typically $30-80 per month for an active restaurant. You can see exact charges in your Billing dashboard.</p>
-          <p><strong>About transaction fees.</strong> Charged only on orders paid by card. No fee on cash orders or no-shows. Stripe processing fees are separate and standard (2.9% + $0.30 on most cards).</p>
         </div>
       </div>
     </section>
@@ -688,7 +688,7 @@
         </div>
 
         <div class="detail-block">
-          <p class="detail-label">02 · What counts as a transaction</p>
+          <p class="detail-label">What counts as a transaction</p>
           <div class="detail-body">
             <p>The transaction fee applies only to <strong>card orders placed through DialTone and successfully paid</strong>. Walk-in orders, phone orders paid in cash at pickup, and abandoned checkouts are not charged a transaction fee.</p>
             <p>Reservations are not transactions and carry no per-booking fee — they're included in your subscription.</p>
@@ -698,8 +698,8 @@
         <div class="detail-block">
           <p class="detail-label">03 · Pilot program</p>
           <div class="detail-body">
-            <p>The Pilot tier is a curated program for restaurants willing to give real feedback during v1.0. We're taking a small number of design-partner restaurants and working closely with each of them. You pay no subscription for 7 days; Stripe's standard processing fees and our 4% transaction fee still apply on card orders.</p>
-            <p>At day 8, pilots convert to Starter or Pro — or off DialTone entirely, no hard feelings. Pilot spots require a short application so we can make sure we're a mutual fit.</p>
+            <p>The Pilot tier is a curated program for restaurants willing to give real feedback during v1.0. We're taking a small number of design-partner restaurants and working closely with each of them. You pay no subscription for 15 days; Stripe's standard processing fees and our 1.5% transaction fee still apply on card orders.</p>
+            <p>At day 16, pilots convert to Starter or Pro — or off DialTone entirely, no hard feelings. Pilot spots require a short application so we can make sure we're a mutual fit.</p>
           </div>
         </div>
 

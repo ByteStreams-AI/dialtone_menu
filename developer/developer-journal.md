@@ -1,5 +1,25 @@
 # Developer Journal
 
+## 2026-06-09
+
+- Replaced the kitchen handoff preview in [public/features.html](public/features.html) from `kitchen-orders.png` to the production video [public/media/kitchen-order.mp4](public/media/kitchen-order.mp4), using an inline `<video>` player with controls for direct in-page playback.
+- Confirmed media assets are not excluded by ignore rules: [.gitignore](.gitignore) does not block `.mp4`, and [public/.assetsignore](public/.assetsignore) only scopes image exclusions.
+
+## 2026-06-06
+
+- Updated the homepage hero headline in [public/index.html](public/index.html) to the requested four-line copy: `Your phone, your orders, your tables.` with the blue emphasis changed to `All on one screen.` for cleaner visual separation in the hero.
+- Updated [public/index.html](public/index.html) hero emphasis styling so `All on one screen.` now uses `var(--gold)`, matching the `Tone` brand accent color in the logo.
+- Updated the homepage step icon in [public/index.html](public/index.html) from a printer to a monitor to better match the kitchen-screen workflow visual.
+- Repositioned the demo playback button in [public/index.html](public/index.html) to the upper third of the media frame (with a mobile adjustment) so it no longer overlaps on-screen copy/subtitles.
+- Fine-tuned the demo playback button position/size in [public/index.html](public/index.html) to sit higher (top-quarter) with a slightly smaller control, preventing overlap with centered hero text in the demo thumbnail.
+- Updated [public/index.html](public/index.html) hero emphasis typography so `All on one screen.` is forced onto a single line with a slightly reduced size for better fit.
+- Adjusted the pricing hero lede in [public/pricing.html](public/pricing.html) to a slightly smaller size and wider measure so the flat-price paragraph fits on two lines.
+- Removed the extra outer nav inset in [public/pricing.html](public/pricing.html) so the DialTone.Menu logo lines up with the hero headline column.
+- Normalized pricing tier description height in [public/pricing.html](public/pricing.html) so the headline values (`$0`, `$149`, `$279`, `Let's talk`) align on the same horizontal row.
+- Commented out the `Basic analytics & weekly summary` Pro-tier feature line in [public/pricing.html](public/pricing.html) per request.
+- Reordered homepage sections in [public/index.html](public/index.html) so the Book a Call/contact block appears between Who It's For and Ready to Serve.
+- Standardized top navigation format across [public/index.html](public/index.html), [public/features.html](public/features.html), [public/pricing.html](public/pricing.html), [public/privacy.html](public/privacy.html), [public/terms.html](public/terms.html), and [public/404.html](public/404.html) so each page links to the other site pages while excluding itself.
+
 ## 2026-05-30
 - Implemented Issue #27 in [worker.js](worker.js) by adding a new dynamic public menu route at `/m/<slug>` that fetches menu data via Supabase RPC (`get_public_menu_by_slug`) and server-renders a branded HTML page.
 - Added request-driven edge caching for menu pages and unknown-slug responses with `Cache-Control: public, max-age=0, s-maxage=300`, keeping freshness tied to traffic rather than a scheduled republish flow.

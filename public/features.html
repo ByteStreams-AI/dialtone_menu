@@ -28,7 +28,7 @@
   <meta name="twitter:description" content="DialTone.Menu answers every phone call at your restaurant, takes the order, and sends the customer a payment link. Built for pickup, dine-in, and the lunch rush." />
   <meta name="twitter:image" content="https://dialtone.menu/og-features.png" />
 
-  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg?v=20260427" />
+  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg?v=20260607" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -107,6 +107,25 @@
     .brand span {
       color: var(--gold);
     }
+
+    .nav-right {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .nav-link {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--navy);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-link:hover { color: var(--blue); }
 
     .cta {
       font-size: 0.9rem;
@@ -677,6 +696,13 @@
       object-fit: cover;
     }
 
+    .shot-image video {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: cover;
+    }
+
     .shot-body strong {
       color: var(--navy);
       font-size: 0.83rem;
@@ -973,6 +999,20 @@
     }
 
     @media (max-width: 720px) {
+      .topbar {
+        min-height: auto;
+        padding: 12px 0;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .nav-right {
+        gap: 0.7rem;
+        justify-content: flex-end;
+      }
+      .nav-link {
+        font-size: 0.64rem;
+        letter-spacing: 0.12em;
+      }
       main {
         padding-top: 24px;
       }
@@ -1055,7 +1095,12 @@
   <header>
     <div class="container topbar">
       <a class="brand" href="/">Dial<span>Tone</span>.Menu</a>
-      <a class="cta" href="/pricing.html">See pricing</a>
+      <span class="nav-right">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/pricing.html">Pricing</a>
+        <a class="nav-link" href="/privacy.html">Privacy</a>
+        <a class="nav-link" href="/terms.html">Terms</a>
+      </span>
     </div>
   </header>
 
@@ -1063,12 +1108,11 @@
     <div class="container">
       <section class="hero">
         <div>
-          <p class="eyebrow">Voice ordering for restaurants</p>
-          <h1>Your Menu,<br />Your Updates,<br />Your Workflows.</h1>
-          <p class="lead">DialTone.Menu keeps your menu accurate everywhere — on the phone, online, and in the kitchen. Update pricing, specials, availability, and modifiers in seconds.</p>
-          <p class="lead">Every change is live instantly across your entire workflow.</p>
+          <p class="eyebrow"> VOICE ORDERING FOR RESTAURANTS</p>
+          <h1>Your menu,<br />Your updates,<br />Your kitchen.</h1>
+          <p class="lead">Change a price, 86 an item, or add a special — and your phone starts saying the new thing immediately. The agent answering your calls is always selling exactly what's on today's menu. Online and the kitchen update at the same moment.</p>
           <div>
-            <p class="lead lead-center"><strong><em>No syncing. No delays. No manual updates.</em></strong></p>
+            <p class="lead lead-center"><strong><em>No syncing. No delays. No selling what you're out of.</em></strong></p>
           </div>
           <div>
           <a class="shot-image" href="/images/menu-item-options.png" target="_blank" rel="noopener noreferrer" aria-label="Menu item options preview">
@@ -1078,9 +1122,9 @@
         </div>
         <aside class="voice-anchor" aria-label="Menu update preview">
           <div>
-            <p class="voice-label">Menu update</p>
-            <h2 class="voice-title">Here's how it works.</h2>
-            <p class="voice-caption">An update to your menu is captured and processed seamlessly.</p>
+            <p class="voice-label">MENU UPDATE</p>
+            <h2 class="voice-title">Edit any item in seconds.</h2>
+            <p class="voice-caption">The second you hit Save, the phone agent quotes the new price, skips the 86'd item, and offers the new special — no extra step.</p>
           </div>
 
           <a class="shot-image" href="/images/menu-item.png" target="_blank" rel="noopener noreferrer" aria-label="Menu item update preview">
@@ -1090,7 +1134,32 @@
 
       </section>
 
-      <section class="section-one" aria-labelledby="section-one-title">
+      <section class="section-one" aria-labelledby="section-three-title" style="align-items: start;">
+        <div>
+          <p class="eyebrow">ORDER ENTRY THAT NEEDS NO TRAINING</p>
+          <h2 id="section-three-title">One screen. Anyone on your team can take an order.</h2>
+          <p>Phone, name, pickup or dine-in, and the menu — all on a single page. New hires figure it out on their first shift without anyone standing over their shoulder. No menu-diving, no separate screens, no "where do I click."</p>
+        </div>
+
+        <div class="tip-callout">
+          <strong>Lay it out the way your team thinks.</strong>
+          Arrange items and options however your staff already moves — your busiest items where the hands reach first. The order screen matches how your restaurant actually works, not the other way around.
+        </div>
+
+        <div style="grid-column: 1 / -1; display: flex; justify-content: center;">
+          <article class="phone-shot is-real" style="max-width: 600px; width: 100%;">
+            <div class="shot-label" style="justify-content: center;">
+              <span>Order entry</span>
+            </div>
+            <div class="shot-image">
+              <video src="/media/order-entry.mp4" style="width:100%;height:auto;display:block;" controls playsinline muted loop preload="metadata" aria-label="Order entry screen showing large menu item cards and clearly displayed options"></video>
+            </div>
+            <p class="shot-note" style="text-align: center;">Order entry in DialTone.Menu</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section-two" aria-labelledby="section-one-title">
         <div>
           <p class="eyebrow">Lunch rush, Friday, 12:14 PM</p>
           <h2 id="section-one-title">The phone never stops ringing.<br /><span style="white-space: nowrap;">DialTone.Menu keeps answering.</span></h2>
@@ -1128,7 +1197,34 @@
         </aside>
       </section>
 
-      <section class="section-two" aria-labelledby="section-two-title">
+      <section class="section-three" aria-labelledby="section-three-title">
+        <div>
+          <p class="eyebrow">Within 30 seconds of confirming</p>
+          <h2 id="section-three-title">They tap. You're paid.</h2>
+          <p>Right after the call, the customer gets a restaurant branded text with their order details and a payment link. They tap, confirm the receipt, add a tip if they want, and pay before pickup. That means no declined cards at the counter and no chasing down walkaways.</p>
+
+          <div class="payment-methods" aria-label="Accepted payment methods">Apple Pay · Google Pay · Link · Visa · Mastercard · Amex</div>
+
+          <div class="tip-callout">
+            <strong>Tips, not arm-twisting.</strong>
+            The tip prompt appears on checkout, not in the voice flow. Customers choose preset or custom amounts, and tips go directly to your account.
+          </div>
+        </div>
+
+        <aside class="payment-placeholders" aria-label="Payment flow screenshot placeholders" style="grid-template-columns: 1fr; justify-items: center;">
+          <article class="phone-shot is-real">
+            <div class="shot-label">
+              <span>Order review + pay</span>
+            </div>
+            <div class="shot-image">
+              <video src="/media/sms-phone-payment.mp4" style="width:100%;height:auto;display:block;" controls playsinline muted loop preload="metadata" aria-label="Order review and pay screen showing item details, tip options, subtotal, tax, total, and continue-to-pay action"></video>
+            </div>
+            <p class="shot-note">Captured production checkout review flow.</p>
+          </article>
+        </aside>
+      </section>
+
+      <section class="section-four" aria-labelledby="section-two-title">
         <div>
           <p class="eyebrow">On the kitchen display, before the customer hangs up</p>
           <h2 id="section-two-title">The order shows up where the food gets made.</h2>
@@ -1155,106 +1251,28 @@
             <span>Kitchen card preview</span>
             <span>production-screenshot</span>
           </div>
-          <a class="shot-image" href="/images/kitchen-orders.png" target="_blank" rel="noopener noreferrer" aria-label="Open full-size kitchen card image">
-            <img src="/images/kitchen-orders.png" alt="Kitchen order card showing order number, allergen flags, modifiers, and pickup time" loading="lazy" decoding="async" />
-          </a>
-          <p class="shot-note">Kitchen display order card from production system.</p>
-        </aside>
-      </section>
-
-      <section class="section-three" aria-labelledby="section-three-title">
-        <div>
-          <p class="eyebrow">Within 30 seconds of confirming</p>
-          <h2 id="section-three-title">They tap. You're paid.</h2>
-          <p>Right after the call, the customer gets a restaurant branded text with their order details and a payment link. They tap, confirm the receipt, add a tip if they want, and pay before pickup. That means no declined cards at the counter and no chasing down walkaways.</p>
-
-          <div class="payment-methods" aria-label="Accepted payment methods">Apple Pay · Google Pay · Link · Visa · Mastercard · Amex</div>
-
-          <div class="tip-callout">
-            <strong>Tips, not arm-twisting.</strong>
-            The tip prompt appears on checkout, not in the voice flow. Customers choose preset or custom amounts, and tips go directly to your account.
+          <div class="shot-image">
+            <video src="/media/kitchen-order.mp4" style="width:100%;height:auto;display:block;" controls playsinline muted loop preload="metadata" aria-label="Kitchen order card video showing order number, allergen flags, modifiers, and pickup time"></video>
           </div>
-        </div>
-
-        <aside class="payment-placeholders" aria-label="Payment flow screenshot placeholders">
-          <article class="phone-shot is-real">
-            <div class="shot-label">
-              <span>Order review + pay</span>
-              <span>production-screenshot</span>
-            </div>
-            <div class="shot-image">
-              <img src="/images/order_review_sms.jpg" alt="Order review and pay screen showing item details, tip options, subtotal, tax, total, and continue-to-pay action" loading="lazy" decoding="async" />
-            </div>
-            <p class="shot-note">Captured production checkout review flow.</p>
-          </article>
-
-          <article class="phone-shot is-real">
-            <div class="shot-label">
-              <span>Payment received confirmation</span>
-              <span>production-screenshot</span>
-            </div>
-            <div class="shot-image">
-              <img src="/images/payment_received_sms.jpg" alt="Payment received confirmation showing subtotal, tax, tip, total, and next-step SMS messaging" loading="lazy" decoding="async" />
-            </div>
-            <p class="shot-note">Captured production payment confirmation flow.</p>
-          </article>
+          <p class="shot-note">Kitchen display order card from production system.</p>
         </aside>
       </section>
 
       <section class="section-four" aria-labelledby="section-four-title">
         <div>
           <p class="eyebrow">From your phone, your laptop, anywhere</p>
-          <h2 id="section-four-title">Every call, every order, every dollar - in one place.</h2>
-          <p>The admin dashboard shows what is happening now: pending payments, orders in the kitchen, completed pickups, and failed conversions. Search by phone number, resend payment links, or cancel and refund from one workflow without switching tools.</p>
+          <h2 id="section-four-title">Every call, every order - in one place.</h2>
+          <p>The admin dashboard shows what is happening now: order statuses, reservations, menu updates, and voice recordings. You can resend payment links, or cancel and refund from one tab, without switching tools.</p>
         </div>
 
         <aside class="dashboard-placeholder" aria-label="Admin orders dashboard">
           <div class="shot-label">
-            <span>Admin orders page</span>
-            <span>production-screenshot</span>
+            <span>Admin display</span>
           </div>
-          <div class="shot-image admin-slideshow" tabindex="0" aria-label="Admin dashboard slideshow">
-            <img src="/images/admin-orders01.png" alt="Admin dashboard screenshot 1" class="slide active" loading="lazy" decoding="async" />
-            <img src="/images/admin-orders02.png" alt="Admin dashboard screenshot 2" class="slide" loading="lazy" decoding="async" style="display:none;" />
-            <img src="/images/admin-orders03.png" alt="Admin dashboard screenshot 3" class="slide" loading="lazy" decoding="async" style="display:none;" />
-            <div class="slideshow-controls">
-              <button type="button" class="prev" aria-label="Previous screenshot">&#8592;</button>
-              <button type="button" class="next" aria-label="Next screenshot">&#8594;</button>
-            </div>
+          <div class="shot-image">
+            <video src="/media/admin.mp4" style="width:100%;height:auto;display:block;border-radius:12px;" controls playsinline muted loop preload="metadata" aria-label="Admin dashboard showing live order status, customer history, and revenue tracking"></video>
           </div>
-          <p class="shot-note">Admin dashboard slideshow: live order status, customer history, and revenue tracking.</p>
-            <style>
-              .admin-slideshow { position: relative; }
-              .admin-slideshow img.slide { max-width: 100%; border-radius: 12px; box-shadow: 0 2px 12px rgba(6,35,75,0.08); transition: opacity 0.3s; }
-              .admin-slideshow .slideshow-controls { position: absolute; bottom: 12px; right: 16px; display: flex; gap: 8px; }
-              .admin-slideshow button { background: var(--navy); color: var(--cream); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 1.2rem; cursor: pointer; opacity: 0.85; transition: background 0.2s; }
-              .admin-slideshow button:hover { background: var(--gold); color: var(--navy); }
-            </style>
-            <script>
-              document.addEventListener('DOMContentLoaded', function() {
-                var slides = document.querySelectorAll('.admin-slideshow img.slide');
-                var current = 0;
-                var prevBtn = document.querySelector('.admin-slideshow .prev');
-                var nextBtn = document.querySelector('.admin-slideshow .next');
-                function showSlide(idx) {
-                  slides.forEach(function(img, i) {
-                    img.style.display = (i === idx) ? '' : 'none';
-                  });
-                  current = idx;
-                }
-                prevBtn.addEventListener('click', function() {
-                  showSlide((current + slides.length - 1) % slides.length);
-                });
-                nextBtn.addEventListener('click', function() {
-                  showSlide((current + 1) % slides.length);
-                });
-                // Optional: keyboard navigation
-                document.querySelector('.admin-slideshow').addEventListener('keydown', function(e) {
-                  if (e.key === 'ArrowLeft') prevBtn.click();
-                  if (e.key === 'ArrowRight') nextBtn.click();
-                });
-              });
-            </script>
+          <p class="shot-note">Admin display: live order status, customer history, and reservations.</p>
         </aside>
 
         <div class="admin-cards" aria-label="Admin proof points">

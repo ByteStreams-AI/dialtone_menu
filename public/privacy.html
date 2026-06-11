@@ -97,20 +97,23 @@
     .logo-tag {
       display: none;
     }
-    .nav-meta {
+    .nav-right {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+    }
+    .nav-link {
       font-family: var(--font-mono);
       font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.15em;
-      color: var(--muted);
-    }
-    .nav-home {
-      font-size: 0.85rem;
       color: var(--navy);
       text-decoration: none;
-      opacity: 0.7;
+      transition: color 150ms ease-out;
     }
-    .nav-home:hover { opacity: 1; }
+    .nav-link:hover { color: var(--blue); }
 
     main { flex: 1; }
     .container {
@@ -260,8 +263,12 @@
   <nav class="nav">
     <div class="nav-inner">
       <a class="logo" href="/" aria-label="DialTone.Menu home">Dial<span>Tone</span>.Menu</a>
-      <span class="nav-meta">Privacy</span>
-      <a class="nav-home" href="/">← Home</a>
+      <span class="nav-right">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/features.html">Features</a>
+        <a class="nav-link" href="/pricing.html">Pricing</a>
+        <a class="nav-link" href="/terms.html">Terms</a>
+      </span>
     </div>
   </nav>
 
