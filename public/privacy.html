@@ -212,6 +212,15 @@
       margin-bottom: 0.5rem;
     }
 
+    h3 {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--navy);
+      margin: 1.75rem 0 0.5rem;
+      letter-spacing: -0.01em;
+    }
+
     /* Links */
     a {
       color: var(--gold);
@@ -276,64 +285,55 @@
     <div class="container">
       <p class="eyebrow">Legal</p>
       <h1>Privacy Policy</h1>
-      <p class="doc-meta">Last updated · April 20, 2026</p>
+      <p class="doc-meta">Last updated · June 24, 2026</p>
 
-      <div class="summary-box">
-        <div class="summary-box-label">Draft notice</div>
-        <p style="margin: 0;">This is a pre-launch privacy notice. It will be replaced with a finalized policy before the first paying customer goes live. If anything here is unclear, email <a href="mailto:hello@dialtone.menu">hello@dialtone.menu</a>.</p>
-      </div>
-
-      <p>This policy explains what information DialTone collects when you call a restaurant that uses our service, interact with us by SMS, or visit this website. DialTone is an AI-powered phone ordering and reservation service used by independent restaurants.</p>
+      <p>This policy explains what information DialTone collects when you call a restaurant that uses our service, interact with us by SMS, place an order online or through a kiosk, or visit this website. DialTone is an AI-powered phone ordering, reservation, and messaging service used by independent restaurants.</p>
 
       <h2><span class="num">01</span> What we collect</h2>
       <ul>
-        <li><strong>Phone number.</strong> When you call a restaurant, we receive your caller ID from the phone network. We use it to identify returning customers by the restaurant that received the call, and to send you transactional text messages (payment links, reservation confirmations).</li>
-        <li><strong>Voice call content.</strong> The AI agent transcribes and temporarily stores your side of the conversation so it can take your order or book a table. Call recordings may be retained short-term for quality review and dispute resolution.</li>
-        <li><strong>Order details.</strong> Items you order, modifiers, pickup or delivery preference, and — for delivery — the address you give the agent.</li>
-        <li><strong>Name.</strong> If you provide it during the call (e.g. "put it under Mike").</li>
-        <li><strong>Payment information.</strong> Card payments are processed by Stripe, Inc. DialTone never sees or stores your card number; Stripe sends us only a confirmation that payment succeeded.</li>
-        <li><strong>Website usage.</strong> Standard web server logs (IP, user agent, page requested). We do not use tracking cookies on this marketing site.</li>
+        <li><strong>Phone number:</strong> When you call a restaurant, we receive your caller ID from the phone network. We use it to identify returning customers, route your call, and send transactional text messages (payment links, order confirmations, receipts, reservation updates) or optional promotional messages you have consented to receive.</li>
+        <li><strong>Voice call content:</strong> Our AI agent transcribes and temporarily stores your side of the conversation so it can take your order or book a table. Call recordings may be retained short-term for quality review and dispute resolution.</li>
+        <li><strong>Order and Reservation details:</strong> Items you order, modifiers, pickup or delivery preferences, delivery addresses, and reservation times.</li>
+        <li><strong>Name:</strong> If you provide it during a call, online order, or booking.</li>
+        <li><strong>Location Data:</strong> If you opt into location-based services via a food truck's mobile app, we may collect precise or approximate location data to send nearby alerts.</li>
+        <li><strong>Payment information:</strong> Card payments are securely processed by Stripe, Inc. DialTone never stores your card number; Stripe sends us only a confirmation that payment succeeded.</li>
+        <li><strong>Website and App usage:</strong> Standard server logs (IP, user agent, page requested) and basic app performance metrics. We do not use tracking cookies on this marketing site.</li>
       </ul>
 
       <h2><span class="num">02</span> How we use it</h2>
       <ul>
-        <li>To complete the order or reservation you placed by phone.</li>
-        <li>To send you a secure payment link by SMS after a phone order.</li>
-        <li>To send you reservation confirmations and reminders by SMS if you book a table.</li>
-        <li>To let the restaurant's staff see and manage your order.</li>
-        <li>To debug and improve the service when something goes wrong on a call.</li>
+        <li>To complete and manage the order or reservation you placed by phone, web, app, or kiosk.</li>
+        <li>To send you secure payment links, order confirmations, receipts, and reservation updates via SMS.</li>
+        <li>To let the restaurant's staff see, fulfill, and manage your request.</li>
+        <li>With your explicit consent, to deliver promotional messages, loyalty rewards, special offers, and food truck location alerts via SMS or app notifications.</li>
+        <li>To debug, maintain, and improve our automated voice and messaging services.</li>
       </ul>
-      <p>We do not sell your information. We do not use it for marketing to you. We do not share it with advertisers.</p>
 
-      <h2><span class="num">03</span> Service providers</h2>
-      <p>DialTone relies on a small number of third parties to operate:</p>
+      <h2><span class="num">03</span> Service providers and Data Sharing</h2>
+      <p>DialTone relies on a trusted tier of third-party infrastructure sub-processors to operate (including Supabase, Telnyx, Vapi, ElevenLabs, OpenAI, Stripe, Sentry, and Cloudflare). We only share information with these providers as strictly necessary to deliver our services.</p>
+
+      <h3>03.a &nbsp;SMS Consent and Mobile Data Protection (10DLC Compliance)</h3>
+      <p><strong>We do not sell, rent, or share your mobile phone numbers or SMS consent data with third parties or affiliates for marketing or promotional purposes.</strong> All the above categories exclude text messaging originator opt-in data and consent; this information will not be shared with any third parties.</p>
+
+      <h2><span class="num">04</span> SMS messaging (Opt-In &amp; Opt-Out)</h2>
+      <p>If you interact with a restaurant powered by DialTone, you may receive SMS messages based on your interaction type and explicit consent:</p>
       <ul>
-        <li><a href="https://supabase.com/privacy">Supabase</a> — database and authentication.</li>
-        <li><a href="https://www.twilio.com/legal/privacy">Twilio</a> — phone number routing and SMS delivery.</li>
-        <li><a href="https://vapi.ai/privacy">Vapi</a> — the voice agent platform (speech-to-text, large language model, text-to-speech orchestration).</li>
-        <li><a href="https://elevenlabs.io/privacy">ElevenLabs</a> — text-to-speech voice generation used by Vapi.</li>
-        <li><a href="https://openai.com/policies/privacy-policy/">OpenAI</a> — large language model powering the voice agent.</li>
-        <li><a href="https://stripe.com/privacy">Stripe</a> — payment processing for card orders.</li>
-        <li><a href="https://sentry.io/privacy/">Sentry</a> — error reporting so we can notice and fix problems.</li>
-        <li><a href="https://www.cloudflare.com/privacypolicy/">Cloudflare</a> — web hosting for this site and our admin + kitchen apps.</li>
+        <li><strong>Transactional Messages:</strong> Order confirmations, receipts, ready alerts, and reservation updates. Message frequency varies typically based on your order activity.</li>
+        <li><strong>Promotional &amp; Location Alerts:</strong> If you explicitly opt in verbally to an agent, via an un-checked box on an online/app ordering form, or through a self-service kiosk, you may receive promotional deals, loyalty notifications, or food truck proximity alerts.</li>
       </ul>
-
-      <h2><span class="num">04</span> SMS messaging</h2>
-      <p>If you place a phone order or book a reservation, DialTone may send you transactional SMS messages on behalf of the restaurant: a payment link, a reservation confirmation, or an appointment reminder. Message and data rates may apply. Message frequency varies — typically one or two messages per completed order or booking.</p>
-      <p>You can opt out at any time by replying <strong>STOP</strong> to any message from us. Reply <strong>HELP</strong> for assistance. Opting out will prevent us from sending you a payment link, which means card orders placed by phone cannot be completed — you'll need to pay in person instead.</p>
-      <p>We do not use the phone numbers we collect for marketing SMS, and we do not share them with other companies for their marketing.</p>
+      <p><strong>Opt-Out:</strong> You can opt out of SMS communications at any time by replying <strong>STOP</strong> to any text message received from our system. Reply <strong>HELP</strong> for assistance. Please note that opting out of transactional SMS will prevent us from sending you text-based payment links or digital receipts for your phone orders.</p>
 
       <h2><span class="num">05</span> Data retention</h2>
-      <p>Order and reservation records are retained for the restaurant's business records and tax / regulatory purposes, typically for several years. Voice call transcripts and recordings are retained short-term (days to weeks) for quality review and then deleted. Payment information is held by Stripe per their retention policy.</p>
+      <p>Order and reservation records are retained for the restaurant's business records and regulatory purposes, typically for several years. Voice call transcripts and recordings are retained short-term (days to weeks) for platform optimization and quality control, then deleted.</p>
 
       <h2><span class="num">06</span> Your rights</h2>
-      <p>You can ask us to confirm what information we hold that is associated with your phone number, to correct it if it's wrong, or to delete it (subject to the restaurant's own record-keeping obligations). Email <a href="mailto:hello@dialtone.menu">hello@dialtone.menu</a> with your request and we'll respond within a reasonable time.</p>
+      <p>You can ask us to confirm what information we hold that is associated with your phone number, to correct it if it's wrong, or to request deletion (subject to the restaurant's own legal record-keeping obligations). Email <a href="mailto:hello@dialtone.menu">hello@dialtone.menu</a> with your request.</p>
 
       <h2><span class="num">07</span> Children</h2>
       <p>DialTone is not directed to children under 13 and we do not knowingly collect information from them.</p>
 
       <h2><span class="num">08</span> Changes</h2>
-      <p>If we make material changes to this policy we'll update the "Last updated" date above and, where feasible, notify affected customers. Continued use of the service after changes constitutes acceptance of the updated policy.</p>
+      <p>If we make material changes to this policy, we will update the "Last updated" date above. Continued use of our services or interaction with our platform constitutes acceptance of the updated policy.</p>
 
       <h2><span class="num">09</span> Contact</h2>
       <p>Questions? Concerns? Email <a href="mailto:hello@dialtone.menu">hello@dialtone.menu</a>.</p>
