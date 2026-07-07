@@ -163,6 +163,17 @@ nav {
 .feature-card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
 .feature-card .card-more { margin-top: auto; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--blue); }
 
+/* Media placeholder — for pages awaiting a real screenshot / video capture. */
+.media-placeholder {
+  display: grid; place-content: center; text-align: center; gap: 8px;
+  min-height: 260px; padding: 32px;
+  border-radius: 16px; border: 1px dashed rgba(6,35,75,0.22);
+  background: linear-gradient(135deg, var(--warm), var(--cream));
+  color: var(--muted); box-shadow: none;
+}
+.media-placeholder .ph-icon { font-size: 2rem; }
+.media-placeholder .ph-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; }
+
 /* ── CTA band ─────────────────────────────────────────────────────────────── */
 .cta-band { background: var(--navy); color: var(--white); text-align: center; padding: 72px 0; }
 .cta-band h2 { color: var(--white); }
