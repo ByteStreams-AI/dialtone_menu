@@ -125,7 +125,7 @@ async function run() {
   assert.match(html, /class="app-qr-code"><svg[^>]*viewBox="0 0 25 25"/, 'App QR should render the self-contained SVG');
   assert.match(html, /class="app-qr-caption">Download the app to order</, 'QR caption should render');
   assert.match(html, /\.app-qr-caption \{[^}]*font-weight: 700/, 'QR caption should be bold');
-  assert.match(html, /\.tagline \{[^}]*font-weight: 700/, 'Tagline should be bold');
+  assert.match(html, /\.tagline \{[^}]*font-style: italic/, 'Tagline is an italic serif in the hero (Phase 1 redesign)');
   assert.match(html, /Served 7:00 AM-11:00 AM/, 'Serving window label should be rendered');
   // Special item: a "Special" label + the special price, no strikethrough.
   assert.match(html, /class="special-label">Special<\/span>\$8\.50/, 'Special item should show a "Special" label + the special price');
