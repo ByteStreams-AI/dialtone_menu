@@ -120,6 +120,12 @@ async function run() {
   assert.match(html, /Visit our site/, 'Website CTA should render when website_url exists');
   assert.match(html, /target="_blank"/, 'Website CTA should open in a new tab');
   assert.match(html, /rel="noopener noreferrer"/, 'Website CTA should enforce safe rel attributes');
+  // App-download QR on the right of the header + its bold caption.
+  assert.match(html, /class="app-qr"[^>]*href="https:\/\/dialtone\.menu"/, 'App QR should link to dialtone.menu (retargets to app stores later)');
+  assert.match(html, /class="app-qr-code"><svg[^>]*viewBox="0 0 25 25"/, 'App QR should render the self-contained SVG');
+  assert.match(html, /class="app-qr-caption">Download the app to order</, 'QR caption should render');
+  assert.match(html, /\.app-qr-caption \{[^}]*font-weight: 700/, 'QR caption should be bold');
+  assert.match(html, /\.tagline \{[^}]*font-weight: 700/, 'Tagline should be bold');
   assert.match(html, /Served 7:00 AM-11:00 AM/, 'Serving window label should be rendered');
   // Special item: a "Special" label + the special price, no strikethrough.
   assert.match(html, /class="special-label">Special<\/span>\$8\.50/, 'Special item should show a "Special" label + the special price');

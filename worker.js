@@ -337,6 +337,17 @@ function buildMenuSuccessResponse(payload, slug) {
     ? `<a class="site-link" href="${escapeHtml(websiteUrl)}" target="_blank" rel="noopener noreferrer">Visit our site</a>`
     : '';
 
+  // App-download QR (right side of the header). Static, self-contained SVG —
+  // encodes https://dialtone.menu for now; will retarget the App Store / Play
+  // Store once the app ships. Regenerate with:
+  //   npx qrcode -e M -t svg -o qr.svg "<url>"   (margin:0; framed by CSS quiet zone)
+  const appQrSvg =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" shape-rendering="crispEdges"><path fill="#ffffff" d="M0 0h25v25H0z"/><path stroke="#000000" d="M0 0.5h7m1 0h5m1 0h1m3 0h7M0 1.5h1m5 0h1m1 0h1m3 0h2m4 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h2m3 0h2m3 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m3 0h1m1 0h2m1 0h2m1 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h1m2 0h1m2 0h1m3 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m4 0h1m2 0h1m3 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M10 7.5h2m1 0h1m2 0h1M0 8.5h1m2 0h6m1 0h1m3 0h4m2 0h1m1 0h3M0 9.5h2m1 0h1m1 0h1m2 0h1m1 0h1m1 0h4m3 0h5M0 10.5h1m2 0h7m1 0h3m1 0h1m1 0h1m2 0h2m2 0h1M0 11.5h1m2 0h1m3 0h6m2 0h1m2 0h2m1 0h4M1 12.5h1m1 0h1m1 0h2m2 0h4m3 0h1m1 0h2m4 0h1M0 13.5h1m6 0h1m1 0h1m3 0h1m1 0h2m3 0h1m2 0h1M0 14.5h2m1 0h5m2 0h6m2 0h1m1 0h5M0 15.5h1m1 0h1m1 0h1m6 0h1m3 0h1m1 0h3m1 0h2m1 0h1M0 16.5h1m1 0h1m2 0h4m1 0h1m3 0h1m1 0h5m1 0h2M8 17.5h2m1 0h3m2 0h1m3 0h1m1 0h2M0 18.5h7m1 0h4m4 0h1m1 0h1m1 0h1m3 0h1M0 19.5h1m5 0h1m1 0h1m3 0h1m1 0h3m3 0h1m2 0h2M0 20.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h9m2 0h2M0 21.5h1m1 0h3m1 0h1m1 0h2m4 0h1m1 0h3m4 0h2M0 22.5h1m1 0h3m1 0h1m3 0h1m1 0h1m1 0h1m2 0h1m2 0h5M0 23.5h1m5 0h1m2 0h2m3 0h2m3 0h2m1 0h3M0 24.5h7m1 0h3m2 0h2m1 0h3m2 0h1m2 0h1"/></svg>';
+  const appQrMarkup =
+    `<a class="app-qr" href="https://dialtone.menu" target="_blank" rel="noopener noreferrer" aria-label="Download the app to order">` +
+    `<span class="app-qr-code">${appQrSvg}</span>` +
+    `<span class="app-qr-caption">Download the app to order</span></a>`;
+
   const body = [
     '<!doctype html>',
     '<html lang="en">',
@@ -365,8 +376,13 @@ function buildMenuSuccessResponse(payload, slug) {
     '    .brand-block { display: flex; flex-direction: column; gap: 8px; min-width: 0; }',
     '    .brand-logo { max-height: 72px; max-width: min(40vw, 220px); width: auto; border-radius: 8px; object-fit: contain; }',
     '    .brand-wordmark { font-size: clamp(1.8rem, 3vw, 2.3rem); line-height: 1.05; font-weight: 700; color: var(--brand-primary); }',
-    '    .tagline { margin: 0; color: #4f5e73; }',
+    '    .tagline { margin: 0; color: #4f5e73; font-size: clamp(1.05rem, 2.2vw, 1.4rem); font-weight: 700; }',
     '    .site-link { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; background: var(--brand-primary); color: #fff; border-radius: 999px; padding: 11px 18px; font-weight: 700; white-space: nowrap; }',
+    '    .header-aside { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; flex-shrink: 0; }',
+    '    .app-qr { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; }',
+    '    .app-qr-code { background: #fff; padding: 8px; border-radius: 12px; border: 1px solid rgba(6, 35, 75, 0.12); box-shadow: 0 4px 14px rgba(6, 35, 75, 0.06); }',
+    '    .app-qr-code svg { display: block; width: 116px; height: 116px; }',
+    '    .app-qr-caption { font-size: 0.82rem; font-weight: 700; color: var(--brand-primary); text-align: center; }',
     '    .categories { margin-top: 24px; display: grid; gap: 18px; }',
     '    .category { background: #fff; border: 1px solid rgba(6, 35, 75, 0.12); border-radius: 14px; padding: 18px; }',
     '    .category-header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 10px; }',
@@ -390,6 +406,7 @@ function buildMenuSuccessResponse(payload, slug) {
     '    .empty-state { margin: 10px 0 0; color: #4f6178; background: #fff; border: 1px dashed rgba(6, 35, 75, 0.25); border-radius: 12px; padding: 16px; text-align: center; }',
     '    @media (max-width: 720px) {',
     '      .menu-header { flex-direction: column; align-items: flex-start; }',
+    '      .header-aside { align-items: flex-start; }',
     '      .site-link { width: 100%; }',
     '      .category-header { flex-direction: column; }',
     '    }',
@@ -399,7 +416,7 @@ function buildMenuSuccessResponse(payload, slug) {
     '  <main>',
     '    <header class="menu-header">',
     `      <div class="brand-block">${logoMarkup}${tagline ? `<p class="tagline">${escapeHtml(tagline)}</p>` : ''}</div>`,
-    `      ${websiteCtaMarkup}`,
+    `      <div class="header-aside">${websiteCtaMarkup}${appQrMarkup}</div>`,
     '    </header>',
     `    <section class="categories" data-restaurant-timezone="${escapeHtml(timezone)}">${categoryHtml}</section>`,
     '  </main>',
