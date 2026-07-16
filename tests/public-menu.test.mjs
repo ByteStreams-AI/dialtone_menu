@@ -218,7 +218,64 @@ async function run() {
   console.log('public menu route tests passed');
 }
 
+async function runHostRouting() {
+  // A branded menu subdomain (`<slug>.dialtone.menu`) IS that restaurant's menu.
+  let rpcSlug = null;
+  globalThis.fetch = async (url, options = {}) => {
+    rpcSlug = JSON.parse(String(options.body || '{}')).p_slug;
+    return new Response(JSON.stringify(samplePayload()), {
+      status: 200,
+      headers: { 'content-type': 'application/json' }
+    });
+  };
+
+  const subRoot = await worker.fetch(new Request('https://main-street.dialtone.menu/'), makeEnv());
+  assert.equal(subRoot.status, 200, 'menu subdomain root should render the menu');
+  assert.equal(rpcSlug, 'main-street', 'menu subdomain should derive the slug from the host');
+  assert.match(
+    await subRoot.text(),
+    /<title>Main Street Kitchen Menu \| DialTone<\/title>/,
+    'subdomain should render that restaurant’s menu'
+  );
+
+  // A deep link on the subdomain also lands on the menu (whole host = the menu).
+  rpcSlug = null;
+  const subDeep = await worker.fetch(new Request('https://main-street.dialtone.menu/anything'), makeEnv());
+  assert.equal(subDeep.status, 200, 'any path on a menu subdomain renders the menu');
+  assert.equal(rpcSlug, 'main-street', 'deep link still resolves the host slug');
+
+  // Reserved app subdomains, the apex, multi-label hosts (the pay wildcard), and
+  // off-domain hosts are NOT menus: no RPC lookup, falls through to the
+  // marketing asset pipeline.
+  for (const host of [
+    'https://dialtone.menu/',
+    'https://www.dialtone.menu/',
+    'https://admin.dialtone.menu/',
+    'https://kitchen-staging.dialtone.menu/',
+    'https://pay.dialtone.menu/',
+    'https://suis-sushi.pay.dialtone.menu/',
+    'https://example.com/'
+  ]) {
+    let rpcCalled = false;
+    globalThis.fetch = async () => {
+      rpcCalled = true;
+      return new Response('{}', { status: 200 });
+    };
+    const resp = await worker.fetch(new Request(host), makeEnv());
+    assert.equal(rpcCalled, false, `${host} must not trigger a menu lookup`);
+    assert.equal(await resp.text(), 'asset fallback', `${host} should serve the marketing site, not a menu`);
+  }
+
+  // Crawler paths still resolve on a menu subdomain (they don't render the menu).
+  globalThis.fetch = async () => new Response('null', { status: 200, headers: { 'content-type': 'application/json' } });
+  const robots = await worker.fetch(new Request('https://main-street.dialtone.menu/robots.txt'), makeEnv());
+  assert.match(robots.headers.get('content-type') || '', /text\/plain/, 'robots.txt resolves on a menu subdomain');
+
+  console.log('menu subdomain routing tests passed');
+}
+
 run()
+  .then(runHostRouting)
   .catch((error) => {
     console.error(error);
     process.exitCode = 1;
