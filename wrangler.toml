@@ -113,7 +113,12 @@ not_found_handling = "404-page"
 # fallback to /images/favicon.svg, security.txt, contact form), so
 # force them to run through the Worker first instead of being
 # treated as missing assets.
+# `/` runs the Worker first so a branded menu subdomain (`<slug>.dialtone.menu`)
+# serves the menu at its root instead of the marketing `index.html` asset. On
+# the apex (`dialtone.menu`) the Worker falls through to the assets binding, so
+# the homepage is unchanged. See the "Branded menu subdomains" runbook below.
 run_worker_first = [
+  "/",
   "/robots.txt",
   "/sitemap.xml",
   "/favicon.ico",
@@ -121,6 +126,31 @@ run_worker_first = [
   "/m/*",
   "/api/*"
 ]
+
+# ── Branded menu subdomains (`<slug>.dialtone.menu`) ────────────────────────
+# The Worker serves each restaurant's menu at its own subdomain (the path form
+# `dialtone.menu/m/<slug>` still works). `extractMenuSlugFromHost` in worker.js
+# maps `<slug>.dialtone.menu` → that restaurant's menu; reserved app subdomains
+# (admin/kitchen/beverage/expo/pay + *-staging) are excluded and keep their own
+# Custom Domains.
+#
+# This is the "cheap" wildcard approach (mirrors `*.pay.dialtone.menu`), NOT a
+# per-slug Custom Domain — Cloudflare caps Custom Domains and rejects wildcards
+# on them. Three one-time DASHBOARD steps (not managed by wrangler, so the
+# existing `dialtone.menu` / `www` Custom Domains aren't disturbed):
+#   1. DNS: add a PROXIED (orange-cloud) record `*` (CNAME `*` → `dialtone.menu`,
+#      or `A * → 192.0.2.1` proxied) in the dialtone.menu zone. Specific records
+#      (admin, kitchen, pay, …) take precedence over the wildcard, so they are
+#      unaffected.
+#   2. Route: Workers & Pages → this Worker (`dawn-pine-d058`) → Triggers →
+#      add Route `*.dialtone.menu/*` (zone dialtone.menu). Custom Domains for the
+#      app subdomains out-rank this wildcard, so only unclaimed subdomains (the
+#      menu slugs) hit this Worker.
+#   3. TLS: Universal SSL already covers `dialtone.menu` + one level of wildcard
+#      (`*.dialtone.menu`), so `<slug>.dialtone.menu` is HTTPS with no extra
+#      cert (unlike the 2nd-level `*.pay.` host, which needed an ACM cert).
+# Verify: `https://<any-live-slug>.dialtone.menu` renders the menu; an
+# unprovisioned slug returns the friendly menu-not-found page (200-cached 404).
 
 # Declares the secret names required by this Worker.
 # `wrangler deploy` and `wrangler dev` will warn if any are absent.

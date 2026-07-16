@@ -69,6 +69,26 @@ export default {
 };
 
 async function routeRequest(request, env, url, ctx) {
+  // A per-restaurant menu subdomain — `<slug>.dialtone.menu` — IS that
+  // restaurant's menu for the whole host: `/` and any deep link render the
+  // menu; only crawler / asset-support paths resolve to themselves. Reserved
+  // app subdomains (admin, kitchen, pay, …) never reach here — each is its own
+  // Cloudflare Custom Domain, which takes routing precedence over the wildcard
+  // Worker Route that points these menu subdomains at this Worker.
+  const hostSlug = extractMenuSlugFromHost(url.hostname);
+  if (hostSlug !== null) {
+    if (url.pathname === '/robots.txt') {
+      return handleRobots(url);
+    }
+    if (url.pathname === '/favicon.ico') {
+      return handleFavicon(request, env);
+    }
+    if (url.pathname === '/.well-known/security.txt') {
+      return handleSecurityTxt();
+    }
+    return handlePublicMenuPage(request, env, url, hostSlug, ctx);
+  }
+
   // Explicit handlers for known dynamic paths.
   if (url.pathname === '/features' || url.pathname === '/features/') {
     return serveStaticPage(request, env, '/features.html');
@@ -116,6 +136,48 @@ function extractMenuSlug(pathname) {
   } catch {
     return '';
   }
+}
+
+// The base domain under which a single-label subdomain is a restaurant menu
+// slug: `<slug>.dialtone.menu`. Apex (`dialtone.menu`) and any multi-label host
+// (e.g. the `<slug>.pay.dialtone.menu` pay wildcard) are NOT menu subdomains.
+const MENU_HOST_SUFFIX = '.dialtone.menu';
+
+// Subdomains that are NOT restaurant slugs: the app surfaces (each its own
+// Custom Domain, so they never route here — listed defensively in case one
+// ever does) plus common infra / marketing labels. A host whose first label is
+// one of these renders the marketing site, never a menu.
+const RESERVED_MENU_SUBDOMAINS = new Set([
+  'www', 'app', 'api', 'staging', 'dev', 'preview', 'mail', 'email', 'smtp',
+  'ns1', 'ns2', 'cdn', 'assets', 'static', 'm',
+  'admin', 'admin-staging',
+  'kitchen', 'kitchen-staging',
+  'beverage', 'beverage-staging',
+  'expo', 'expo-staging',
+  'pay', 'pay-staging'
+]);
+
+// A request to `<label>.dialtone.menu` where `<label>` is a single, valid,
+// non-reserved DNS label → that label is the restaurant slug. Returns the slug,
+// or null for the apex, reserved subdomains, multi-label hosts, or any host
+// outside the menu domain. `get_public_menu_by_slug` remains the sole lookup:
+// an unprovisioned subdomain resolves to the friendly menu-not-found page.
+function extractMenuSlugFromHost(hostname) {
+  const host = String(hostname || '').toLowerCase();
+  if (!host.endsWith(MENU_HOST_SUFFIX)) {
+    return null;
+  }
+  const label = host.slice(0, -MENU_HOST_SUFFIX.length);
+  if (!label || label.includes('.')) {
+    return null;
+  }
+  if (RESERVED_MENU_SUBDOMAINS.has(label)) {
+    return null;
+  }
+  if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label)) {
+    return null;
+  }
+  return label;
 }
 
 async function handlePublicMenuPage(request, env, url, slug, ctx) {
