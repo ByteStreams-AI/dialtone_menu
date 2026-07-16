@@ -274,8 +274,42 @@ async function runHostRouting() {
   console.log('menu subdomain routing tests passed');
 }
 
+async function runTemplateSelection() {
+  // Default template (no menu_template) → the editorial 'lacquer' body.
+  globalThis.fetch = async () =>
+    new Response(JSON.stringify(samplePayload()), { status: 200, headers: { 'content-type': 'application/json' } });
+  const lacquer = await (await worker.fetch(new Request('https://dialtone.menu/m/main-street'), makeEnv())).text();
+  assert.match(lacquer, /class="menu-hero/, 'default template renders the lacquer hero');
+  assert.match(lacquer, /class="item"/, 'default template renders typographic item rows');
+  assert.doesNotMatch(lacquer, /id="catSelect"/, 'default template has no cards category dropdown');
+
+  // menu_template = 'cards' → the photo-forward cards body, with item photos.
+  const cardsPayload = samplePayload();
+  cardsPayload.restaurant.menu_template = 'cards';
+  cardsPayload.categories[0].items[0].image_url = 'https://cdn.example.com/eggs.jpg';
+  // second item has no image_url → placeholder tile.
+  globalThis.fetch = async () =>
+    new Response(JSON.stringify(cardsPayload), { status: 200, headers: { 'content-type': 'application/json' } });
+  const cards = await (await worker.fetch(new Request('https://dialtone.menu/m/main-street'), makeEnv())).text();
+
+  assert.match(cards, /id="catSelect"/, 'cards template renders the category dropdown');
+  assert.match(cards, /id="q"[^>]*type="search"/, 'cards template renders the search field');
+  assert.match(cards, /class="grid"/, 'cards template renders the card grid');
+  assert.match(cards, /class="card"/, 'cards template renders item cards');
+  assert.match(cards, /<img src="https:\/\/cdn\.example\.com\/eggs\.jpg"[^>]*loading="lazy"/, 'an item photo renders as a thumbnail');
+  assert.match(cards, /class="thumb thumb--ph"/, 'a photo-less item renders the branded placeholder tile');
+  // A special item → a "Special" badge + struck base price.
+  assert.match(cards, /class="badge">Special<\/span>/, 'special items show a Special badge in cards');
+  assert.doesNotMatch(cards, /class="menu-hero__inner">\s*<img class="brand-logo"[^>]*>\s*<h1 class="brand-wordmark">/, 'cards uses its own hero, not lacquer rows');
+  // Escaping still holds (untrusted font in samplePayload).
+  assert.doesNotMatch(cards, /<script>alert\(1\)<\/script>/, 'untrusted font input is sanitized in cards');
+
+  console.log('menu template selection tests passed');
+}
+
 run()
   .then(runHostRouting)
+  .then(runTemplateSelection)
   .catch((error) => {
     console.error(error);
     process.exitCode = 1;
