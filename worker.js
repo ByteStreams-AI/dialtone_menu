@@ -7,6 +7,64 @@ const FALLBACK_PRIMARY = '#06234B';
 const FALLBACK_SECONDARY = '#E8A020';
 const SYSTEM_FONT_STACK = "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
+// Static menu CSS (menu branding Phase 1, dialtone#914). Per-tenant values
+// (--brand-primary/secondary/soft, --font-display) are inlined separately at
+// render time; everything here is keyed to those tokens. Warm-paper single theme;
+// the hero is a lacquer band that works with OR without an operator photo.
+const MENU_CSS = `
+    :root {
+      --paper: #FBF7F0; --raised: #ffffff; --ink: #211812; --muted: #7A6A5E;
+      --hairline: rgba(33, 24, 18, 0.12); --hero-ground: #17100F; --hero-ink: #FBF3E6;
+      --font-body: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --maxw: 46rem;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+    .menu-hero { position: relative; isolation: isolate; color: var(--hero-ink); background: radial-gradient(120% 90% at 82% 8%, rgba(245, 193, 74, 0.18), transparent 46%), linear-gradient(168deg, #3A0C0C 0%, #200A0A 48%, var(--hero-ground) 100%); background-color: var(--hero-ground); padding: clamp(3.25rem, 11vh, 6.5rem) 1.5rem clamp(2.5rem, 7vh, 4rem); overflow: hidden; }
+    .menu-hero__photo { position: absolute; inset: 0; z-index: -2; background-size: cover; background-position: center; }
+    .menu-hero__scrim { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(15, 8, 8, 0.34) 0%, rgba(15, 8, 8, 0.60) 100%); opacity: 0; }
+    .menu-hero.has-photo .menu-hero__scrim { opacity: 1; }
+    .menu-hero__inner { max-width: var(--maxw); margin: 0 auto; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.8rem; }
+    .brand-logo { max-height: 104px; max-width: min(62vw, 280px); width: auto; object-fit: contain; }
+    .brand-wordmark { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(2.4rem, 7.5vw, 4.2rem); line-height: 0.98; letter-spacing: -0.01em; color: var(--hero-ink); text-wrap: balance; }
+    .hero-rule { width: 3rem; height: 2px; border: 0; margin: 0.3rem 0 0; background: var(--brand-secondary); }
+    .tagline { margin: 0.1rem 0 0; color: rgba(251, 243, 230, 0.82); font-size: clamp(1rem, 2.4vw, 1.15rem); font-style: italic; font-family: var(--font-display); }
+    .hero-actions { margin-top: 1.25rem; display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }
+    .site-link { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; font-weight: 600; font-size: 0.95rem; padding: 0.68rem 1.25rem; border-radius: 999px; background: var(--brand-secondary); color: #241206; }
+    .app-qr { display: inline-flex; flex-direction: column; align-items: center; gap: 0.5rem; text-decoration: none; margin-top: 1.6rem; }
+    .app-qr-code { background: #fff; padding: 8px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28); }
+    .app-qr-code svg { display: block; width: 104px; height: 104px; }
+    .app-qr-caption { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.02em; color: var(--brand-secondary); text-align: center; }
+
+    main { max-width: var(--maxw); margin: 0 auto; padding: clamp(2rem, 6vw, 3.25rem) 1.5rem 1rem; }
+    .categories { display: flex; flex-direction: column; gap: clamp(2.25rem, 6vw, 3.5rem); }
+    .category-header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding-bottom: 0.65rem; margin-bottom: 1.1rem; border-bottom: 1px solid var(--hairline); }
+    .category-title-wrap { display: flex; flex-direction: column; gap: 0.12rem; }
+    .category-header h2 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: clamp(1.5rem, 3.5vw, 1.95rem); color: var(--brand-primary); letter-spacing: -0.01em; }
+    .category-description { margin: 0; color: var(--muted); font-size: 0.92rem; max-width: 34ch; }
+    .served-label { flex: none; align-self: center; white-space: nowrap; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--brand-primary); background: var(--brand-soft); border: 1px solid var(--hairline); padding: 0.32rem 0.6rem; border-radius: 999px; }
+    .served-label.later { color: var(--muted); background: transparent; }
+    .item { padding: 1rem 0; border-bottom: 1px solid var(--hairline); }
+    .item:last-child { border-bottom: 0; }
+    .item-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+    .item-name { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1.12rem; line-height: 1.25; color: var(--ink); }
+    .alcohol-pill { margin-left: 0.5rem; vertical-align: middle; font-family: var(--font-body); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; color: #8A2D12; background: #FFE3D8; border: 1px solid #FFC5AF; padding: 0.1rem 0.4rem; border-radius: 999px; }
+    .price { flex: none; font-weight: 600; font-size: 1.02rem; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .price .special-label { margin-right: 0.45rem; color: var(--brand-primary); font-size: 0.66em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; vertical-align: 0.12em; }
+    .item-description { margin: 0.4rem 0 0; color: var(--muted); font-size: 0.95rem; max-width: 60ch; }
+    .modifiers { margin-top: 0.65rem; display: flex; flex-direction: column; gap: 0.4rem; }
+    .modifier-header { display: flex; gap: 0.5rem; flex-wrap: wrap; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+    .modifier-options { margin: 0.3rem 0 0; padding-left: 1.1rem; color: var(--ink); font-size: 0.9rem; }
+    .modifier-options li { margin: 0.15rem 0; }
+    .empty-state { margin: 1rem 0 0; color: var(--muted); border: 1px dashed var(--hairline); border-radius: 12px; padding: 1rem; text-align: center; }
+    footer { max-width: var(--maxw); margin: 2.25rem auto 0; padding: 1.75rem 1.5rem 2.75rem; border-top: 1px solid var(--hairline); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; color: var(--muted); font-size: 0.8rem; }
+    footer a { color: var(--brand-primary); text-decoration: none; font-weight: 600; }
+    a:focus-visible, .site-link:focus-visible { outline: 2px solid var(--brand-secondary); outline-offset: 3px; border-radius: 6px; }
+    @media (max-width: 560px) { .category-header { flex-direction: column; align-items: flex-start; gap: 0.4rem; } .served-label { align-self: flex-start; } }
+`;
+
 // Per-isolate in-memory rate limiter: max 5 submissions per IP per 60 seconds.
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -317,6 +375,7 @@ function buildMenuSuccessResponse(payload, slug) {
   const timezone = normalizeText(restaurant.timezone, 120);
   const websiteUrl = safeLogoUrl(restaurant.website_url || '');
   const logoUrl = safeLogoUrl(restaurant.logo_url || '');
+  const heroImageUrl = safeLogoUrl(restaurant.hero_image_url || '');
   const primaryColor = sanitizeHexColor(restaurant.primary_color, FALLBACK_PRIMARY);
   const secondaryColor = sanitizeHexColor(restaurant.secondary_color, FALLBACK_SECONDARY);
   const pageTitle = `${wordmark} Menu | DialTone`;
@@ -329,9 +388,11 @@ function buildMenuSuccessResponse(payload, slug) {
     ? categories.map((category) => renderMenuCategory(category, timezone)).join('')
     : '<p class="empty-state">No menu items are currently available.</p>';
 
-  const logoMarkup = logoUrl
-    ? `<img class="brand-logo" src="${escapeHtml(logoUrl)}" alt="${escapeHtml(wordmark)} logo">`
-    : `<div class="brand-wordmark">${escapeHtml(wordmark)}</div>`;
+  // A logo (when present) is the hero brand mark, with the wordmark kept for SEO
+  // only; without a logo the wordmark carries the hero.
+  const brandMarkMarkup = logoUrl
+    ? `<img class="brand-logo" src="${escapeHtml(logoUrl)}" alt="${escapeHtml(wordmark)} logo"><h1 class="brand-wordmark sr-only">${escapeHtml(wordmark)}</h1>`
+    : `<h1 class="brand-wordmark">${escapeHtml(wordmark)}</h1>`;
 
   const websiteCtaMarkup = websiteUrl
     ? `<a class="site-link" href="${escapeHtml(websiteUrl)}" target="_blank" rel="noopener noreferrer">Visit our site</a>`
@@ -348,6 +409,29 @@ function buildMenuSuccessResponse(payload, slug) {
     `<span class="app-qr-code">${appQrSvg}</span>` +
     `<span class="app-qr-caption">Download the app to order</span></a>`;
 
+  // Hero band — brand mark + tagline + CTA + the app QR, over a lacquer ground
+  // (and the operator's hero photo, when set, behind a scrim).
+  const heroMarkup = [
+    `  <header class="menu-hero${heroImageUrl ? ' has-photo' : ''}">`,
+    heroImageUrl ? `    <div class="menu-hero__photo" style="background-image: url('${escapeHtml(heroImageUrl)}')"></div>` : '',
+    '    <div class="menu-hero__scrim"></div>',
+    '    <div class="menu-hero__inner">',
+    `      ${brandMarkMarkup}`,
+    '      <hr class="hero-rule">',
+    tagline ? `      <p class="tagline">${escapeHtml(tagline)}</p>` : '',
+    websiteCtaMarkup ? `      <div class="hero-actions">${websiteCtaMarkup}</div>` : '',
+    `      ${appQrMarkup}`,
+    '    </div>',
+    '  </header>'
+  ].filter(Boolean).join('\n');
+
+  const footerMarkup = [
+    '  <footer>',
+    `    <span>${escapeHtml(wordmark)} · Menu by <a href="https://dialtone.menu">DialTone</a></span>`,
+    '    <span>Prices and availability may change.</span>',
+    '  </footer>'
+  ].join('\n');
+
   const body = [
     '<!doctype html>',
     '<html lang="en">',
@@ -361,7 +445,7 @@ function buildMenuSuccessResponse(payload, slug) {
     `  <meta property="og:description" content="${escapeHtml(pageDescription)}">`,
     '  <meta property="og:type" content="website">',
     `  <meta property="og:url" content="https://dialtone.menu/m/${encodeURIComponent(slug)}">`,
-    `  <meta property="og:image" content="${escapeHtml(logoUrl || 'https://dialtone.menu/images/dialtone-banner.png')}">`,
+    `  <meta property="og:image" content="${escapeHtml(heroImageUrl || logoUrl || 'https://dialtone.menu/images/dialtone-banner.png')}">`,
     '  <meta name="twitter:card" content="summary_large_image">',
     `  <meta name="twitter:title" content="${escapeHtml(pageTitle)}">`,
     `  <meta name="twitter:description" content="${escapeHtml(pageDescription)}">`,
@@ -369,57 +453,16 @@ function buildMenuSuccessResponse(payload, slug) {
     fontHref ? `  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>` : '',
     fontHref ? `  <link rel="stylesheet" href="${escapeHtml(fontHref)}">` : '',
     '  <style>',
-    `    :root { --brand-primary: ${primaryColor}; --brand-secondary: ${secondaryColor}; --brand-soft: ${hexToRgba(primaryColor, 0.08)}; }`,
-    `    body { margin: 0; color: #122236; background: radial-gradient(circle at top right, ${hexToRgba(secondaryColor, 0.18)}, transparent 40%), #faf7f2; font-family: ${fontFamily}; }`,
-    '    main { max-width: 980px; margin: 0 auto; padding: 24px 20px 56px; }',
-    '    .menu-header { display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 18px 20px; border: 1px solid rgba(6, 35, 75, 0.16); border-radius: 16px; background: #ffffff; box-shadow: 0 10px 32px rgba(6, 35, 75, 0.08); }',
-    '    .brand-block { display: flex; flex-direction: column; gap: 8px; min-width: 0; }',
-    '    .brand-logo { max-height: 72px; max-width: min(40vw, 220px); width: auto; border-radius: 8px; object-fit: contain; }',
-    '    .brand-wordmark { font-size: clamp(1.8rem, 3vw, 2.3rem); line-height: 1.05; font-weight: 700; color: var(--brand-primary); }',
-    '    .tagline { margin: 0; color: #4f5e73; font-size: clamp(1.05rem, 2.2vw, 1.4rem); font-weight: 700; }',
-    '    .site-link { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; background: var(--brand-primary); color: #fff; border-radius: 999px; padding: 11px 18px; font-weight: 700; white-space: nowrap; }',
-    '    .header-aside { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; flex-shrink: 0; }',
-    '    .app-qr { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; }',
-    '    .app-qr-code { background: #fff; padding: 8px; border-radius: 12px; border: 1px solid rgba(6, 35, 75, 0.12); box-shadow: 0 4px 14px rgba(6, 35, 75, 0.06); }',
-    '    .app-qr-code svg { display: block; width: 116px; height: 116px; }',
-    '    .app-qr-caption { font-size: 0.82rem; font-weight: 700; color: var(--brand-primary); text-align: center; }',
-    '    .categories { margin-top: 24px; display: grid; gap: 18px; }',
-    '    .category { background: #fff; border: 1px solid rgba(6, 35, 75, 0.12); border-radius: 14px; padding: 18px; }',
-    '    .category-header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 10px; }',
-    '    .category-title-wrap h2 { margin: 0; color: var(--brand-primary); font-size: clamp(1.35rem, 2.5vw, 1.65rem); }',
-    '    .category-description { margin: 6px 0 0; color: #5a6c83; }',
-    '    .served-label { font-size: 0.84rem; font-weight: 700; padding: 6px 10px; border-radius: 999px; color: var(--brand-primary); background: var(--brand-soft); border: 1px solid rgba(6, 35, 75, 0.2); }',
-    '    .served-label.later { opacity: 0.72; }',
-    '    .item { padding: 14px 0; border-top: 1px solid rgba(6, 35, 75, 0.12); }',
-    '    .item:first-of-type { border-top: 0; }',
-    '    .item-head { display: flex; justify-content: space-between; gap: 14px; align-items: baseline; }',
-    '    .item-name { margin: 0; font-size: 1.05rem; color: #132743; }',
-    '    .alcohol-pill { margin-left: 8px; font-size: 0.72rem; color: #8a2d12; background: #ffe3d8; border: 1px solid #ffc5af; padding: 2px 8px; border-radius: 999px; vertical-align: middle; }',
-    '    .item-description { margin: 7px 0 0; color: #5a6c83; }',
-    '    .price { font-weight: 700; color: #132743; white-space: nowrap; }',
-    '    .price .special-label { color: #b00020; font-size: 0.72em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 6px; }',
-    '    .modifiers { margin-top: 10px; display: grid; gap: 8px; }',
-    '    .modifier-group { background: #f6f9fc; border: 1px solid rgba(6, 35, 75, 0.08); border-radius: 10px; padding: 9px 10px; }',
-    '    .modifier-header { display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.85rem; color: #334b69; }',
-    '    .modifier-options { margin: 6px 0 0; padding-left: 18px; color: #4f6178; }',
-    '    .modifier-options li { margin: 2px 0; }',
-    '    .empty-state { margin: 10px 0 0; color: #4f6178; background: #fff; border: 1px dashed rgba(6, 35, 75, 0.25); border-radius: 12px; padding: 16px; text-align: center; }',
-    '    @media (max-width: 720px) {',
-    '      .menu-header { flex-direction: column; align-items: flex-start; }',
-    '      .header-aside { align-items: flex-start; }',
-    '      .site-link { width: 100%; }',
-    '      .category-header { flex-direction: column; }',
-    '    }',
+    `    :root { --brand-primary: ${primaryColor}; --brand-secondary: ${secondaryColor}; --brand-soft: ${hexToRgba(primaryColor, 0.08)}; --font-display: ${fontFamily}; }`,
+    MENU_CSS,
     '  </style>',
     '</head>',
     '<body>',
+    heroMarkup,
     '  <main>',
-    '    <header class="menu-header">',
-    `      <div class="brand-block">${logoMarkup}${tagline ? `<p class="tagline">${escapeHtml(tagline)}</p>` : ''}</div>`,
-    `      <div class="header-aside">${websiteCtaMarkup}${appQrMarkup}</div>`,
-    '    </header>',
     `    <section class="categories" data-restaurant-timezone="${escapeHtml(timezone)}">${categoryHtml}</section>`,
     '  </main>',
+    footerMarkup,
     '  <script>',
     '    (() => {',
     '      const categories = document.querySelectorAll(".category[data-start][data-end]");',
