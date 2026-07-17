@@ -730,25 +730,29 @@ const MENU_CARDS_CSS = `
        scrim. It used to ramp to 92% black to hold up the bottom-anchored
        logo/tagline, which crushed the lower half of the photo for nothing. */
     .menu-hero__scrim{position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,transparent 0%,transparent 68%,rgba(18,17,16,.72) 100%);}
-    .brand-logo{width:56px;height:56px;object-fit:contain;border-radius:12px;background:rgba(255,255,255,.92);padding:6px;box-shadow:0 4px 16px rgba(0,0,0,.4);flex:0 0 auto;}
+    .brand-logo{width:88px;height:88px;object-fit:contain;border-radius:16px;background:rgba(255,255,255,.92);padding:8px;box-shadow:0 4px 16px rgba(0,0,0,.4);flex:0 0 auto;}
     .brand-wordmark{font-family:var(--font-display);font-weight:800;font-size:clamp(1.5rem,4vw,2rem);line-height:1;margin:0;color:var(--gold);letter-spacing:-.01em;}
     .brand-wordmark.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
     .tagline{margin:0;color:#ece3d7;font-size:1rem;font-weight:500;}
     /* Brandbar — identity over controls on the left, app QR held to the right. */
-    .brandbar{display:flex;align-items:center;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;padding:1rem;max-width:1120px;margin:0 auto;border-bottom:1px solid var(--line);}
-    .brandbar__group{display:flex;flex-direction:column;gap:.75rem;flex:1 1 320px;min-width:0;}
+    .brandbar{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;padding:1rem;max-width:1120px;margin:0 auto;border-bottom:1px solid var(--line);}
+    /* Group sits at its content width so the QR's auto margins can absorb the
+       leftover space evenly and centre it in the gap. */
+    .brandbar__group{display:flex;flex-direction:column;gap:.75rem;flex:0 1 auto;min-width:0;}
     .brandbar__identity{display:flex;align-items:center;gap:.9rem;min-width:0;}
     .controls{display:flex;gap:.6rem;}
-    .select-wrap{position:relative;flex:0 0 44%;max-width:260px;}
+    /* Definite basis, not a percentage: the group is shrink-to-fit now, so a
+       % basis has nothing to resolve against and collapses to the text width. */
+    .select-wrap{position:relative;flex:0 0 260px;}
     .select-wrap::after{content:"";position:absolute;right:.85rem;top:50%;width:.5rem;height:.5rem;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none;}
     select,.search input{width:100%;height:44px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-size:.95rem;padding:0 1rem;font-family:inherit;}
     select{appearance:none;-webkit-appearance:none;padding-right:2.2rem;cursor:pointer;}
     /* Half its old width — it used to flex:1 and swallow the whole bar. */
-    .search{position:relative;flex:0 1 240px;}
+    .search{position:relative;flex:0 0 240px;}
     .search svg{position:absolute;left:.8rem;top:50%;transform:translateY(-50%);width:1.05rem;height:1.05rem;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none;}
     .search input{padding-left:2.4rem;}
     .search input::placeholder{color:var(--muted);}
-    .app-qr{display:inline-flex;flex-direction:column;align-items:center;gap:.5rem;text-decoration:none;flex:0 0 auto;}
+    .app-qr{display:inline-flex;flex-direction:column;align-items:center;gap:.5rem;text-decoration:none;flex:0 0 auto;margin:0 auto;}
     .app-qr-code{background:#fff;padding:8px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.28);}
     .app-qr-code svg{display:block;width:96px;height:96px;}
     .app-qr-caption{font-size:.72rem;font-weight:700;letter-spacing:.02em;color:var(--gold);text-align:center;}
@@ -785,7 +789,10 @@ const MENU_CARDS_CSS = `
       .brandbar{gap:1rem;}
       .brandbar__group{flex:1 1 100%;}
       .app-qr{margin:0 auto;}
-      .search{flex:1 1 auto;}
+      /* Share the row evenly — the desktop basis (260px) would let Categories
+         eat a phone-width row and squeeze Search to nothing. */
+      .select-wrap{flex:1 1 0;}
+      .search{flex:1 1 0;}
     }`;
 
 function renderCardsItem(item) {
