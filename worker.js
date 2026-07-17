@@ -478,16 +478,7 @@ function buildMenuSuccessResponse(payload, slug) {
     ? `<a class="site-link" href="${escapeHtml(websiteUrl)}" target="_blank" rel="noopener noreferrer">Visit our site</a>`
     : '';
 
-  // App-download QR (right side of the header). Static, self-contained SVG —
-  // encodes https://dialtone.menu for now; will retarget the App Store / Play
-  // Store once the app ships. Regenerate with:
-  //   npx qrcode -e M -t svg -o qr.svg "<url>"   (margin:0; framed by CSS quiet zone)
-  const appQrSvg =
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" shape-rendering="crispEdges"><path fill="#ffffff" d="M0 0h25v25H0z"/><path stroke="#000000" d="M0 0.5h7m1 0h5m1 0h1m3 0h7M0 1.5h1m5 0h1m1 0h1m3 0h2m4 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h2m3 0h2m3 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m3 0h1m1 0h2m1 0h2m1 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h1m2 0h1m2 0h1m3 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m4 0h1m2 0h1m3 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M10 7.5h2m1 0h1m2 0h1M0 8.5h1m2 0h6m1 0h1m3 0h4m2 0h1m1 0h3M0 9.5h2m1 0h1m1 0h1m2 0h1m1 0h1m1 0h4m3 0h5M0 10.5h1m2 0h7m1 0h3m1 0h1m1 0h1m2 0h2m2 0h1M0 11.5h1m2 0h1m3 0h6m2 0h1m2 0h2m1 0h4M1 12.5h1m1 0h1m1 0h2m2 0h4m3 0h1m1 0h2m4 0h1M0 13.5h1m6 0h1m1 0h1m3 0h1m1 0h2m3 0h1m2 0h1M0 14.5h2m1 0h5m2 0h6m2 0h1m1 0h5M0 15.5h1m1 0h1m1 0h1m6 0h1m3 0h1m1 0h3m1 0h2m1 0h1M0 16.5h1m1 0h1m2 0h4m1 0h1m3 0h1m1 0h5m1 0h2M8 17.5h2m1 0h3m2 0h1m3 0h1m1 0h2M0 18.5h7m1 0h4m4 0h1m1 0h1m1 0h1m3 0h1M0 19.5h1m5 0h1m1 0h1m3 0h1m1 0h3m3 0h1m2 0h2M0 20.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h9m2 0h2M0 21.5h1m1 0h3m1 0h1m1 0h2m4 0h1m1 0h3m4 0h2M0 22.5h1m1 0h3m1 0h1m3 0h1m1 0h1m1 0h1m2 0h1m2 0h5M0 23.5h1m5 0h1m2 0h2m3 0h2m3 0h2m1 0h3M0 24.5h7m1 0h3m2 0h2m1 0h3m2 0h1m2 0h1"/></svg>';
-  const appQrMarkup =
-    `<a class="app-qr" href="https://dialtone.menu" target="_blank" rel="noopener noreferrer" aria-label="Download the app to order">` +
-    `<span class="app-qr-code">${appQrSvg}</span>` +
-    `<span class="app-qr-caption">Download the app to order</span></a>`;
+  const appQrMarkup = renderAppQr();
 
   // Hero band — brand mark + tagline + CTA + the app QR, over a lacquer ground
   // (and the operator's hero photo, when set, behind a scrim).
@@ -711,6 +702,23 @@ function renderModifierOption(option) {
 // Reuses the shared normalize/format helpers; brand tokens are inlined :root
 // vars exactly like the lacquer body.
 // ---------------------------------------------------------------------------
+// App-download QR. Static, self-contained SVG — encodes https://dialtone.menu
+// for now; will retarget the App Store / Play Store once the app ships.
+// Regenerate with:
+//   npx qrcode -e M -t svg -o qr.svg "<url>"   (margin:0; framed by CSS quiet zone)
+// Shared by BOTH templates — it lived inline in the lacquer body, which sits
+// after the 'cards' early-return, so a cards tenant silently lost the app CTA.
+const APP_QR_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" shape-rendering="crispEdges"><path fill="#ffffff" d="M0 0h25v25H0z"/><path stroke="#000000" d="M0 0.5h7m1 0h5m1 0h1m3 0h7M0 1.5h1m5 0h1m1 0h1m3 0h2m4 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h2m3 0h2m3 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m3 0h1m1 0h2m1 0h2m1 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h1m2 0h1m2 0h1m3 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m4 0h1m2 0h1m3 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M10 7.5h2m1 0h1m2 0h1M0 8.5h1m2 0h6m1 0h1m3 0h4m2 0h1m1 0h3M0 9.5h2m1 0h1m1 0h1m2 0h1m1 0h1m1 0h4m3 0h5M0 10.5h1m2 0h7m1 0h3m1 0h1m1 0h1m2 0h2m2 0h1M0 11.5h1m2 0h1m3 0h6m2 0h1m2 0h2m1 0h4M1 12.5h1m1 0h1m1 0h2m2 0h4m3 0h1m1 0h2m4 0h1M0 13.5h1m6 0h1m1 0h1m3 0h1m1 0h2m3 0h1m2 0h1M0 14.5h2m1 0h5m2 0h6m2 0h1m1 0h5M0 15.5h1m1 0h1m1 0h1m6 0h1m3 0h1m1 0h3m1 0h2m1 0h1M0 16.5h1m1 0h1m2 0h4m1 0h1m3 0h1m1 0h5m1 0h2M8 17.5h2m1 0h3m2 0h1m3 0h1m1 0h2M0 18.5h7m1 0h4m4 0h1m1 0h1m1 0h1m3 0h1M0 19.5h1m5 0h1m1 0h1m3 0h1m1 0h3m3 0h1m2 0h2M0 20.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h9m2 0h2M0 21.5h1m1 0h3m1 0h1m1 0h2m4 0h1m1 0h3m4 0h2M0 22.5h1m1 0h3m1 0h1m3 0h1m1 0h1m1 0h1m2 0h1m2 0h5M0 23.5h1m5 0h1m2 0h2m3 0h2m3 0h2m1 0h3M0 24.5h7m1 0h3m2 0h2m1 0h3m2 0h1m2 0h1"/></svg>';
+
+function renderAppQr() {
+  return (
+    `<a class="app-qr" href="https://dialtone.menu" target="_blank" rel="noopener noreferrer" aria-label="Download the app to order">` +
+    `<span class="app-qr-code">${APP_QR_SVG}</span>` +
+    `<span class="app-qr-caption">Download the app to order</span></a>`
+  );
+}
+
 const MENU_CARDS_CSS = `
     *{box-sizing:border-box;} html,body{margin:0;}
     body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
@@ -718,21 +726,28 @@ const MENU_CARDS_CSS = `
     .menu-hero{position:relative;isolation:isolate;min-height:56vw;max-height:340px;display:flex;align-items:flex-end;padding:1.25rem;overflow:hidden;background:#000;color:#fff;}
     .menu-hero__photo{position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center;}
     .menu-hero__scrim{position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(10,8,7,.15) 0%,rgba(10,8,7,.55) 55%,rgba(10,8,7,.92) 100%);}
-    .menu-hero__inner{width:100%;}
-    .brand-logo{width:52px;height:52px;object-fit:contain;border-radius:12px;background:rgba(255,255,255,.92);padding:6px;margin-bottom:.7rem;box-shadow:0 4px 16px rgba(0,0,0,.4);}
-    .brand-wordmark{font-family:var(--font-display);font-weight:800;font-size:clamp(2.1rem,9vw,3rem);line-height:1;margin:0;color:var(--gold);letter-spacing:-.01em;text-shadow:0 2px 20px rgba(0,0,0,.5);}
+    .brand-logo{width:56px;height:56px;object-fit:contain;border-radius:12px;background:rgba(255,255,255,.92);padding:6px;box-shadow:0 4px 16px rgba(0,0,0,.4);flex:0 0 auto;}
+    .brand-wordmark{font-family:var(--font-display);font-weight:800;font-size:clamp(1.5rem,4vw,2rem);line-height:1;margin:0;color:var(--gold);letter-spacing:-.01em;}
     .brand-wordmark.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
-    .hero-rule{width:2.4rem;height:3px;background:var(--gold);border:0;margin:.7rem 0 .6rem;border-radius:2px;}
-    .tagline{margin:0;color:#ece3d7;font-size:.9rem;font-weight:500;}
-    .controls{position:sticky;top:0;z-index:5;display:flex;gap:.6rem;padding:.8rem 1rem;background:var(--bar);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);max-width:1120px;margin:0 auto;}
+    .tagline{margin:0;color:#ece3d7;font-size:1rem;font-weight:500;}
+    /* Brandbar — identity over controls on the left, app QR held to the right. */
+    .brandbar{display:flex;align-items:center;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;padding:1rem;max-width:1120px;margin:0 auto;border-bottom:1px solid var(--line);}
+    .brandbar__group{display:flex;flex-direction:column;gap:.75rem;flex:1 1 320px;min-width:0;}
+    .brandbar__identity{display:flex;align-items:center;gap:.9rem;min-width:0;}
+    .controls{display:flex;gap:.6rem;}
     .select-wrap{position:relative;flex:0 0 44%;max-width:260px;}
     .select-wrap::after{content:"";position:absolute;right:.85rem;top:50%;width:.5rem;height:.5rem;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none;}
     select,.search input{width:100%;height:44px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-size:.95rem;padding:0 1rem;font-family:inherit;}
     select{appearance:none;-webkit-appearance:none;padding-right:2.2rem;cursor:pointer;}
-    .search{position:relative;flex:1;}
+    /* Half its old width — it used to flex:1 and swallow the whole bar. */
+    .search{position:relative;flex:0 1 240px;}
     .search svg{position:absolute;left:.8rem;top:50%;transform:translateY(-50%);width:1.05rem;height:1.05rem;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none;}
     .search input{padding-left:2.4rem;}
     .search input::placeholder{color:var(--muted);}
+    .app-qr{display:inline-flex;flex-direction:column;align-items:center;gap:.5rem;text-decoration:none;flex:0 0 auto;}
+    .app-qr-code{background:#fff;padding:8px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.28);}
+    .app-qr-code svg{display:block;width:96px;height:96px;}
+    .app-qr-caption{font-size:.72rem;font-weight:700;letter-spacing:.02em;color:var(--gold);text-align:center;}
     main{padding:1rem 1rem 2.5rem;max-width:1120px;margin:0 auto;}
     .cat{scroll-margin-top:70px;margin-top:1.8rem;}
     .cat-head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:.9rem;}
@@ -761,7 +776,12 @@ const MENU_CARDS_CSS = `
       .layout{display:flex;flex-direction:column;height:100vh;}
       .menu-hero{flex:0 0 auto;height:clamp(240px,34vh,330px);max-height:none;min-height:0;}
       .content{flex:1;min-height:0;overflow-y:auto;}
-      .controls{max-width:none;margin:0;}
+    }
+    @media (max-width:560px){
+      .brandbar{gap:1rem;}
+      .brandbar__group{flex:1 1 100%;}
+      .app-qr{margin:0 auto;}
+      .search{flex:1 1 auto;}
     }`;
 
 function renderCardsItem(item) {
@@ -838,16 +858,34 @@ function renderCardsMenuBody(ctx) {
     ? `<img class="brand-logo" src="${escapeHtml(ctx.logoUrl)}" alt="${escapeHtml(ctx.wordmark)} logo"><h1 class="brand-wordmark sr-only">${escapeHtml(ctx.wordmark)}</h1>`
     : `<h1 class="brand-wordmark">${escapeHtml(ctx.wordmark)}</h1>`;
 
-  const heroMarkup = [
-    `  <header class="menu-hero${ctx.heroImageUrl ? ' has-photo' : ''}">`,
-    ctx.heroImageUrl ? `    <div class="menu-hero__photo" style="background-image: url('${escapeHtml(ctx.heroImageUrl)}')"></div>` : '',
-    '    <div class="menu-hero__scrim"></div>',
-    '    <div class="menu-hero__inner">',
-    `      ${brandMark}`,
-    '      <hr class="hero-rule">',
-    ctx.tagline ? `      <p class="tagline">${escapeHtml(ctx.tagline)}</p>` : '',
-    '    </div>',
-    '  </header>'
+  // Hero is now the photo alone — the identity moved out from under the scrim
+  // and into the brandbar below it. With no photo there is nothing to show, so
+  // the band is dropped entirely rather than rendering an empty black slab.
+  const heroMarkup = ctx.heroImageUrl
+    ? [
+        '  <header class="menu-hero has-photo">',
+        `    <div class="menu-hero__photo" style="background-image: url('${escapeHtml(ctx.heroImageUrl)}')"></div>`,
+        '    <div class="menu-hero__scrim"></div>',
+        '  </header>'
+      ].join('\n')
+    : '';
+
+  // Brandbar — the identity lockup (mark + tagline) over the controls, with the
+  // app QR held to the right of that whole group.
+  const brandbarMarkup = [
+    '      <div class="brandbar">',
+    '        <div class="brandbar__group">',
+    '          <div class="brandbar__identity">',
+    `            ${brandMark}`,
+    ctx.tagline ? `            <p class="tagline">${escapeHtml(ctx.tagline)}</p>` : '',
+    '          </div>',
+    '          <div class="controls">',
+    '            <div class="select-wrap"><select id="catSelect" aria-label="Jump to category"><option value="" disabled selected>Categories</option>' + options + '</select></div>',
+    '            <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg><input id="q" type="search" placeholder="Search" aria-label="Search the menu"></div>',
+    '          </div>',
+    '        </div>',
+    `        ${renderAppQr()}`,
+    '      </div>'
   ].filter(Boolean).join('\n');
 
   return [
@@ -877,10 +915,7 @@ function renderCardsMenuBody(ctx) {
     '  <div class="layout">',
     heroMarkup,
     '    <div class="content">',
-    '      <div class="controls">',
-    '        <div class="select-wrap"><select id="catSelect" aria-label="Jump to category"><option value="" disabled selected>Categories</option>' + options + '</select></div>',
-    '        <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg><input id="q" type="search" placeholder="Search" aria-label="Search the menu"></div>',
-    '      </div>',
+    brandbarMarkup,
     '      <main>',
     `        ${sections || '<p class="empty" style="display:block">No menu items are currently available.</p>'}`,
     '        <p class="empty" id="empty">No items match your search.</p>',
