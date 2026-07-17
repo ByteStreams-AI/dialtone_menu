@@ -723,9 +723,13 @@ const MENU_CARDS_CSS = `
     *{box-sizing:border-box;} html,body{margin:0;}
     body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
     img{display:block;max-width:100%;}
-    .menu-hero{position:relative;isolation:isolate;min-height:56vw;max-height:340px;display:flex;align-items:flex-end;padding:1.25rem;overflow:hidden;background:#000;color:#fff;}
+    .menu-hero{position:relative;isolation:isolate;min-height:56vw;max-height:340px;overflow:hidden;background:#000;}
     .menu-hero__photo{position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center;}
-    .menu-hero__scrim{position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(10,8,7,.15) 0%,rgba(10,8,7,.55) 55%,rgba(10,8,7,.92) 100%);}
+    /* The photo carries no text now (the identity moved to the brandbar), so
+       this is only a soft landing into the page ground — NOT a legibility
+       scrim. It used to ramp to 92% black to hold up the bottom-anchored
+       logo/tagline, which crushed the lower half of the photo for nothing. */
+    .menu-hero__scrim{position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,transparent 0%,transparent 68%,rgba(18,17,16,.72) 100%);}
     .brand-logo{width:56px;height:56px;object-fit:contain;border-radius:12px;background:rgba(255,255,255,.92);padding:6px;box-shadow:0 4px 16px rgba(0,0,0,.4);flex:0 0 auto;}
     .brand-wordmark{font-family:var(--font-display);font-weight:800;font-size:clamp(1.5rem,4vw,2rem);line-height:1;margin:0;color:var(--gold);letter-spacing:-.01em;}
     .brand-wordmark.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
