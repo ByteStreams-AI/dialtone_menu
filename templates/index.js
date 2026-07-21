@@ -4,11 +4,16 @@
 // module, add one line here — no new if/else branch in worker.js.
 import { lacquer } from './lacquer.js';
 import { cards } from './cards.js';
+import { standard } from './standard.js';
 
 export const TEMPLATE_REGISTRY = {
   [lacquer.id]: lacquer,
-  [cards.id]: cards
+  [cards.id]: cards,
+  [standard.id]: standard
 };
+
+/** Registered ids, for callers that need to enumerate (preview, tests). */
+export const TEMPLATE_IDS = Object.keys(TEMPLATE_REGISTRY);
 
 export const DEFAULT_TEMPLATE = lacquer;
 

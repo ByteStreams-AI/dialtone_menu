@@ -304,6 +304,39 @@ async function runTemplateSelection() {
   // Escaping still holds (untrusted font in samplePayload).
   assert.doesNotMatch(cards, /<script>alert\(1\)<\/script>/, 'untrusted font input is sanitized in cards');
 
+  // menu_template = 'standard' → the plain card list (dialtone#984). This is
+  // the case the OLD hardcoded `=== 'cards' ? 'cards' : 'lacquer'` ternary in
+  // buildMenuCtx silently swallowed: the module and the registry entry existed
+  // and the page still rendered lacquer.
+  const standardPayload = samplePayload();
+  standardPayload.restaurant.menu_template = 'standard';
+  standardPayload.restaurant.hero_image_url = 'https://cdn.example.com/hero.jpg';
+  globalThis.fetch = async () =>
+    new Response(JSON.stringify(standardPayload), { status: 200, headers: { 'content-type': 'application/json' } });
+  const standard = await (await worker.fetch(new Request('https://dialtone.menu/m/main-street'), makeEnv())).text();
+
+  assert.match(standard, /class="menu-header"/, 'standard renders the white header card');
+  assert.match(standard, /class="categories"/, 'standard renders the category card list');
+  assert.match(standard, /class="modifier-group"/, 'standard renders modifier groups');
+  assert.doesNotMatch(standard, /id="catSelect"/, 'standard has no cards category dropdown');
+  // The header is a CARD, not a photo band — standard deliberately ignores the
+  // hero even when one is set. Only the social unfurl uses it.
+  assert.doesNotMatch(standard, /class="menu-hero/, 'standard renders no hero band');
+  assert.match(
+    standard,
+    /property="og:image" content="https:\/\/cdn\.example\.com\/hero\.jpg"/,
+    'standard still prefers the hero for the social unfurl',
+  );
+  assert.doesNotMatch(standard, /<script>alert\(1\)<\/script>/, 'untrusted font input is sanitized in standard');
+
+  // An unknown/legacy value falls back to lacquer rather than 500ing or blanking.
+  const legacyPayload = samplePayload();
+  legacyPayload.restaurant.menu_template = 'no-such-template';
+  globalThis.fetch = async () =>
+    new Response(JSON.stringify(legacyPayload), { status: 200, headers: { 'content-type': 'application/json' } });
+  const legacy = await (await worker.fetch(new Request('https://dialtone.menu/m/main-street'), makeEnv())).text();
+  assert.match(legacy, /class="menu-hero/, 'an unknown template id falls back to lacquer');
+
   console.log('menu template selection tests passed');
 }
 
