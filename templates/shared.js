@@ -146,7 +146,13 @@ export function buildMenuCtx(payload, slug) {
   const fontFamily = safeFontFamily(normalizeText(restaurant.font, 120));
   const fontHref = googleFontHref(normalizeText(restaurant.font, 120));
 
-  const menuTemplate = normalizeText(restaurant.menu_template, 20) === 'cards' ? 'cards' : 'lacquer';
+  // Pass the requested id through untouched and let the REGISTRY decide whether
+  // it exists (renderMenu falls back to lacquer for anything unknown). This was
+  // a hardcoded `=== 'cards' ? 'cards' : 'lacquer'` ternary, which silently
+  // coerced every NEW template back to lacquer — so adding a module and a
+  // registry line was not enough to ship one (dialtone#984). Validating here
+  // instead would mean importing the registry, which imports this file.
+  const menuTemplate = normalizeText(restaurant.menu_template, 20);
 
   return {
     restaurant, categories, restaurantName, displayName, wordmark, tagline,
