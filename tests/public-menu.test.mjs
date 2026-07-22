@@ -367,6 +367,21 @@ async function runSiteSurfaces() {
   assert.match(legacy, /class="menu-header"/, '/m/<slug> is ALWAYS the menu, even in home mode');
   assert.doesNotMatch(legacy, /class="site-header"/, '/m/<slug> never becomes the home page');
 
+  // ...but it hands its SEO to the branded host (#991). Both URLs serve
+  // identical HTML, so without this they compete as duplicates and the address
+  // the operator promotes is the one that loses.
+  assert.match(
+    legacy,
+    /rel="canonical" href="https:\/\/main-street\.m\.dialtone\.menu\/menu"/,
+    '/m/<slug> canonicalizes to the branded /menu when a home page exists'
+  );
+  const legacyMenuOnly = await serve(withSite('menu_only'), 'https://dialtone.menu/m/main-street');
+  assert.match(
+    legacyMenuOnly,
+    /rel="canonical" href="https:\/\/main-street\.m\.dialtone\.menu\/"/,
+    'in menu_only the branded ROOT is the menu, so that is the canonical'
+  );
+
   // --- an unset/unknown mode behaves as menu_only: this feature can only be
   // turned on deliberately.
   const unknown = await serve(withSite('landing'), 'https://main-street.m.dialtone.menu/');
