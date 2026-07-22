@@ -1,6 +1,6 @@
 // Template layer (Option A, #914): shared ctx normalizer + helpers, and the
 // registry that dispatches menu_template -> a template module (lacquer default).
-import { renderMenu } from './templates/index.js';
+import { renderMenu, renderHome, servesHomeAtRoot } from './templates/index.js';
 import { buildMenuCtx, escapeHtml, normalizeText } from './templates/shared.js';
 
 const JSON_HEADERS = {
@@ -88,7 +88,11 @@ async function routeRequest(request, env, url, ctx) {
     if (url.pathname === '/.well-known/security.txt') {
       return handleSecurityTxt();
     }
-    return handlePublicMenuPage(request, env, url, hostSlug, ctx);
+    // `/menu` is the STABLE menu URL — the one QR codes and printed cards
+    // point at — so it renders the menu regardless of site_mode. Every other
+    // path on the host takes whatever the mode says the root is (#986).
+    const hostSurface = url.pathname === '/menu' || url.pathname === '/menu/' ? 'menu' : 'auto';
+    return handlePublicMenuPage(request, env, url, hostSlug, ctx, hostSurface);
   }
 
   // Explicit handlers for known dynamic paths.
@@ -98,7 +102,9 @@ async function routeRequest(request, env, url, ctx) {
 
   const menuSlug = extractMenuSlug(url.pathname);
   if (menuSlug !== null) {
-    return handlePublicMenuPage(request, env, url, menuSlug, ctx);
+    // The legacy path form is what every QR code minted so far points at, and
+    // its meaning must never change: always the menu, never the home page.
+    return handlePublicMenuPage(request, env, url, menuSlug, ctx, 'menu');
   }
 
   if (url.pathname === '/robots.txt') {
@@ -182,7 +188,7 @@ function extractMenuSlugFromHost(hostname) {
   return label;
 }
 
-async function handlePublicMenuPage(request, env, url, slug, ctx) {
+async function handlePublicMenuPage(request, env, url, slug, ctx, surfaceHint = 'auto') {
   if (!isLookupMethod(request.method)) {
     return new Response('Method Not Allowed', {
       status: 405,
@@ -198,7 +204,7 @@ async function handlePublicMenuPage(request, env, url, slug, ctx) {
   }
 
   const edgeCache = getEdgeCache();
-  const cacheKey = new Request(menuCacheKeyUrl(url, slug), { method: 'GET' });
+  const cacheKey = new Request(menuCacheKeyUrl(url, slug, surfaceHint), { method: 'GET' });
   const shouldUseCache = request.method === 'GET' && edgeCache;
 
   if (shouldUseCache) {
@@ -208,7 +214,7 @@ async function handlePublicMenuPage(request, env, url, slug, ctx) {
     }
   }
 
-  const response = await buildPublicMenuResponse(env, slug);
+  const response = await buildPublicMenuResponse(env, slug, url, surfaceHint);
 
   if (shouldUseCache && isMenuResponseCacheable(response.status)) {
     const cachePut = edgeCache.put(cacheKey, response.clone());
@@ -226,9 +232,15 @@ async function handlePublicMenuPage(request, env, url, slug, ctx) {
   return response;
 }
 
-function menuCacheKeyUrl(url, slug) {
+function menuCacheKeyUrl(url, slug, surfaceHint = 'auto') {
   const cacheUrl = new URL(url.toString());
-  cacheUrl.pathname = `/m/${encodeURIComponent(slug)}`;
+  // The root and /menu are DIFFERENT pages once a home page exists, so they
+  // need different cache entries — one key per slug would have served whichever
+  // surface rendered first to both URLs (#986). Keyed on the hint rather than
+  // the resolved surface because the key is needed before the payload is
+  // fetched, and the hint is what actually distinguishes the two URLs.
+  const suffix = surfaceHint === 'menu' ? '' : '/__root';
+  cacheUrl.pathname = `/m/${encodeURIComponent(slug)}${suffix}`;
   cacheUrl.search = '';
   return cacheUrl.toString();
 }
@@ -251,7 +263,7 @@ function toHeadResponse(response) {
   });
 }
 
-async function buildPublicMenuResponse(env, slug) {
+async function buildPublicMenuResponse(env, slug, url, surfaceHint = 'auto') {
   const supabaseUrl = normalizeText(env.PUBLIC_MENU_SUPABASE_URL || env.SUPABASE_URL || '', 500);
   const supabaseAnonKey = normalizeText(
     env.PUBLIC_MENU_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || env.SUPABASE_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '',
@@ -333,7 +345,7 @@ async function buildPublicMenuResponse(env, slug) {
     return buildMenuNotFoundResponse();
   }
 
-  return buildMenuSuccessResponse(payload, slug);
+  return buildMenuSuccessResponse(payload, slug, url, surfaceHint, env);
 }
 
 function buildMenuNotFoundResponse() {
@@ -371,15 +383,63 @@ function buildMenuNotFoundResponse() {
 }
 
 
-function buildMenuSuccessResponse(payload, slug) {
-  const ctx = buildMenuCtx(payload, slug);
-  return new Response(renderMenu(ctx), {
+function buildMenuSuccessResponse(payload, slug, url, surfaceHint = 'auto', env = {}) {
+  const links = buildSurfaceLinks(url, slug);
+  // Decide the surface BEFORE building ctx, so templates receive a canonical
+  // that matches what they are about to render.
+  const probe = buildMenuCtx(payload, slug, { storageBaseUrl: env.PUBLIC_MENU_SUPABASE_URL });
+  const surface = surfaceHint === 'menu' ? 'menu' : servesHomeAtRoot(probe) ? 'home' : 'menu';
+
+  const ctx = buildMenuCtx(payload, slug, {
+    storageBaseUrl: env.PUBLIC_MENU_SUPABASE_URL,
+    surface,
+    canonicalUrl: canonicalFor(links, surface, servesHomeAtRoot(probe)),
+    menuUrl: links.menuUrl,
+    homeUrl: links.homeUrl
+  });
+
+  return new Response(surface === 'home' ? renderHome(ctx) : renderMenu(ctx), {
     status: 200,
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': `public, max-age=0, s-maxage=${PUBLIC_MENU_CACHE_SECONDS}`
     }
   });
+}
+
+/**
+ * The two URLs this restaurant's surfaces live at, derived from the request so
+ * they stay on whichever host actually served it — the branded subdomain when
+ * that resolves, the /m/<slug> path form otherwise.
+ */
+function buildSurfaceLinks(url, slug) {
+  const onBrandedHost = extractMenuSlugFromHost(url.hostname) !== null;
+  const origin = `${url.protocol}//${url.host}`;
+  return onBrandedHost
+    ? { homeUrl: `${origin}/`, menuUrl: `${origin}/menu`, pathForm: false }
+    : {
+        homeUrl: `${origin}/m/${encodeURIComponent(slug)}`,
+        menuUrl: `${origin}/m/${encodeURIComponent(slug)}`,
+        pathForm: true
+      };
+}
+
+/**
+ * Which URL owns this page in search results (#986).
+ *
+ * In menu_only the root and /menu render IDENTICAL content, so both point at
+ * the root — the address the operator promotes. In home_and_menu each surface
+ * is canonical for itself.
+ *
+ * The design doc also says /m/<slug> should canonicalize to its branded
+ * equivalent. That is deliberately NOT done yet: `<slug>.dialtone.menu` has no
+ * DNS record (#991), and pointing a canonical at a host that doesn't resolve is
+ * worse than pointing at the working URL. Self-canonical until it does.
+ */
+function canonicalFor(links, surface, homeEnabled) {
+  if (links.pathForm) return links.menuUrl;
+  if (!homeEnabled) return links.homeUrl; // root owns both copies of the menu
+  return surface === 'home' ? links.homeUrl : links.menuUrl;
 }
 
 async function serveStaticPage(request, env, pathname) {

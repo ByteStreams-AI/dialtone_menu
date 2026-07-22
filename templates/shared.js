@@ -126,7 +126,63 @@ export function renderAppQr() {
 // Verbatim from worker.js buildMenuSuccessResponse lines 430-451: everything
 // computed BEFORE the old cards early-return. Every template render(ctx)
 // consumes this. menuTemplate is included so the registry can dispatch on it.
-export function buildMenuCtx(payload, slug) {
+/** Weekday labels for the rendered hours table (0 = Sunday, matching the DB). */
+const DAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/**
+ * The site block (#986 Phase 2). Everything here is RENDERED, never captured on
+ * the site: hours, address and phone come from the admin, so a home page can't
+ * disagree with the real ones. Gallery arrives as storage PATHS and the origin
+ * is applied here, so no environment is baked into the payload.
+ */
+function buildSite(payload, options) {
+  const site = payload.site && typeof payload.site === 'object' ? payload.site : {};
+  const contact = payload.contact && typeof payload.contact === 'object' ? payload.contact : {};
+  const hours = Array.isArray(payload.hours) ? payload.hours : [];
+  const storageBase = normalizeText(options.storageBaseUrl || '', 300).replace(/\/$/, '');
+
+  const gallery = (Array.isArray(site.gallery) ? site.gallery : [])
+    .map((path) => normalizeText(path, 400))
+    .filter(Boolean)
+    .map((path) => (storageBase ? `${storageBase}/storage/v1/object/public/restaurant-gallery/${path}` : ''))
+    .filter(Boolean);
+
+  const socials = [
+    { key: 'instagram', label: 'Instagram', url: safeLogoUrl(site.social_instagram || '') },
+    { key: 'facebook', label: 'Facebook', url: safeLogoUrl(site.social_facebook || '') },
+    { key: 'tiktok', label: 'TikTok', url: safeLogoUrl(site.social_tiktok || '') },
+    { key: 'x', label: 'X', url: safeLogoUrl(site.social_x || '') }
+  ].filter((s) => s.url);
+
+  const addressParts = [
+    normalizeText(contact.address_line1, 200),
+    normalizeText(contact.city, 120),
+    [normalizeText(contact.state, 40), normalizeText(contact.postal_code, 20)].filter(Boolean).join(' ')
+  ].filter(Boolean);
+
+  return {
+    // Anything unrecognized behaves as menu_only — the mode can only ever turn
+    // the home page ON deliberately.
+    mode: normalizeText(site.mode, 20) === 'home_and_menu' ? 'home_and_menu' : 'menu_only',
+    storyHeadline: normalizeText(site.story_headline, 200),
+    storyBody: normalizeText(site.story_body, 5000),
+    gallery,
+    socials,
+    phone: normalizeText(contact.phone, 40),
+    address: addressParts.join(', '),
+    hours: hours
+      .filter((h) => h && Number.isInteger(h.day_of_week))
+      .map((h) => ({
+        label: DAY_LABELS[h.day_of_week] || '',
+        isClosed: Boolean(h.is_closed),
+        open: format12Hour(normalizeText(h.open_time, 10)),
+        close: format12Hour(normalizeText(h.close_time, 10))
+      }))
+      .filter((h) => h.label)
+  };
+}
+
+export function buildMenuCtx(payload, slug, options = {}) {
   const restaurant = payload.restaurant && typeof payload.restaurant === 'object' ? payload.restaurant : {};
   const categories = Array.isArray(payload.categories) ? payload.categories : [];
 
@@ -157,6 +213,14 @@ export function buildMenuCtx(payload, slug) {
   return {
     restaurant, categories, restaurantName, displayName, wordmark, tagline,
     timezone, websiteUrl, logoUrl, heroImageUrl, primaryColor, secondaryColor,
-    pageTitle, pageDescription, fontFamily, fontHref, menuTemplate, slug
+    pageTitle, pageDescription, fontFamily, fontHref, menuTemplate, slug,
+    site: buildSite(payload, options),
+    // Which surface this request resolved to, and the URL that should own it in
+    // search results. Both are decided by the worker (it knows the host and the
+    // path); templates only render them.
+    surface: options.surface === 'home' ? 'home' : 'menu',
+    canonicalUrl: normalizeText(options.canonicalUrl || '', 400),
+    menuUrl: normalizeText(options.menuUrl || '', 400),
+    homeUrl: normalizeText(options.homeUrl || '', 400)
   };
 }
