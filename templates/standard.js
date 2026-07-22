@@ -13,7 +13,7 @@
 // where a photo beats a logo and nothing on the page changes.)
 import {
   escapeHtml, normalizeText, normalizeCents, formatCurrency, hexToRgba,
-  isValidServingTime, formatServingRange, renderAppQr
+  isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay
 } from './shared.js';
 
 function renderMenuCategory(category, timezone) {
@@ -314,8 +314,12 @@ function renderStandardHomeBody(ctx) {
 
   const contactBits = [
     site.address ? `<p class="contact-line">${escapeHtml(site.address)}</p>` : '',
+    // Tell the customer WHY they would call. A bare number on a restaurant page
+    // is ambiguous — this is the line that turns it into an action, and it is
+    // the number the voice agent answers.
     site.phone
-      ? `<p class="contact-line"><a href="tel:${escapeHtml(site.phone)}">${escapeHtml(site.phone)}</a></p>`
+      ? `<p class="contact-line contact-call">To place an order or make a reservation<br>` +
+        `<a class="contact-phone" href="tel:${escapeHtml(site.phone)}">${escapeHtml(formatPhoneForDisplay(site.phone))}</a></p>`
       : '',
     websiteUrl
       ? `<p class="contact-line"><a href="${escapeHtml(websiteUrl)}" target="_blank" rel="noopener noreferrer">Visit our site</a></p>`
@@ -383,6 +387,8 @@ function renderStandardHomeBody(ctx) {
     '    .hours-row dt { font-weight: 600; }',
     '    .hours-row dd { margin: 0; font-variant-numeric: tabular-nums; }',
     '    .contact-line { margin: 0 0 6px; color: #40506a; }',
+    '    .contact-call { margin-top: 10px; line-height: 1.5; }',
+    '    .contact-phone { font-size: 1.15rem; font-weight: 700; text-decoration: none; }',
     '    .contact-line a { color: var(--brand-primary); }',
     '    .socials { display: flex; flex-wrap: wrap; gap: 10px; }',
     '    .socials a { text-decoration: none; font-weight: 700; color: var(--brand-primary); background: var(--brand-soft); border-radius: 999px; padding: 8px 16px; }',
