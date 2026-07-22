@@ -173,7 +173,7 @@ function renderLacquerMenuBody(ctx) {
   const {
     categories, timezone, logoUrl, wordmark, websiteUrl, tagline, heroImageUrl,
     pageTitle, pageDescription, fontHref, primaryColor, secondaryColor,
-    fontFamily, slug
+    fontFamily, slug, canonicalUrl
   } = ctx;
 
   const categoryHtml = categories.length
@@ -227,7 +227,8 @@ function renderLacquerMenuBody(ctx) {
     `  <meta property="og:title" content="${escapeHtml(pageTitle)}">`,
     `  <meta property="og:description" content="${escapeHtml(pageDescription)}">`,
     '  <meta property="og:type" content="website">',
-    `  <meta property="og:url" content="https://dialtone.menu/m/${encodeURIComponent(slug)}">`,
+    canonicalUrl ? `  <link rel="canonical" href="${escapeHtml(canonicalUrl)}">` : '',
+    `  <meta property="og:url" content="${escapeHtml(canonicalUrl || `https://dialtone.menu/m/${encodeURIComponent(slug)}`)}">`,
     `  <meta property="og:image" content="${escapeHtml(heroImageUrl || logoUrl || 'https://dialtone.menu/images/dialtone-banner.png')}">`,
     '  <meta name="twitter:card" content="summary_large_image">',
     `  <meta name="twitter:title" content="${escapeHtml(pageTitle)}">`,

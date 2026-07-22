@@ -128,7 +128,7 @@ function renderStandardMenuBody(ctx) {
   const {
     categories, timezone, logoUrl, wordmark, websiteUrl, tagline, heroImageUrl,
     pageTitle, pageDescription, fontHref, primaryColor, secondaryColor,
-    fontFamily, slug
+    fontFamily, slug, canonicalUrl
   } = ctx;
 
   const categoryHtml = categories.length
@@ -155,7 +155,8 @@ function renderStandardMenuBody(ctx) {
     `  <meta property="og:title" content="${escapeHtml(pageTitle)}">`,
     `  <meta property="og:description" content="${escapeHtml(pageDescription)}">`,
     '  <meta property="og:type" content="website">',
-    `  <meta property="og:url" content="https://dialtone.menu/m/${encodeURIComponent(slug)}">`,
+    canonicalUrl ? `  <link rel="canonical" href="${escapeHtml(canonicalUrl)}">` : '',
+    `  <meta property="og:url" content="${escapeHtml(canonicalUrl || `https://dialtone.menu/m/${encodeURIComponent(slug)}`)}">`,
     // The page has no hero band, but a social unfurl still prefers a photo over
     // a logo — same order the other two templates use.
     `  <meta property="og:image" content="${escapeHtml(heroImageUrl || logoUrl || 'https://dialtone.menu/images/dialtone-banner.png')}">`,
@@ -259,4 +260,154 @@ function renderStandardMenuBody(ctx) {
   ].filter(Boolean).join('\n');
 }
 
-export const standard = { id: 'standard', label: 'Standard', render: renderStandardMenuBody };
+export const standard = {
+  id: 'standard',
+  label: 'Standard',
+  render: renderStandardMenuBody,
+  renderHome: renderStandardHomeBody
+};
+
+// ---------------------------------------------------------------------------
+// Home surface (#986 Phase 2)
+// ---------------------------------------------------------------------------
+// Same page furniture as the menu — light ground, white cards, the brand
+// tokens — so a restaurant that picks Standard gets one site rather than two
+// designs bolted together.
+//
+// Everything degrades: no headline, no story, no photos, no socials all render
+// as absence rather than as empty boxes, because an operator can enable this
+// mode before writing anything (developer/restaurant-site.md §4 — warn, don't
+// gate). The one element that is ALWAYS present is the menu link: even the
+// emptiest home page has to be a working route to the menu, never a dead end.
+function renderStandardHomeBody(ctx) {
+  const {
+    site, logoUrl, wordmark, websiteUrl, tagline, pageTitle, pageDescription,
+    fontHref, primaryColor, secondaryColor, fontFamily, canonicalUrl, menuUrl
+  } = ctx;
+
+  const logoMarkup = logoUrl
+    ? `<img class="brand-logo" src="${escapeHtml(logoUrl)}" alt="${escapeHtml(wordmark)} logo">`
+    : '';
+
+  const galleryMarkup = site.gallery.length
+    ? `<section class="gallery">${site.gallery
+        .map(
+          (url, i) =>
+            `<img class="gallery-img" src="${escapeHtml(url)}" alt="${escapeHtml(wordmark)} photo ${i + 1}" loading="lazy">`
+        )
+        .join('')}</section>`
+    : '';
+
+  const hoursMarkup = site.hours.length
+    ? `<section class="card info">
+        <h2>Hours</h2>
+        <dl class="hours">${site.hours
+          .map(
+            (h) =>
+              `<div class="hours-row"><dt>${escapeHtml(h.label)}</dt><dd>${
+                h.isClosed ? 'Closed' : `${escapeHtml(h.open)} – ${escapeHtml(h.close)}`
+              }</dd></div>`
+          )
+          .join('')}</dl>
+      </section>`
+    : '';
+
+  const contactBits = [
+    site.address ? `<p class="contact-line">${escapeHtml(site.address)}</p>` : '',
+    site.phone
+      ? `<p class="contact-line"><a href="tel:${escapeHtml(site.phone)}">${escapeHtml(site.phone)}</a></p>`
+      : '',
+    websiteUrl
+      ? `<p class="contact-line"><a href="${escapeHtml(websiteUrl)}" target="_blank" rel="noopener noreferrer">Visit our site</a></p>`
+      : ''
+  ].filter(Boolean).join('');
+
+  const contactMarkup = contactBits ? `<section class="card info"><h2>Find us</h2>${contactBits}</section>` : '';
+
+  const socialMarkup = site.socials.length
+    ? `<nav class="socials" aria-label="Social links">${site.socials
+        .map(
+          (s) =>
+            `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(s.label)}</a>`
+        )
+        .join('')}</nav>`
+    : '';
+
+  const storyMarkup =
+    site.storyHeadline || site.storyBody
+      ? `<section class="card story">
+          ${site.storyHeadline ? `<h1 class="story-headline">${escapeHtml(site.storyHeadline)}</h1>` : ''}
+          ${site.storyBody ? `<p class="story-body">${escapeHtml(site.storyBody)}</p>` : ''}
+        </section>`
+      : '';
+
+  return [
+    '<!doctype html>',
+    '<html lang="en">',
+    '<head>',
+    '  <meta charset="utf-8">',
+    '  <meta name="viewport" content="width=device-width, initial-scale=1">',
+    `  <title>${escapeHtml(pageTitle)}</title>`,
+    `  <meta name="description" content="${escapeHtml(pageDescription)}">`,
+    '  <meta name="robots" content="index,follow">',
+    canonicalUrl ? `  <link rel="canonical" href="${escapeHtml(canonicalUrl)}">` : '',
+    `  <meta property="og:title" content="${escapeHtml(pageTitle)}">`,
+    `  <meta property="og:description" content="${escapeHtml(pageDescription)}">`,
+    '  <meta property="og:type" content="website">',
+    canonicalUrl ? `  <meta property="og:url" content="${escapeHtml(canonicalUrl)}">` : '',
+    `  <meta property="og:image" content="${escapeHtml(
+      ctx.heroImageUrl || site.gallery[0] || logoUrl || 'https://dialtone.menu/images/dialtone-banner.png'
+    )}">`,
+    '  <meta name="twitter:card" content="summary_large_image">',
+    fontHref ? '  <link rel="preconnect" href="https://fonts.googleapis.com">' : '',
+    fontHref ? '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' : '',
+    fontHref ? `  <link rel="stylesheet" href="${escapeHtml(fontHref)}">` : '',
+    '  <style>',
+    `    :root { --brand-primary: ${primaryColor}; --brand-secondary: ${secondaryColor}; --brand-soft: ${hexToRgba(primaryColor, 0.08)}; }`,
+    `    body { margin: 0; color: #122236; background: radial-gradient(circle at top right, ${hexToRgba(secondaryColor, 0.18)}, transparent 40%), #faf7f2; font-family: ${fontFamily}; }`,
+    '    main { max-width: 980px; margin: 0 auto; padding: 24px 20px 56px; display: grid; gap: 18px; }',
+    '    .site-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; border: 1px solid rgba(6, 35, 75, 0.16); border-radius: 16px; background: #ffffff; box-shadow: 0 10px 32px rgba(6, 35, 75, 0.08); }',
+    '    .brand-logo { max-height: 64px; max-width: min(40vw, 200px); width: auto; object-fit: contain; }',
+    '    .brand-wordmark { font-size: clamp(1.6rem, 3vw, 2.1rem); font-weight: 700; color: var(--brand-primary); }',
+    '    .tagline { margin: 4px 0 0; color: #4f5e73; font-weight: 700; }',
+    '    .menu-cta { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; background: var(--brand-primary); color: #fff; border-radius: 999px; padding: 12px 22px; font-weight: 700; white-space: nowrap; }',
+    '    .hero { border-radius: 16px; overflow: hidden; height: min(56.25vw, 46vh, 480px); background: #000 center/cover no-repeat; }',
+    '    .card { background: #fff; border: 1px solid rgba(6, 35, 75, 0.12); border-radius: 14px; padding: 20px; }',
+    '    .story-headline { margin: 0 0 8px; color: var(--brand-primary); font-size: clamp(1.5rem, 3vw, 2rem); }',
+    '    .story-body { margin: 0; color: #40506a; font-size: 1.05rem; line-height: 1.7; white-space: pre-line; }',
+    '    .gallery { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }',
+    '    .gallery-img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 12px; }',
+    '    .info h2 { margin: 0 0 10px; font-size: 1.05rem; color: var(--brand-primary); }',
+    '    .hours { margin: 0; display: grid; gap: 4px; }',
+    '    .hours-row { display: flex; justify-content: space-between; gap: 16px; color: #40506a; }',
+    '    .hours-row dt { font-weight: 600; }',
+    '    .hours-row dd { margin: 0; font-variant-numeric: tabular-nums; }',
+    '    .contact-line { margin: 0 0 6px; color: #40506a; }',
+    '    .contact-line a { color: var(--brand-primary); }',
+    '    .socials { display: flex; flex-wrap: wrap; gap: 10px; }',
+    '    .socials a { text-decoration: none; font-weight: 700; color: var(--brand-primary); background: var(--brand-soft); border-radius: 999px; padding: 8px 16px; }',
+    '    .info-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }',
+    '    @media (max-width: 720px) { .menu-cta { width: 100%; } }',
+    '  </style>',
+    '</head>',
+    '<body>',
+    '  <main>',
+    '    <header class="site-header">',
+    `      <div>${logoMarkup || `<div class="brand-wordmark">${escapeHtml(wordmark)}</div>`}${
+      tagline ? `<p class="tagline">${escapeHtml(tagline)}</p>` : ''
+    }</div>`,
+    // Always present, even on an otherwise empty home page.
+    `      <a class="menu-cta" href="${escapeHtml(menuUrl || '/menu')}">View the menu</a>`,
+    '    </header>',
+    ctx.heroImageUrl
+      ? `    <div class="hero" style="background-image: url('${escapeHtml(ctx.heroImageUrl)}')"></div>`
+      : '',
+    storyMarkup,
+    galleryMarkup,
+    hoursMarkup || contactMarkup ? `    <div class="info-grid">${hoursMarkup}${contactMarkup}</div>` : '',
+    socialMarkup,
+    '  </main>',
+    '</body>',
+    '</html>'
+  ].filter(Boolean).join('\n');
+}

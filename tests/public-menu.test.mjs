@@ -274,6 +274,73 @@ async function runHostRouting() {
   console.log('menu subdomain routing tests passed');
 }
 
+// #986 Phase 2 — what the root serves depends on site_mode, but /menu and
+// /m/<slug> must be the menu FOREVER, because that is what printed QR codes
+// point at.
+async function runSiteSurfaces() {
+  const withSite = (mode, extra = {}) => {
+    const p = samplePayload();
+    p.restaurant.menu_template = 'standard';
+    p.site = {
+      mode,
+      story_headline: 'Fire, salt, time',
+      story_body: 'We opened in 2019.',
+      gallery: ['r1/a.webp'],
+      social_instagram: 'https://instagram.com/place',
+      ...extra
+    };
+    p.contact = { phone: '+15551110000', address_line1: '1 Main St', city: 'Chicago', state: 'IL', postal_code: '60654' };
+    p.hours = [{ day_of_week: 1, open_time: '11:00', close_time: '21:00', is_closed: false }];
+    return p;
+  };
+  const serve = async (payload, requestUrl) => {
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } });
+    return (await worker.fetch(new Request(requestUrl), makeEnv())).text();
+  };
+
+  // --- menu_only: the root is the menu, exactly as before this feature.
+  const menuOnlyRoot = await serve(withSite('menu_only'), 'https://main-street.dialtone.menu/');
+  assert.match(menuOnlyRoot, /class="menu-header"/, 'menu_only root renders the menu');
+  assert.doesNotMatch(menuOnlyRoot, /class="site-header"/, 'menu_only root is not the home page');
+  // Both copies of the menu point at the root, which is the address the
+  // operator promotes — otherwise they compete as duplicate content.
+  assert.match(menuOnlyRoot, /rel="canonical" href="https:\/\/main-street\.dialtone\.menu\/"/, 'menu_only root self-canonicalizes');
+  const menuOnlyMenu = await serve(withSite('menu_only'), 'https://main-street.dialtone.menu/menu');
+  assert.match(menuOnlyMenu, /rel="canonical" href="https:\/\/main-street\.dialtone\.menu\/"/, 'menu_only /menu canonicalizes to the root');
+
+  // --- home_and_menu: the root becomes the home page, /menu stays the menu.
+  const homeRoot = await serve(withSite('home_and_menu'), 'https://main-street.dialtone.menu/');
+  assert.match(homeRoot, /class="site-header"/, 'home mode renders the home page at the root');
+  assert.match(homeRoot, /Fire, salt, time/, 'the story headline renders');
+  assert.match(homeRoot, /View the menu/, 'the home page always links to the menu');
+  assert.match(homeRoot, /restaurant-gallery\/r1\/a\.webp/, 'gallery paths become URLs on the storage origin');
+  assert.match(homeRoot, /11:00 AM/, 'hours render from the admin, not re-entered content');
+  assert.match(homeRoot, /rel="canonical" href="https:\/\/main-street\.dialtone\.menu\/"/, 'the home page is canonical for itself');
+
+  const homeMenu = await serve(withSite('home_and_menu'), 'https://main-street.dialtone.menu/menu');
+  assert.match(homeMenu, /class="menu-header"/, '/menu is the menu even with a home page enabled');
+  assert.match(homeMenu, /rel="canonical" href="https:\/\/main-street\.dialtone\.menu\/menu"/, '/menu is canonical for itself in home mode');
+
+  // --- the promise that protects printed QR codes.
+  const legacy = await serve(withSite('home_and_menu'), 'https://dialtone.menu/m/main-street');
+  assert.match(legacy, /class="menu-header"/, '/m/<slug> is ALWAYS the menu, even in home mode');
+  assert.doesNotMatch(legacy, /class="site-header"/, '/m/<slug> never becomes the home page');
+
+  // --- an unset/unknown mode behaves as menu_only: this feature can only be
+  // turned on deliberately.
+  const unknown = await serve(withSite('landing'), 'https://main-street.dialtone.menu/');
+  assert.match(unknown, /class="menu-header"/, 'an unknown site_mode falls back to the menu');
+
+  // --- a template without its own home surface still gets one.
+  const cardsPayload = withSite('home_and_menu');
+  cardsPayload.restaurant.menu_template = 'cards';
+  const cardsHome = await serve(cardsPayload, 'https://main-street.dialtone.menu/');
+  assert.match(cardsHome, /class="site-header"/, 'a template with no bespoke home borrows the shared one');
+
+  console.log('site surface routing tests passed');
+}
+
 async function runTemplateSelection() {
   // Default template (no menu_template) → the editorial 'lacquer' body.
   globalThis.fetch = async () =>
@@ -343,6 +410,7 @@ async function runTemplateSelection() {
 run()
   .then(runHostRouting)
   .then(runTemplateSelection)
+  .then(runSiteSurfaces)
   .catch((error) => {
     console.error(error);
     process.exitCode = 1;

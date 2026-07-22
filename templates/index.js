@@ -21,3 +21,21 @@ export function renderMenu(ctx) {
   const template = TEMPLATE_REGISTRY[ctx.menuTemplate] ?? DEFAULT_TEMPLATE;
   return template.render(ctx);
 }
+
+/**
+ * The home surface (#986 Phase 2). A template that hasn't grown its own home
+ * design yet borrows Standard's, so enabling the mode never yields a blank
+ * root — the operator turned it on and is owed a page. Editorial and Cards get
+ * bespoke homes next; when they do, adding `renderHome` to their module is the
+ * whole change.
+ */
+export function renderHome(ctx) {
+  const template = TEMPLATE_REGISTRY[ctx.menuTemplate] ?? DEFAULT_TEMPLATE;
+  const render = template.renderHome ?? standard.renderHome;
+  return render(ctx);
+}
+
+/** True when this ctx should serve the home page at the root. */
+export function servesHomeAtRoot(ctx) {
+  return ctx.site?.mode === 'home_and_menu';
+}
