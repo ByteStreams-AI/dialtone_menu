@@ -124,6 +124,15 @@ run_worker_first = [
   "/favicon.ico",
   "/.well-known/*",
   "/m/*",
+  # `/menu` is the stable menu URL on a branded subdomain (#986 Phase 2). It
+  # MUST be listed here: with `not_found_handling = "404-page"`, any path that
+  # is neither an asset nor on this list is short-circuited to /404.html
+  # WITHOUT invoking the Worker — so routing it inside worker.js alone left
+  # `<slug>.dialtone.menu/menu` serving the marketing 404 page. Worker tests
+  # cannot catch that: they call worker.fetch() directly, below the layer that
+  # does the short-circuiting.
+  "/menu",
+  "/menu/",
   "/api/*"
 ]
 
