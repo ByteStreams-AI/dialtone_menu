@@ -39,6 +39,25 @@ export function formatServingRange(start, end) {
   return `${format12Hour(start)}-${format12Hour(end)}`;
 }
 
+/**
+ * A phone number as a customer should read it, not as we store it.
+ *
+ * Numbers are stored E.164 (`+16292503998`) because that is what Telnyx and
+ * Stripe need. `+1` in front of a number on a restaurant's own page reads as
+ * something to dial internationally, so US/Canada numbers render as
+ * `(629) 250-3998`. Anything that is not a 10-digit NANP number is returned
+ * untouched rather than mangled — better an unformatted number than a wrong one.
+ *
+ * The `tel:` href keeps the E.164 form, which is what actually dials correctly.
+ */
+export function formatPhoneForDisplay(value) {
+  const raw = String(value || '').trim();
+  const digits = raw.replace(/\D/g, '');
+  const local = digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits;
+  if (local.length !== 10) return raw;
+  return `(${local.slice(0, 3)}) ${local.slice(3, 6)}-${local.slice(6)}`;
+}
+
 export function format12Hour(value) {
   const [hoursText, minutesText] = String(value).split(':');
   const hours = Number.parseInt(hoursText, 10);

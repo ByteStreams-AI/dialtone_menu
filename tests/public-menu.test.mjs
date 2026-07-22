@@ -322,6 +322,13 @@ async function runSiteSurfaces() {
   assert.match(homeMenu, /class="menu-header"/, '/menu is the menu even with a home page enabled');
   assert.match(homeMenu, /rel="canonical" href="https:\/\/main-street\.dialtone\.menu\/menu"/, '/menu is canonical for itself in home mode');
 
+  // The phone line tells the customer WHY to call, and shows the number the way
+  // they would read it — E.164 is what Telnyx and Stripe need, not what belongs
+  // on a restaurant's own page.
+  assert.match(homeRoot, /To place an order or make a reservation/, 'the call-to-action explains the number');
+  assert.match(homeRoot, /\(555\) 111-0000/, 'the number renders without the +1');
+  assert.match(homeRoot, /href="tel:\+15551110000"/, 'the tel: link keeps E.164, which is what dials');
+
   // --- the promise that protects printed QR codes.
   const legacy = await serve(withSite('home_and_menu'), 'https://dialtone.menu/m/main-street');
   assert.match(legacy, /class="menu-header"/, '/m/<slug> is ALWAYS the menu, even in home mode');
