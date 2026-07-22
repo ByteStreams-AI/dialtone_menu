@@ -38,6 +38,7 @@ const MENU_CARDS_CSS = `
     /* Group sits at its content width so the QR's auto margins can absorb the
        leftover space evenly and centre it in the gap. */
     .brandbar__group{display:flex;flex-direction:column;gap:.75rem;flex:0 1 auto;min-width:0;}
+    .home-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:700;font-size:.9rem;padding:.55rem 1.1rem;border-radius:999px;border:1px solid var(--gold);color:var(--gold);white-space:nowrap;flex:0 0 auto;}
     .brandbar__identity{display:flex;align-items:center;gap:.9rem;min-width:0;}
     .controls{display:flex;gap:.6rem;}
     /* Definite basis, not a percentage: the group is shrink-to-fit now, so a
@@ -191,6 +192,9 @@ function renderCardsMenuBody(ctx) {
     ctx.tagline ? `            <p class="tagline">${escapeHtml(ctx.tagline)}</p>` : '',
     '          </div>',
     '          <div class="controls">',
+    ctx.site.mode === 'home_and_menu' && ctx.homeUrl
+      ? `            <a class="home-link" href="${escapeHtml(ctx.homeUrl)}">Home</a>`
+      : '',
     '            <div class="select-wrap"><select id="catSelect" aria-label="Jump to category"><option value="" disabled selected>Categories</option>' + options + '</select></div>',
     '            <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg><input id="q" type="search" placeholder="Search" aria-label="Search the menu"></div>',
     '          </div>',

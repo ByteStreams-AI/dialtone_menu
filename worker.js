@@ -418,7 +418,10 @@ function buildSurfaceLinks(url, slug) {
   return onBrandedHost
     ? { homeUrl: `${origin}/`, menuUrl: `${origin}/menu`, pathForm: false }
     : {
-        homeUrl: `${origin}/m/${encodeURIComponent(slug)}`,
+        // No home link on the legacy path form: /m/<slug> is always the menu,
+        // and sending a visitor to a different host mid-session is more than a
+        // nav link should do. The branded host is where the site lives.
+        homeUrl: '',
         menuUrl: `${origin}/m/${encodeURIComponent(slug)}`,
         pathForm: true
       };
