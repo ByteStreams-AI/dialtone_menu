@@ -28,6 +28,7 @@ const MENU_CSS = `
     .hero-rule { width: 3rem; height: 2px; border: 0; margin: 0.3rem 0 0; background: var(--brand-secondary); }
     .tagline { margin: 0.1rem 0 0; color: rgba(251, 243, 230, 0.82); font-size: clamp(1rem, 2.4vw, 1.15rem); font-style: italic; font-family: var(--font-display); }
     .hero-actions { margin-top: 1.25rem; display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }
+    .home-link { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; font-weight: 600; font-size: 0.95rem; padding: 0.68rem 1.25rem; border-radius: 999px; border: 1px solid var(--brand-secondary); color: var(--hero-ink); }
     .site-link { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; font-weight: 600; font-size: 0.95rem; padding: 0.68rem 1.25rem; border-radius: 999px; background: var(--brand-secondary); color: #241206; }
     .app-qr { display: inline-flex; flex-direction: column; align-items: center; gap: 0.5rem; text-decoration: none; margin-top: 1.6rem; }
     .app-qr-code { background: #fff; padding: 8px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28); }
@@ -190,6 +191,13 @@ function renderLacquerMenuBody(ctx) {
     ? `<a class="site-link" href="${escapeHtml(websiteUrl)}" target="_blank" rel="noopener noreferrer">Visit our site</a>`
     : '';
 
+  // Back to the home page when the operator has one (#986 Phase 0: the menu
+  // links to the home page, never the other way round in the URL structure).
+  const homeCtaMarkup =
+    ctx.site.mode === 'home_and_menu' && ctx.homeUrl
+      ? `<a class="home-link" href="${escapeHtml(ctx.homeUrl)}">Home</a>`
+      : '';
+
   const appQrMarkup = renderAppQr();
 
   // Hero band — brand mark + tagline + CTA + the app QR, over a lacquer ground
@@ -202,7 +210,9 @@ function renderLacquerMenuBody(ctx) {
     `      ${brandMarkMarkup}`,
     '      <hr class="hero-rule">',
     tagline ? `      <p class="tagline">${escapeHtml(tagline)}</p>` : '',
-    websiteCtaMarkup ? `      <div class="hero-actions">${websiteCtaMarkup}</div>` : '',
+    homeCtaMarkup || websiteCtaMarkup
+      ? `      <div class="hero-actions">${homeCtaMarkup}${websiteCtaMarkup}</div>`
+      : '',
     `      ${appQrMarkup}`,
     '    </div>',
     '  </header>'

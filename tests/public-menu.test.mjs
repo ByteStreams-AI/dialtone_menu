@@ -320,6 +320,17 @@ async function runSiteSurfaces() {
 
   const homeMenu = await serve(withSite('home_and_menu'), 'https://main-street.dialtone.menu/menu');
   assert.match(homeMenu, /class="menu-header"/, '/menu is the menu even with a home page enabled');
+  // The return trip: the menu links BACK to the home page when one exists.
+  assert.match(homeMenu, /class="home-link" href="https:\/\/main-street\.dialtone\.menu\/"/, 'the menu links home when a home page exists');
+
+  // …and does not when there is nowhere to go.
+  const menuOnlyRootAgain = await serve(withSite('menu_only'), 'https://main-street.dialtone.menu/');
+  assert.doesNotMatch(menuOnlyRootAgain, /class="home-link"/, 'no Home link in menu_only — there is no home page');
+
+  // The legacy path form gets no Home link: /m/<slug> is always the menu, and a
+  // nav link should not move the visitor to a different host mid-session.
+  const legacyHomeMode = await serve(withSite('home_and_menu'), 'https://dialtone.menu/m/main-street');
+  assert.doesNotMatch(legacyHomeMode, /class="home-link"/, 'no Home link on the path form');
   assert.match(homeMenu, /rel="canonical" href="https:\/\/main-street\.dialtone\.menu\/menu"/, '/menu is canonical for itself in home mode');
 
   // The phone line tells the customer WHY to call, and shows the number the way
@@ -344,6 +355,14 @@ async function runSiteSurfaces() {
   cardsPayload.restaurant.menu_template = 'cards';
   const cardsHome = await serve(cardsPayload, 'https://main-street.dialtone.menu/');
   assert.match(cardsHome, /class="site-header"/, 'a template with no bespoke home borrows the shared one');
+
+  // Each template's MENU carries the Home link, not just Standard's.
+  for (const template of ['lacquer', 'cards', 'standard']) {
+    const p = withSite('home_and_menu');
+    p.restaurant.menu_template = template;
+    const menu = await serve(p, 'https://main-street.dialtone.menu/menu');
+    assert.match(menu, /class="home-link"/, `${template} menu links home`);
+  }
 
   console.log('site surface routing tests passed');
 }

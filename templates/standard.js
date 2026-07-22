@@ -143,6 +143,13 @@ function renderStandardMenuBody(ctx) {
     ? `<a class="site-link" href="${escapeHtml(websiteUrl)}" target="_blank" rel="noopener noreferrer">Visit our site</a>`
     : '';
 
+  // Back to the home page, when the operator has one. Same-host, so it reads as
+  // navigation within their site rather than a jump somewhere else.
+  const homeCtaMarkup =
+    ctx.site.mode === 'home_and_menu' && ctx.homeUrl
+      ? `<a class="home-link" href="${escapeHtml(ctx.homeUrl)}">Home</a>`
+      : '';
+
   return [
     '<!doctype html>',
     '<html lang="en">',
@@ -176,6 +183,7 @@ function renderStandardMenuBody(ctx) {
     '    .brand-wordmark { font-size: clamp(1.8rem, 3vw, 2.3rem); line-height: 1.05; font-weight: 700; color: var(--brand-primary); }',
     '    .tagline { margin: 0; color: #4f5e73; font-size: clamp(1.05rem, 2.2vw, 1.4rem); font-weight: 700; }',
     '    .site-link { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; background: var(--brand-primary); color: #fff; border-radius: 999px; padding: 11px 18px; font-weight: 700; white-space: nowrap; }',
+    '    .home-link { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; color: var(--brand-primary); border: 1.5px solid var(--brand-primary); border-radius: 999px; padding: 9px 18px; font-weight: 700; white-space: nowrap; }',
     '    .header-aside { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; flex-shrink: 0; }',
     '    .app-qr { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; }',
     '    .app-qr-code { background: #fff; padding: 8px; border-radius: 12px; border: 1px solid rgba(6, 35, 75, 0.12); box-shadow: 0 4px 14px rgba(6, 35, 75, 0.06); }',
@@ -214,7 +222,7 @@ function renderStandardMenuBody(ctx) {
     '  <main>',
     '    <header class="menu-header">',
     `      <div class="brand-block">${logoMarkup}${tagline ? `<p class="tagline">${escapeHtml(tagline)}</p>` : ''}</div>`,
-    `      <div class="header-aside">${websiteCtaMarkup}${renderAppQr()}</div>`,
+    `      <div class="header-aside">${homeCtaMarkup}${websiteCtaMarkup}${renderAppQr()}</div>`,
     '    </header>',
     `    <section class="categories" data-restaurant-timezone="${escapeHtml(timezone)}">${categoryHtml}</section>`,
     '  </main>',
