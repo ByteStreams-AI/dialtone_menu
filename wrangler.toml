@@ -113,7 +113,7 @@ not_found_handling = "404-page"
 # fallback to /images/favicon.svg, security.txt, contact form), so
 # force them to run through the Worker first instead of being
 # treated as missing assets.
-# `/` runs the Worker first so a branded menu subdomain (`<slug>.dialtone.menu`)
+# `/` runs the Worker first so a branded menu subdomain (`<slug>.m.dialtone.menu`)
 # serves the menu at its root instead of the marketing `index.html` asset. On
 # the apex (`dialtone.menu`) the Worker falls through to the assets binding, so
 # the homepage is unchanged. See the "Branded menu subdomains" runbook below.
@@ -128,7 +128,7 @@ run_worker_first = [
   # MUST be listed here: with `not_found_handling = "404-page"`, any path that
   # is neither an asset nor on this list is short-circuited to /404.html
   # WITHOUT invoking the Worker — so routing it inside worker.js alone left
-  # `<slug>.dialtone.menu/menu` serving the marketing 404 page. Worker tests
+  # `<slug>.m.dialtone.menu/menu` serving the marketing 404 page. Worker tests
   # cannot catch that: they call worker.fetch() directly, below the layer that
   # does the short-circuiting.
   "/menu",
@@ -136,30 +136,46 @@ run_worker_first = [
   "/api/*"
 ]
 
-# ── Branded menu subdomains (`<slug>.dialtone.menu`) ────────────────────────
-# The Worker serves each restaurant's menu at its own subdomain (the path form
+# ── Branded menu hosts (`<slug>.m.dialtone.menu`) ───────────────────────────
+# The Worker serves each restaurant's menu at its own host (the path form
 # `dialtone.menu/m/<slug>` still works). `extractMenuSlugFromHost` in worker.js
-# maps `<slug>.dialtone.menu` → that restaurant's menu; reserved app subdomains
-# (admin/kitchen/beverage/expo/pay + *-staging) are excluded and keep their own
-# Custom Domains.
+# maps `<slug>.m.dialtone.menu` → that restaurant's menu.
 #
-# This is the "cheap" wildcard approach (mirrors `*.pay.dialtone.menu`), NOT a
-# per-slug Custom Domain — Cloudflare caps Custom Domains and rejects wildcards
-# on them. Three one-time DASHBOARD steps (not managed by wrangler, so the
-# existing `dialtone.menu` / `www` Custom Domains aren't disturbed):
-#   1. DNS: add a PROXIED (orange-cloud) record `*` (CNAME `*` → `dialtone.menu`,
-#      or `A * → 192.0.2.1` proxied) in the dialtone.menu zone. Specific records
-#      (admin, kitchen, pay, …) take precedence over the wildcard, so they are
-#      unaffected.
-#   2. Route: Workers & Pages → this Worker (`dawn-pine-d058`) → Triggers →
-#      add Route `*.dialtone.menu/*` (zone dialtone.menu). Custom Domains for the
-#      app subdomains out-rank this wildcard, so only unclaimed subdomains (the
-#      menu slugs) hit this Worker.
-#   3. TLS: Universal SSL already covers `dialtone.menu` + one level of wildcard
-#      (`*.dialtone.menu`), so `<slug>.dialtone.menu` is HTTPS with no extra
-#      cert (unlike the 2nd-level `*.pay.` host, which needed an ACM cert).
-# Verify: `https://<any-live-slug>.dialtone.menu` renders the menu; an
-# unprovisioned slug returns the friendly menu-not-found page (200-cached 404).
+# WHY `.m.` AND NOT `<slug>.dialtone.menu` — READ BEFORE "SIMPLIFYING" THIS.
+# Serving slugs at the first level needs the route `*.dialtone.menu/*`, and that
+# route matched EVERY app host: admin, kitchen, beverage, expo and their
+# -staging variants all served the marketing site in production until it was
+# deleted (dialtone#1011). The assumption it was added on — "Custom Domains
+# out-rank a wildcard Route" — is false. Scoping one level deeper cannot overlap
+# a single-label app host, which is why `*.pay.dialtone.menu` has always been
+# safe. The alternative, a Custom Domain per restaurant, caps at 100 per zone
+# and adds a provisioning step to every onboarding.
+#
+# There is no reserved-subdomain list any more: nothing but restaurants lives
+# under `.m.`, so a restaurant legitimately called "The Kitchen" can have
+# `kitchen.m.dialtone.menu`.
+#
+# Three one-time DASHBOARD steps (not managed by wrangler, so the existing
+# `dialtone.menu` / `www` Custom Domains aren't disturbed):
+#   1. TLS FIRST: `*.m.dialtone.menu` is a SECOND-level wildcard, which
+#      Universal SSL does NOT cover — order an ACM/advanced certificate for it,
+#      exactly as `*.pay.dialtone.menu` needed. Do this first; it takes minutes
+#      to validate and without it every branded host fails the handshake.
+#   2. DNS: add a PROXIED (orange-cloud) record `*.m` in the dialtone.menu zone
+#      (AAAA `*.m` → `100::` proxied is the conventional placeholder).
+#   3. Route: Workers & Pages → this Worker (`dawn-pine-d058`) → Triggers →
+#      add Route `*.m.dialtone.menu/*` (zone dialtone.menu).
+#
+# VERIFY BY CONTENT, NOT STATUS CODE. The outage above passed a 200-only check:
+# every app host returned 200 while serving the marketing homepage. Fetch each
+# host and assert what came back, and include the -staging hosts:
+#   for h in admin kitchen beverage expo admin-staging kitchen-staging \
+#            beverage-staging; do
+#     printf '%s -> ' "$h"
+#     curl -s "https://$h.dialtone.menu/" | grep -o '<title>[^<]*' | head -1
+#   done
+# Then: `https://<any-live-slug>.m.dialtone.menu/` renders that menu, and an
+# unprovisioned slug returns the friendly menu-not-found page.
 
 # Declares the secret names required by this Worker.
 # `wrangler deploy` and `wrangler dev` will warn if any are absent.

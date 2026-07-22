@@ -71,12 +71,11 @@ export default {
 };
 
 async function routeRequest(request, env, url, ctx) {
-  // A per-restaurant menu subdomain — `<slug>.dialtone.menu` — IS that
+  // A per-restaurant menu host — `<slug>.m.dialtone.menu` — IS that
   // restaurant's menu for the whole host: `/` and any deep link render the
-  // menu; only crawler / asset-support paths resolve to themselves. Reserved
-  // app subdomains (admin, kitchen, pay, …) never reach here — each is its own
-  // Cloudflare Custom Domain, which takes routing precedence over the wildcard
-  // Worker Route that points these menu subdomains at this Worker.
+  // menu; only crawler / asset-support paths resolve to themselves. App hosts
+  // (admin, kitchen, beverage, expo, pay) sit one level shallower and can never
+  // reach here — see MENU_HOST_SUFFIX for why that separation is load-bearing.
   const hostSlug = extractMenuSlugFromHost(url.hostname);
   if (hostSlug !== null) {
     if (url.pathname === '/robots.txt') {
@@ -146,29 +145,31 @@ function extractMenuSlug(pathname) {
   }
 }
 
-// The base domain under which a single-label subdomain is a restaurant menu
-// slug: `<slug>.dialtone.menu`. Apex (`dialtone.menu`) and any multi-label host
-// (e.g. the `<slug>.pay.dialtone.menu` pay wildcard) are NOT menu subdomains.
-const MENU_HOST_SUFFIX = '.dialtone.menu';
+// Restaurant menu hosts live one level DEEPER than the apps: `<slug>.m.dialtone.menu`.
+//
+// The obvious shape — `<slug>.dialtone.menu` — cannot work on this zone. Serving
+// it needs a wildcard Worker Route (`*.dialtone.menu/*`), and that route matched
+// EVERY app host too: admin, kitchen, beverage, expo and their -staging
+// variants all served the marketing site, in production, until the route was
+// deleted (dialtone#1011). Custom Domains did not outrank it, contrary to the
+// assumption the rollout was based on.
+//
+// Scoping to `.m.` mirrors `*.pay.dialtone.menu`, which has always been safe for
+// exactly this reason: one level deeper cannot overlap a one-label app host.
+// The alternative — a Custom Domain per restaurant — caps at 100 per zone and
+// adds a provisioning step to every onboarding.
+const MENU_HOST_SUFFIX = '.m.dialtone.menu';
 
-// Subdomains that are NOT restaurant slugs: the app surfaces (each its own
-// Custom Domain, so they never route here — listed defensively in case one
-// ever does) plus common infra / marketing labels. A host whose first label is
-// one of these renders the marketing site, never a menu.
-const RESERVED_MENU_SUBDOMAINS = new Set([
-  'www', 'app', 'api', 'staging', 'dev', 'preview', 'mail', 'email', 'smtp',
-  'ns1', 'ns2', 'cdn', 'assets', 'static', 'm',
-  'admin', 'admin-staging',
-  'kitchen', 'kitchen-staging',
-  'beverage', 'beverage-staging',
-  'expo', 'expo-staging',
-  'pay', 'pay-staging'
-]);
+// NOTE: there is no reserved-subdomain list any more. It existed because
+// restaurant slugs shared the namespace with the app hosts, so `admin` or
+// `kitchen` had to be excluded. Under `.m.` nothing else lives, and reserving
+// those names would only stop a restaurant legitimately called "Kitchen" from
+// using its own slug.
 
-// A request to `<label>.dialtone.menu` where `<label>` is a single, valid,
-// non-reserved DNS label → that label is the restaurant slug. Returns the slug,
-// or null for the apex, reserved subdomains, multi-label hosts, or any host
-// outside the menu domain. `get_public_menu_by_slug` remains the sole lookup:
+// A request to `<label>.m.dialtone.menu` where `<label>` is a single valid DNS
+// label → that label is the restaurant slug. Returns the slug, or null for the
+// apex, any app host, a multi-label prefix, or any host outside the menu
+// domain. `get_public_menu_by_slug` remains the sole lookup:
 // an unprovisioned subdomain resolves to the friendly menu-not-found page.
 function extractMenuSlugFromHost(hostname) {
   const host = String(hostname || '').toLowerCase();
@@ -177,9 +178,6 @@ function extractMenuSlugFromHost(hostname) {
   }
   const label = host.slice(0, -MENU_HOST_SUFFIX.length);
   if (!label || label.includes('.')) {
-    return null;
-  }
-  if (RESERVED_MENU_SUBDOMAINS.has(label)) {
     return null;
   }
   if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label)) {
@@ -435,9 +433,10 @@ function buildSurfaceLinks(url, slug) {
  * is canonical for itself.
  *
  * The design doc also says /m/<slug> should canonicalize to its branded
- * equivalent. That is deliberately NOT done yet: `<slug>.dialtone.menu` has no
- * DNS record (#991), and pointing a canonical at a host that doesn't resolve is
- * worse than pointing at the working URL. Self-canonical until it does.
+ * equivalent. That is deliberately NOT done yet: `<slug>.m.dialtone.menu` needs
+ * a cert, a DNS record and a route first (#991), and pointing a canonical at a
+ * host that doesn't resolve is worse than pointing at the working URL.
+ * Self-canonical until it does.
  */
 function canonicalFor(links, surface, homeEnabled) {
   if (links.pathForm) return links.menuUrl;
