@@ -219,7 +219,7 @@ async function run() {
 }
 
 async function runHostRouting() {
-  // A branded menu subdomain (`<slug>.dialtone.menu`) IS that restaurant's menu.
+  // A branded menu subdomain (`<slug>.m.dialtone.menu`) IS that restaurant's menu.
   let rpcSlug = null;
   globalThis.fetch = async (url, options = {}) => {
     rpcSlug = JSON.parse(String(options.body || '{}')).p_slug;
@@ -229,7 +229,7 @@ async function runHostRouting() {
     });
   };
 
-  const subRoot = await worker.fetch(new Request('https://main-street.dialtone.menu/'), makeEnv());
+  const subRoot = await worker.fetch(new Request('https://main-street.m.dialtone.menu/'), makeEnv());
   assert.equal(subRoot.status, 200, 'menu subdomain root should render the menu');
   assert.equal(rpcSlug, 'main-street', 'menu subdomain should derive the slug from the host');
   assert.match(
@@ -240,20 +240,42 @@ async function runHostRouting() {
 
   // A deep link on the subdomain also lands on the menu (whole host = the menu).
   rpcSlug = null;
-  const subDeep = await worker.fetch(new Request('https://main-street.dialtone.menu/anything'), makeEnv());
+  const subDeep = await worker.fetch(new Request('https://main-street.m.dialtone.menu/anything'), makeEnv());
   assert.equal(subDeep.status, 200, 'any path on a menu subdomain renders the menu');
   assert.equal(rpcSlug, 'main-street', 'deep link still resolves the host slug');
+
+  // Names that used to be reserved to protect our own hosts are now just slugs:
+  // a restaurant called "The Kitchen" can have kitchen.m.dialtone.menu, because
+  // nothing but restaurants lives under .m.
+  for (const slug of ['kitchen', 'admin', 'm', 'www']) {
+    rpcSlug = null;
+    globalThis.fetch = async (url, options = {}) => {
+      rpcSlug = JSON.parse(String(options.body || '{}')).p_slug;
+      return new Response(JSON.stringify(samplePayload()), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    const resp = await worker.fetch(new Request(`https://${slug}.m.dialtone.menu/`), makeEnv());
+    assert.equal(resp.status, 200, `${slug}.m.dialtone.menu serves a menu`);
+    assert.equal(rpcSlug, slug, `${slug} is treated as a restaurant slug under .m.`);
+  }
 
   // Reserved app subdomains, the apex, multi-label hosts (the pay wildcard), and
   // off-domain hosts are NOT menus: no RPC lookup, falls through to the
   // marketing asset pipeline.
+  // The apex, the app hosts and the pay wildcard are NOT menus. This list is the
+  // regression guard for dialtone#1011: a one-label host must never be read as a
+  // restaurant slug again, whatever the route configuration says.
   for (const host of [
     'https://dialtone.menu/',
     'https://www.dialtone.menu/',
     'https://admin.dialtone.menu/',
+    'https://kitchen.dialtone.menu/',
     'https://kitchen-staging.dialtone.menu/',
+    'https://beverage.dialtone.menu/',
+    'https://expo.dialtone.menu/',
     'https://pay.dialtone.menu/',
     'https://suis-sushi.pay.dialtone.menu/',
+    'https://main-street.dialtone.menu/',
+    'https://m.dialtone.menu/',
     'https://example.com/'
   ]) {
     let rpcCalled = false;
@@ -268,7 +290,7 @@ async function runHostRouting() {
 
   // Crawler paths still resolve on a menu subdomain (they don't render the menu).
   globalThis.fetch = async () => new Response('null', { status: 200, headers: { 'content-type': 'application/json' } });
-  const robots = await worker.fetch(new Request('https://main-street.dialtone.menu/robots.txt'), makeEnv());
+  const robots = await worker.fetch(new Request('https://main-street.m.dialtone.menu/robots.txt'), makeEnv());
   assert.match(robots.headers.get('content-type') || '', /text\/plain/, 'robots.txt resolves on a menu subdomain');
 
   console.log('menu subdomain routing tests passed');
@@ -300,38 +322,38 @@ async function runSiteSurfaces() {
   };
 
   // --- menu_only: the root is the menu, exactly as before this feature.
-  const menuOnlyRoot = await serve(withSite('menu_only'), 'https://main-street.dialtone.menu/');
+  const menuOnlyRoot = await serve(withSite('menu_only'), 'https://main-street.m.dialtone.menu/');
   assert.match(menuOnlyRoot, /class="menu-header"/, 'menu_only root renders the menu');
   assert.doesNotMatch(menuOnlyRoot, /class="site-header"/, 'menu_only root is not the home page');
   // Both copies of the menu point at the root, which is the address the
   // operator promotes — otherwise they compete as duplicate content.
-  assert.match(menuOnlyRoot, /rel="canonical" href="https:\/\/main-street\.dialtone\.menu\/"/, 'menu_only root self-canonicalizes');
-  const menuOnlyMenu = await serve(withSite('menu_only'), 'https://main-street.dialtone.menu/menu');
-  assert.match(menuOnlyMenu, /rel="canonical" href="https:\/\/main-street\.dialtone\.menu\/"/, 'menu_only /menu canonicalizes to the root');
+  assert.match(menuOnlyRoot, /rel="canonical" href="https:\/\/main-street\.m\.dialtone\.menu\/"/, 'menu_only root self-canonicalizes');
+  const menuOnlyMenu = await serve(withSite('menu_only'), 'https://main-street.m.dialtone.menu/menu');
+  assert.match(menuOnlyMenu, /rel="canonical" href="https:\/\/main-street\.m\.dialtone\.menu\/"/, 'menu_only /menu canonicalizes to the root');
 
   // --- home_and_menu: the root becomes the home page, /menu stays the menu.
-  const homeRoot = await serve(withSite('home_and_menu'), 'https://main-street.dialtone.menu/');
+  const homeRoot = await serve(withSite('home_and_menu'), 'https://main-street.m.dialtone.menu/');
   assert.match(homeRoot, /class="site-header"/, 'home mode renders the home page at the root');
   assert.match(homeRoot, /Fire, salt, time/, 'the story headline renders');
   assert.match(homeRoot, /View the menu/, 'the home page always links to the menu');
   assert.match(homeRoot, /restaurant-gallery\/r1\/a\.webp/, 'gallery paths become URLs on the storage origin');
   assert.match(homeRoot, /11:00 AM/, 'hours render from the admin, not re-entered content');
-  assert.match(homeRoot, /rel="canonical" href="https:\/\/main-street\.dialtone\.menu\/"/, 'the home page is canonical for itself');
+  assert.match(homeRoot, /rel="canonical" href="https:\/\/main-street\.m\.dialtone\.menu\/"/, 'the home page is canonical for itself');
 
-  const homeMenu = await serve(withSite('home_and_menu'), 'https://main-street.dialtone.menu/menu');
+  const homeMenu = await serve(withSite('home_and_menu'), 'https://main-street.m.dialtone.menu/menu');
   assert.match(homeMenu, /class="menu-header"/, '/menu is the menu even with a home page enabled');
   // The return trip: the menu links BACK to the home page when one exists.
-  assert.match(homeMenu, /class="home-link" href="https:\/\/main-street\.dialtone\.menu\/"/, 'the menu links home when a home page exists');
+  assert.match(homeMenu, /class="home-link" href="https:\/\/main-street\.m\.dialtone\.menu\/"/, 'the menu links home when a home page exists');
 
   // …and does not when there is nowhere to go.
-  const menuOnlyRootAgain = await serve(withSite('menu_only'), 'https://main-street.dialtone.menu/');
+  const menuOnlyRootAgain = await serve(withSite('menu_only'), 'https://main-street.m.dialtone.menu/');
   assert.doesNotMatch(menuOnlyRootAgain, /class="home-link"/, 'no Home link in menu_only — there is no home page');
 
   // The legacy path form gets no Home link: /m/<slug> is always the menu, and a
   // nav link should not move the visitor to a different host mid-session.
   const legacyHomeMode = await serve(withSite('home_and_menu'), 'https://dialtone.menu/m/main-street');
   assert.doesNotMatch(legacyHomeMode, /class="home-link"/, 'no Home link on the path form');
-  assert.match(homeMenu, /rel="canonical" href="https:\/\/main-street\.dialtone\.menu\/menu"/, '/menu is canonical for itself in home mode');
+  assert.match(homeMenu, /rel="canonical" href="https:\/\/main-street\.m\.dialtone\.menu\/menu"/, '/menu is canonical for itself in home mode');
 
   // The phone line tells the customer WHY to call, and shows the number the way
   // they would read it — E.164 is what Telnyx and Stripe need, not what belongs
@@ -347,20 +369,20 @@ async function runSiteSurfaces() {
 
   // --- an unset/unknown mode behaves as menu_only: this feature can only be
   // turned on deliberately.
-  const unknown = await serve(withSite('landing'), 'https://main-street.dialtone.menu/');
+  const unknown = await serve(withSite('landing'), 'https://main-street.m.dialtone.menu/');
   assert.match(unknown, /class="menu-header"/, 'an unknown site_mode falls back to the menu');
 
   // --- a template without its own home surface still gets one.
   const cardsPayload = withSite('home_and_menu');
   cardsPayload.restaurant.menu_template = 'cards';
-  const cardsHome = await serve(cardsPayload, 'https://main-street.dialtone.menu/');
+  const cardsHome = await serve(cardsPayload, 'https://main-street.m.dialtone.menu/');
   assert.match(cardsHome, /class="site-header"/, 'a template with no bespoke home borrows the shared one');
 
   // Each template's MENU carries the Home link, not just Standard's.
   for (const template of ['lacquer', 'cards', 'standard']) {
     const p = withSite('home_and_menu');
     p.restaurant.menu_template = template;
-    const menu = await serve(p, 'https://main-street.dialtone.menu/menu');
+    const menu = await serve(p, 'https://main-street.m.dialtone.menu/menu');
     assert.match(menu, /class="home-link"/, `${template} menu links home`);
   }
 
