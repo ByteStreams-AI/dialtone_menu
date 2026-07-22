@@ -9,7 +9,20 @@ const MENU_CARDS_CSS = `
     *{box-sizing:border-box;} html,body{margin:0;}
     body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
     img{display:block;max-width:100%;}
-    .menu-hero{position:relative;isolation:isolate;min-height:56vw;max-height:340px;overflow:hidden;background:#000;}
+    /* The hero is a PHOTO, so it is sized by aspect ratio and capped by the
+       viewport — not pinned to a fixed pixel band. A fixed band showed a ~42%
+       horizontal slice of a 16:9 photo on a laptop (dialtone#980), which is why
+       the admin used to tell operators to centre their subject and avoid
+       close-ups. The layout adapts instead.
+
+       Height is driven by viewport WIDTH (56.25vw = 16:9 of a full-bleed row)
+       and capped against viewport height, rather than aspect-ratio plus a
+       max-height. (With a ratio set, clamping the height makes the box shrink
+       its WIDTH to preserve the ratio — leaving a black gutter beside the photo
+       on a short window. Measured 838x472 in a 1425px viewport before this
+       note existed.) Careful: this CSS lives inside a JS template literal, so
+       backticks here terminate the string. */
+    .menu-hero{position:relative;isolation:isolate;width:100%;height:min(56.25vw,48vh,520px);overflow:hidden;background:#000;}
     .menu-hero__photo{position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center;}
     /* The photo carries no text now (the identity moved to the brandbar), so
        this is only a soft landing into the page ground — NOT a legibility
@@ -66,10 +79,12 @@ const MENU_CARDS_CSS = `
     footer{border-top:1px solid var(--line);margin-top:2rem;padding:1.2rem 1rem;color:var(--muted);font-size:.8rem;text-align:center;}
     footer a{color:var(--gold);text-decoration:none;}
     @media (min-width:860px){
-      html,body{height:100%;} body{overflow:hidden;}
-      .layout{display:flex;flex-direction:column;height:100vh;}
-      .menu-hero{flex:0 0 auto;height:clamp(240px,34vh,330px);max-height:none;min-height:0;}
-      .content{flex:1;min-height:0;overflow-y:auto;}
+      /* The page scrolls normally on desktop. It used to be a fixed-viewport
+         app shell (body overflow hidden, hero a fixed band, content its own
+         scroll pane) — which is exactly what forced the hero into a strip.
+         The shell existed to keep the controls reachable; the sticky brandbar
+         below does that without costing the photo its shape. */
+      .brandbar{position:sticky;top:0;z-index:5;background:var(--bar);backdrop-filter:blur(8px);}
     }
     @media (max-width:560px){
       .brandbar{gap:1rem;}
