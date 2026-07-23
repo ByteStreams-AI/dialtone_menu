@@ -18,7 +18,7 @@ const MENU_CSS = `
     body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
-    .menu-hero { position: relative; isolation: isolate; color: var(--hero-ink); background: radial-gradient(120% 90% at 82% 8%, var(--hero-glow), transparent 46%), linear-gradient(168deg, var(--hero-a) 0%, var(--hero-b) 46%, transparent 100%); background-color: var(--hero-ground); padding: clamp(3.25rem, 11vh, 6.5rem) 1.5rem clamp(2.5rem, 7vh, 4rem); overflow: hidden; }
+    .menu-hero { position: relative; isolation: isolate; color: var(--hero-ink); background: radial-gradient(120% 90% at 82% 8%, var(--hero-glow), transparent 46%), linear-gradient(168deg, var(--hero-a) 0%, var(--hero-b) 52%, var(--hero-c) 100%); background-color: var(--hero-ground); padding: clamp(3.25rem, 11vh, 6.5rem) 1.5rem clamp(2.5rem, 7vh, 4rem); overflow: hidden; }
     .menu-hero__photo { position: absolute; inset: 0; z-index: -2; background-size: cover; background-position: center; }
     .menu-hero__scrim { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(15, 8, 8, 0.34) 0%, rgba(15, 8, 8, 0.60) 100%); opacity: 0; }
     .menu-hero.has-photo .menu-hero__scrim { opacity: 1; }
@@ -252,7 +252,7 @@ function renderLacquerMenuBody(ctx) {
     // red house reads deep-lacquer red, a teal house deep teal — instead of a
     // fixed warm brown that clashed with cool palettes. Alphas over the neutral
     // near-black --hero-ground keep it dark and legible whatever the hue.
-    `    :root { --brand-primary: ${primaryColor}; --brand-secondary: ${secondaryColor}; --brand-soft: ${hexToRgba(primaryColor, 0.08)}; --font-display: ${fontFamily}; --hero-a: ${hexToRgba(primaryColor, 0.55)}; --hero-b: ${hexToRgba(primaryColor, 0.28)}; --hero-glow: ${hexToRgba(secondaryColor, 0.20)}; }`,
+    `    :root { --brand-primary: ${primaryColor}; --brand-secondary: ${secondaryColor}; --brand-soft: ${hexToRgba(primaryColor, 0.08)}; --font-display: ${fontFamily}; --hero-a: ${hexToRgba(primaryColor, 0.72)}; --hero-b: ${hexToRgba(primaryColor, 0.44)}; --hero-c: ${hexToRgba(primaryColor, 0.20)}; --hero-glow: ${hexToRgba(secondaryColor, 0.22)}; }`,
     MENU_CSS,
     '  </style>',
     '</head>',
@@ -414,11 +414,11 @@ function renderLacquerHomeBody(ctx) {
     '  <style>',
     // Same brand-derived hero as the menu (see the menu :root note) so the home
     // page and the menu it fronts share one coherent palette.
-    `    :root { --brand-primary: ${primaryColor}; --brand-secondary: ${secondaryColor}; --paper: #FBF7F0; --raised: #ffffff; --ink: #211812; --muted: #7A6A5E; --hairline: rgba(33, 24, 18, 0.12); --hero-ground: #121013; --hero-ink: #F6F2EA; --font-display: ${fontFamily}; --maxw: 46rem; --hero-a: ${hexToRgba(primaryColor, 0.55)}; --hero-b: ${hexToRgba(primaryColor, 0.28)}; --hero-glow: ${hexToRgba(secondaryColor, 0.20)}; }`,
+    `    :root { --brand-primary: ${primaryColor}; --brand-secondary: ${secondaryColor}; --paper: #FBF7F0; --raised: #ffffff; --ink: #211812; --muted: #7A6A5E; --hairline: rgba(33, 24, 18, 0.12); --hero-ground: #121013; --hero-ink: #F6F2EA; --font-display: ${fontFamily}; --maxw: 46rem; --hero-a: ${hexToRgba(primaryColor, 0.72)}; --hero-b: ${hexToRgba(primaryColor, 0.44)}; --hero-c: ${hexToRgba(primaryColor, 0.20)}; --hero-glow: ${hexToRgba(secondaryColor, 0.22)}; }`,
     '    * { box-sizing: border-box; }',
     '    body { margin: 0; background: var(--paper); color: var(--ink); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }',
     '    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }',
-    '    .menu-hero { position: relative; isolation: isolate; color: var(--hero-ink); background: radial-gradient(120% 90% at 82% 8%, var(--hero-glow), transparent 46%), linear-gradient(168deg, var(--hero-a) 0%, var(--hero-b) 46%, transparent 100%); background-color: var(--hero-ground); padding: clamp(3.5rem, 12vh, 7rem) 1.5rem clamp(2.75rem, 8vh, 4.5rem); overflow: hidden; }',
+    '    .menu-hero { position: relative; isolation: isolate; color: var(--hero-ink); background: radial-gradient(120% 90% at 82% 8%, var(--hero-glow), transparent 46%), linear-gradient(168deg, var(--hero-a) 0%, var(--hero-b) 52%, var(--hero-c) 100%); background-color: var(--hero-ground); padding: clamp(3.5rem, 12vh, 7rem) 1.5rem clamp(2.75rem, 8vh, 4.5rem); overflow: hidden; }',
     '    .menu-hero__photo { position: absolute; inset: 0; z-index: -2; background-size: cover; background-position: center; }',
     '    .menu-hero__scrim { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(15, 8, 8, 0.42) 0%, rgba(15, 8, 8, 0.68) 100%); opacity: 0; }',
     '    .menu-hero.has-photo .menu-hero__scrim { opacity: 1; }',
