@@ -2,7 +2,7 @@
 // Body + CSS + item/section renderers, extracted verbatim from worker.js.
 import {
   escapeHtml, normalizeText, normalizeCents, formatCurrency, hexToRgba,
-  safeLogoUrl, isValidServingTime, formatServingRange, renderAppQr
+  safeLogoUrl, isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay
 } from './shared.js';
 
 const MENU_CARDS_CSS = `
@@ -256,4 +256,140 @@ function renderCardsMenuBody(ctx) {
     '</html>'
   ].filter(Boolean).join('\n');
 }
-export const cards = { id: 'cards', label: 'Cards', render: renderCardsMenuBody };
+export const cards = {
+  id: 'cards',
+  label: 'Cards',
+  render: renderCardsMenuBody,
+  renderHome: renderCardsHomeBody
+};
+
+// ---------------------------------------------------------------------------
+// Home surface (#986 Phase 2b)
+// ---------------------------------------------------------------------------
+// Cards' home page in Cards' own vocabulary: dark ground, gold accents, and the
+// photography doing the work. It borrowed Standard's light card-list home until
+// now, which gave a photo-forward restaurant a home page that looked like a
+// different product.
+//
+// The gallery is the centrepiece here rather than a footnote — that is the
+// whole proposition of this template — and everything degrades to absence when
+// the operator has not filled it in yet.
+function renderCardsHomeBody(ctx) {
+  const { site, logoUrl, wordmark, websiteUrl, tagline, heroImageUrl, pageTitle,
+    pageDescription, fontHref, primaryColor, secondaryColor, fontFamily,
+    canonicalUrl, menuUrl } = ctx;
+
+  const galleryMarkup = site.gallery.length
+    ? `  <section class="shots">${site.gallery
+        .map((url, i) => `<img src="${escapeHtml(url)}" alt="${escapeHtml(wordmark)} photo ${i + 1}" loading="lazy">`)
+        .join('')}</section>`
+    : '';
+
+  const hoursMarkup = site.hours.length
+    ? `    <section class="panel"><h2>Hours</h2><dl class="hours">${site.hours
+        .map(
+          (h) =>
+            `<div><dt>${escapeHtml(h.label)}</dt><dd>${
+              h.isClosed ? 'Closed' : `${escapeHtml(h.open)} – ${escapeHtml(h.close)}`
+            }</dd></div>`
+        )
+        .join('')}</dl></section>`
+    : '';
+
+  const findUsBits = [
+    site.address ? `<p class="line">${escapeHtml(site.address)}</p>` : '',
+    site.phone
+      ? `<p class="line call">To place an order or make a reservation<br><a class="phone" href="tel:${escapeHtml(site.phone)}">${escapeHtml(formatPhoneForDisplay(site.phone))}</a></p>`
+      : '',
+    websiteUrl
+      ? `<p class="line"><a href="${escapeHtml(websiteUrl)}" target="_blank" rel="noopener noreferrer">Visit our site</a></p>`
+      : ''
+  ].filter(Boolean).join('');
+  const findUsMarkup = findUsBits ? `    <section class="panel"><h2>Find us</h2>${findUsBits}</section>` : '';
+
+  const socialMarkup = site.socials.length
+    ? `  <nav class="socials" aria-label="Social links">${site.socials
+        .map((s) => `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(s.label)}</a>`)
+        .join('')}</nav>`
+    : '';
+
+  const storyMarkup =
+    site.storyHeadline || site.storyBody
+      ? `  <section class="story">${
+          site.storyHeadline ? `<h1>${escapeHtml(site.storyHeadline)}</h1>` : ''
+        }${site.storyBody ? `<p>${escapeHtml(site.storyBody)}</p>` : ''}</section>`
+      : '';
+
+  return [
+    '<!doctype html>',
+    '<html lang="en">',
+    '<head>',
+    '  <meta charset="utf-8">',
+    '  <meta name="viewport" content="width=device-width, initial-scale=1">',
+    `  <title>${escapeHtml(pageTitle)}</title>`,
+    `  <meta name="description" content="${escapeHtml(pageDescription)}">`,
+    '  <meta name="robots" content="index,follow">',
+    canonicalUrl ? `  <link rel="canonical" href="${escapeHtml(canonicalUrl)}">` : '',
+    `  <meta property="og:title" content="${escapeHtml(pageTitle)}">`,
+    `  <meta property="og:description" content="${escapeHtml(pageDescription)}">`,
+    '  <meta property="og:type" content="website">',
+    canonicalUrl ? `  <meta property="og:url" content="${escapeHtml(canonicalUrl)}">` : '',
+    `  <meta property="og:image" content="${escapeHtml(heroImageUrl || site.gallery[0] || logoUrl || 'https://dialtone.menu/images/dialtone-banner.png')}">`,
+    '  <meta name="twitter:card" content="summary_large_image">',
+    fontHref ? '  <link rel="preconnect" href="https://fonts.googleapis.com">' : '',
+    fontHref ? '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' : '',
+    fontHref ? `  <link rel="stylesheet" href="${escapeHtml(fontHref)}">` : '',
+    '  <style>',
+    `    :root{--primary:${primaryColor};--gold:${secondaryColor};--font-display:${fontFamily};--bg:#121110;--card:#1c1a18;--ink:#f4efe8;--muted:#a49a8f;--line:rgba(255,255,255,.09);}`,
+    '    *{box-sizing:border-box;}',
+    '    body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.6;}',
+    // Same sizing rule as the menu hero (dialtone#980): driven by viewport WIDTH
+    // so it keeps its shape, capped so it never swallows the page.
+    '    .hero{position:relative;width:100%;height:min(56.25vw,52vh,560px);overflow:hidden;background:#000 center/cover no-repeat;}',
+    '    .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(18,17,16,.85) 100%);}',
+    '    .brandbar{position:relative;display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;max-width:1120px;margin:0 auto;padding:1.25rem 1rem;}',
+    '    .brandbar.on-hero{margin-top:-5.5rem;z-index:2;}',
+    '    .brand-logo{width:88px;height:88px;object-fit:contain;border-radius:16px;background:rgba(255,255,255,.92);padding:8px;box-shadow:0 4px 16px rgba(0,0,0,.4);flex:0 0 auto;}',
+    '    .brand-wordmark{font-family:var(--font-display);font-weight:800;font-size:clamp(1.5rem,4vw,2rem);line-height:1.1;margin:0;color:var(--gold);}',
+    '    .tagline{margin:.2rem 0 0;color:#ece3d7;}',
+    '    .menu-cta{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:800;padding:.85rem 1.6rem;border-radius:999px;background:var(--primary);color:#fff;white-space:nowrap;}',
+    '    main{max-width:1120px;margin:0 auto;padding:1rem 1rem 3rem;display:grid;gap:1.5rem;}',
+    '    .story{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.6rem;}',
+    '    .story h1{font-family:var(--font-display);font-weight:800;font-size:clamp(1.6rem,4vw,2.2rem);margin:0 0 .6rem;color:var(--gold);line-height:1.15;}',
+    '    .story p{margin:0;color:var(--muted);font-size:1.05rem;white-space:pre-line;}',
+    '    .shots{display:grid;gap:.8rem;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));}',
+    '    .shots img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;display:block;}',
+    '    .panels{display:grid;gap:1.5rem;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));}',
+    '    .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.4rem;}',
+    '    .panel h2{margin:0 0 .7rem;font-size:1rem;color:var(--gold);font-family:var(--font-display);}',
+    '    .hours{margin:0;display:grid;gap:.25rem;}',
+    '    .hours div{display:flex;justify-content:space-between;gap:1rem;color:var(--muted);}',
+    '    .hours dt{font-weight:600;}',
+    '    .hours dd{margin:0;font-variant-numeric:tabular-nums;}',
+    '    .line{margin:0 0 .4rem;color:var(--muted);}',
+    '    .line a{color:var(--gold);}',
+    '    .call{margin-top:.7rem;}',
+    '    .phone{font-size:1.15rem;font-weight:800;text-decoration:none;}',
+    '    .socials{display:flex;flex-wrap:wrap;gap:.5rem;}',
+    '    .socials a{text-decoration:none;font-weight:700;font-size:.9rem;color:var(--gold);border:1px solid var(--gold);border-radius:999px;padding:.5rem 1.1rem;}',
+    '    @media (max-width:560px){.menu-cta{margin-left:0;width:100%;}.brandbar.on-hero{margin-top:-3rem;}}',
+    '  </style>',
+    '</head>',
+    '<body>',
+    heroImageUrl ? `  <header class="hero" style="background-image: url('${escapeHtml(heroImageUrl)}')"></header>` : '',
+    `  <div class="brandbar${heroImageUrl ? ' on-hero' : ''}">`,
+    logoUrl
+      ? `    <img class="brand-logo" src="${escapeHtml(logoUrl)}" alt="${escapeHtml(wordmark)} logo"><div><h1 class="brand-wordmark">${escapeHtml(wordmark)}</h1>${tagline ? `<p class="tagline">${escapeHtml(tagline)}</p>` : ''}</div>`
+      : `    <div><h1 class="brand-wordmark">${escapeHtml(wordmark)}</h1>${tagline ? `<p class="tagline">${escapeHtml(tagline)}</p>` : ''}</div>`,
+    `    <a class="menu-cta" href="${escapeHtml(menuUrl || '/menu')}">View the menu</a>`,
+    '  </div>',
+    '  <main>',
+    storyMarkup,
+    galleryMarkup,
+    hoursMarkup || findUsMarkup ? `  <div class="panels">${hoursMarkup}${findUsMarkup}</div>` : '',
+    socialMarkup,
+    '  </main>',
+    '</body>',
+    '</html>'
+  ].filter(Boolean).join('\n');
+}

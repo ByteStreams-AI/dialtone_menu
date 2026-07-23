@@ -4,7 +4,7 @@
 // stays the default the registry falls back to.
 import {
   escapeHtml, normalizeText, normalizeCents, formatCurrency, hexToRgba,
-  isValidServingTime, formatServingRange, renderAppQr
+  isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay
 } from './shared.js';
 
 const MENU_CSS = `
@@ -300,4 +300,168 @@ function renderLacquerMenuBody(ctx) {
   return body;
 }
 
-export const lacquer = { id: 'lacquer', label: 'Lacquer', render: renderLacquerMenuBody };
+export const lacquer = {
+  id: 'lacquer',
+  label: 'Lacquer',
+  render: renderLacquerMenuBody,
+  renderHome: renderLacquerHomeBody
+};
+
+// ---------------------------------------------------------------------------
+// Home surface (#986 Phase 2b)
+// ---------------------------------------------------------------------------
+// Editorial's home page, in Editorial's own vocabulary: the lacquer hero band
+// carries the identity, the story is set as a column on paper, and everything
+// else is quiet. It borrowed Standard's home until now, which meant a
+// restaurant that chose the dark editorial menu got a light card-list home —
+// one site, two designs.
+//
+// Everything degrades to absence, because the mode can be enabled before
+// anything is written. The menu CTA is the one constant: even an empty home
+// page must be a working route to the menu.
+function renderLacquerHomeBody(ctx) {
+  const {
+    site, logoUrl, wordmark, websiteUrl, tagline, heroImageUrl, pageTitle,
+    pageDescription, fontHref, primaryColor, secondaryColor, fontFamily,
+    canonicalUrl, menuUrl
+  } = ctx;
+
+  const brandMarkMarkup = logoUrl
+    ? `<img class="brand-logo" src="${escapeHtml(logoUrl)}" alt="${escapeHtml(wordmark)} logo"><h1 class="brand-wordmark sr-only">${escapeHtml(wordmark)}</h1>`
+    : `<h1 class="brand-wordmark">${escapeHtml(wordmark)}</h1>`;
+
+  const galleryMarkup = site.gallery.length
+    ? `  <section class="home-gallery">${site.gallery
+        .map(
+          (url, i) =>
+            `<figure class="home-shot"><img src="${escapeHtml(url)}" alt="${escapeHtml(wordmark)} photo ${i + 1}" loading="lazy"></figure>`
+        )
+        .join('')}</section>`
+    : '';
+
+  const hoursMarkup = site.hours.length
+    ? `    <section class="home-panel">
+      <h2 class="panel-title">Hours</h2>
+      <dl class="hours">${site.hours
+        .map(
+          (h) =>
+            `<div class="hours-row"><dt>${escapeHtml(h.label)}</dt><dd>${
+              h.isClosed ? 'Closed' : `${escapeHtml(h.open)} – ${escapeHtml(h.close)}`
+            }</dd></div>`
+        )
+        .join('')}</dl>
+    </section>`
+    : '';
+
+  const findUsBits = [
+    site.address ? `<p class="panel-line">${escapeHtml(site.address)}</p>` : '',
+    site.phone
+      ? `<p class="panel-line panel-call">To place an order or make a reservation<br>` +
+        `<a class="panel-phone" href="tel:${escapeHtml(site.phone)}">${escapeHtml(formatPhoneForDisplay(site.phone))}</a></p>`
+      : '',
+    websiteUrl
+      ? `<p class="panel-line"><a href="${escapeHtml(websiteUrl)}" target="_blank" rel="noopener noreferrer">Visit our site</a></p>`
+      : ''
+  ].filter(Boolean).join('');
+
+  const findUsMarkup = findUsBits
+    ? `    <section class="home-panel"><h2 class="panel-title">Find us</h2>${findUsBits}</section>`
+    : '';
+
+  const socialMarkup = site.socials.length
+    ? `  <nav class="home-socials" aria-label="Social links">${site.socials
+        .map(
+          (s) =>
+            `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(s.label)}</a>`
+        )
+        .join('')}</nav>`
+    : '';
+
+  const storyMarkup =
+    site.storyHeadline || site.storyBody
+      ? `  <section class="home-story">
+    ${site.storyHeadline ? `<h2 class="story-headline">${escapeHtml(site.storyHeadline)}</h2>` : ''}
+    ${site.storyBody ? `<p class="story-body">${escapeHtml(site.storyBody)}</p>` : ''}
+  </section>`
+      : '';
+
+  return [
+    '<!doctype html>',
+    '<html lang="en">',
+    '<head>',
+    '  <meta charset="utf-8">',
+    '  <meta name="viewport" content="width=device-width, initial-scale=1">',
+    `  <title>${escapeHtml(pageTitle)}</title>`,
+    `  <meta name="description" content="${escapeHtml(pageDescription)}">`,
+    '  <meta name="robots" content="index,follow">',
+    canonicalUrl ? `  <link rel="canonical" href="${escapeHtml(canonicalUrl)}">` : '',
+    `  <meta property="og:title" content="${escapeHtml(pageTitle)}">`,
+    `  <meta property="og:description" content="${escapeHtml(pageDescription)}">`,
+    '  <meta property="og:type" content="website">',
+    canonicalUrl ? `  <meta property="og:url" content="${escapeHtml(canonicalUrl)}">` : '',
+    `  <meta property="og:image" content="${escapeHtml(
+      heroImageUrl || site.gallery[0] || logoUrl || 'https://dialtone.menu/images/dialtone-banner.png'
+    )}">`,
+    '  <meta name="twitter:card" content="summary_large_image">',
+    fontHref ? '  <link rel="preconnect" href="https://fonts.googleapis.com">' : '',
+    fontHref ? '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' : '',
+    fontHref ? `  <link rel="stylesheet" href="${escapeHtml(fontHref)}">` : '',
+    '  <style>',
+    `    :root { --brand-primary: ${primaryColor}; --brand-secondary: ${secondaryColor}; --paper: #FBF7F0; --raised: #ffffff; --ink: #211812; --muted: #7A6A5E; --hairline: rgba(33, 24, 18, 0.12); --hero-ground: #17100F; --hero-ink: #FBF3E6; --font-display: ${fontFamily}; --maxw: 46rem; }`,
+    '    * { box-sizing: border-box; }',
+    '    body { margin: 0; background: var(--paper); color: var(--ink); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }',
+    '    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }',
+    '    .menu-hero { position: relative; isolation: isolate; color: var(--hero-ink); background: radial-gradient(120% 90% at 82% 8%, rgba(245, 193, 74, 0.18), transparent 46%), linear-gradient(168deg, #3A0C0C 0%, #200A0A 48%, var(--hero-ground) 100%); background-color: var(--hero-ground); padding: clamp(3.5rem, 12vh, 7rem) 1.5rem clamp(2.75rem, 8vh, 4.5rem); overflow: hidden; }',
+    '    .menu-hero__photo { position: absolute; inset: 0; z-index: -2; background-size: cover; background-position: center; }',
+    '    .menu-hero__scrim { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(15, 8, 8, 0.42) 0%, rgba(15, 8, 8, 0.68) 100%); opacity: 0; }',
+    '    .menu-hero.has-photo .menu-hero__scrim { opacity: 1; }',
+    '    .menu-hero__inner { max-width: var(--maxw); margin: 0 auto; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.8rem; }',
+    '    .brand-logo { max-height: 104px; max-width: min(62vw, 280px); width: auto; object-fit: contain; }',
+    '    .brand-wordmark { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(2.4rem, 7.5vw, 4.2rem); line-height: 0.98; color: var(--hero-ink); text-wrap: balance; }',
+    '    .hero-rule { width: 3rem; height: 2px; border: 0; margin: 0.3rem 0 0; background: var(--brand-secondary); }',
+    '    .tagline { margin: 0.1rem 0 0; color: rgba(251, 243, 230, 0.82); font-size: clamp(1rem, 2.4vw, 1.15rem); font-style: italic; font-family: var(--font-display); }',
+    '    .hero-actions { margin-top: 1.5rem; display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }',
+    '    .menu-cta { display: inline-flex; align-items: center; text-decoration: none; font-weight: 700; font-size: 1rem; padding: 0.8rem 1.6rem; border-radius: 999px; background: var(--brand-secondary); color: #241206; }',
+    '    main { max-width: var(--maxw); margin: 0 auto; padding: clamp(2rem, 6vh, 3.5rem) 1.5rem 4rem; display: grid; gap: clamp(2rem, 6vh, 3rem); }',
+    '    .home-story { text-align: center; }',
+    '    .story-headline { margin: 0 0 0.75rem; font-family: var(--font-display); font-weight: 800; font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.12; color: var(--ink); text-wrap: balance; }',
+    '    .story-body { margin: 0; color: var(--muted); font-size: 1.08rem; line-height: 1.8; white-space: pre-line; text-align: left; }',
+    '    .home-gallery { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }',
+    '    .home-shot { margin: 0; }',
+    '    .home-shot img { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 2px; }',
+    '    .home-panels { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); border-top: 1px solid var(--hairline); padding-top: clamp(1.5rem, 4vh, 2.25rem); }',
+    '    .panel-title { margin: 0 0 0.6rem; font-family: var(--font-display); font-size: 1.05rem; letter-spacing: 0.02em; color: var(--ink); }',
+    '    .hours { margin: 0; display: grid; gap: 0.3rem; }',
+    '    .hours-row { display: flex; justify-content: space-between; gap: 1rem; color: var(--muted); }',
+    '    .hours-row dt { font-weight: 600; }',
+    '    .hours-row dd { margin: 0; font-variant-numeric: tabular-nums; }',
+    '    .panel-line { margin: 0 0 0.4rem; color: var(--muted); }',
+    '    .panel-line a { color: var(--ink); }',
+    '    .panel-call { margin-top: 0.7rem; }',
+    '    .panel-phone { font-size: 1.15rem; font-weight: 700; text-decoration: none; }',
+    '    .home-socials { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }',
+    '    .home-socials a { text-decoration: none; font-weight: 700; font-size: 0.9rem; color: var(--ink); border: 1px solid var(--hairline); border-radius: 999px; padding: 0.5rem 1.1rem; }',
+    '  </style>',
+    '</head>',
+    '<body>',
+    `  <header class="menu-hero${heroImageUrl ? ' has-photo' : ''}">`,
+    heroImageUrl ? `    <div class="menu-hero__photo" style="background-image: url('${escapeHtml(heroImageUrl)}')"></div>` : '',
+    '    <div class="menu-hero__scrim"></div>',
+    '    <div class="menu-hero__inner">',
+    `      ${brandMarkMarkup}`,
+    '      <hr class="hero-rule">',
+    tagline ? `      <p class="tagline">${escapeHtml(tagline)}</p>` : '',
+    // Always present: the emptiest home page is still a route to the menu.
+    `      <div class="hero-actions"><a class="menu-cta" href="${escapeHtml(menuUrl || '/menu')}">View the menu</a></div>`,
+    '    </div>',
+    '  </header>',
+    '  <main>',
+    storyMarkup,
+    galleryMarkup,
+    hoursMarkup || findUsMarkup ? `  <div class="home-panels">${hoursMarkup}${findUsMarkup}</div>` : '',
+    socialMarkup,
+    '  </main>',
+    '</body>',
+    '</html>'
+  ].filter(Boolean).join('\n');
+}

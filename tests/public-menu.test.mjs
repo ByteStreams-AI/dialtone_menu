@@ -372,11 +372,31 @@ async function runSiteSurfaces() {
   const unknown = await serve(withSite('landing'), 'https://main-street.m.dialtone.menu/');
   assert.match(unknown, /class="menu-header"/, 'an unknown site_mode falls back to the menu');
 
-  // --- a template without its own home surface still gets one.
-  const cardsPayload = withSite('home_and_menu');
-  cardsPayload.restaurant.menu_template = 'cards';
-  const cardsHome = await serve(cardsPayload, 'https://main-street.m.dialtone.menu/');
-  assert.match(cardsHome, /class="site-header"/, 'a template with no bespoke home borrows the shared one');
+  // --- every template renders its OWN home surface (#986 Phase 2b). They all
+  // borrowed Standard's until now, which gave an Editorial restaurant a light
+  // card-list home page — one site, two designs.
+  const homeSignatures = {
+    lacquer: /class="menu-hero/,      // the lacquer band, not a header card
+    cards: /class="brandbar/,          // identity over the photo
+    standard: /class="site-header"/    // the white header card
+  };
+  for (const [template, signature] of Object.entries(homeSignatures)) {
+    const p = withSite('home_and_menu');
+    p.restaurant.menu_template = template;
+    const home = await serve(p, 'https://main-street.m.dialtone.menu/');
+    assert.match(home, signature, `${template} renders its own home surface`);
+    assert.match(home, /View the menu/, `${template} home always links to the menu`);
+    assert.match(home, /Fire, salt, time/, `${template} home renders the story`);
+    assert.match(home, /restaurant-gallery\/r1\/a\.webp/, `${template} home renders the gallery`);
+    assert.match(home, /11:00 AM/, `${template} home renders hours from the admin`);
+  }
+
+  // An unknown template id falls back to the default template's home rather
+  // than rendering nothing.
+  const unknownHome = withSite('home_and_menu');
+  unknownHome.restaurant.menu_template = 'no-such-template';
+  const fallbackHome = await serve(unknownHome, 'https://main-street.m.dialtone.menu/');
+  assert.match(fallbackHome, homeSignatures.lacquer, 'an unknown template falls back to the default home');
 
   // Each template's MENU carries the Home link, not just Standard's.
   for (const template of ['lacquer', 'cards', 'standard']) {
