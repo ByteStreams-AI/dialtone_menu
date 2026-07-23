@@ -1,0 +1,204 @@
+/* ============================================================================
+   DialTone.Menu — shared stylesheet
+   Design tokens + base + nav (with Features dropdown) + buttons + footer +
+   the feature-page and features-hub components. Linked by the /features hub
+   and every /features/<slug>.html sub-page so they stay one system.
+   Values mirror the original index.html inline design system.
+   ========================================================================== */
+
+:root {
+  --navy:  #06234B;
+  --navy2: #0A3260;
+  --blue:  #1155CC;
+  --blue2: #2271E8;
+  --gold:  #E8A020;
+  --gold2: #F5C14A;
+  --cream: #FAF7F2;
+  --warm:  #F2EDE4;
+  --text:  #1A1A2E;
+  --muted: #6B7280;
+  --white: #FFFFFF;
+  --r:     12px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+img, video { max-width: 100%; height: auto; display: block; }
+
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+h1, h2, h3 { font-family: 'Playfair Display', serif; color: var(--navy); line-height: 1.1; margin: 0 0 0.5em; }
+h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: 900; }
+h2 { font-size: clamp(1.7rem, 3.5vw, 2.5rem); font-weight: 700; }
+h3 { font-size: 1.25rem; font-weight: 700; }
+p  { margin: 0 0 1rem; }
+a  { color: var(--blue); }
+
+.eyebrow {
+  display: inline-block;
+  font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.15em; color: var(--gold);
+  margin-bottom: 0.75rem;
+}
+.lead { font-size: 1.15rem; color: var(--text); }
+.muted { color: var(--muted); }
+
+/* ── NAV (with Features dropdown) ─────────────────────────────────────────── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 18px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(250,247,242,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(6,35,75,0.08);
+}
+.nav-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.35rem; font-weight: 900; color: var(--navy);
+  letter-spacing: -0.5px; text-decoration: none;
+}
+.nav-logo span { color: var(--gold); }
+.nav-right { display: inline-flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 1rem; }
+.nav-link {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.15em; color: var(--navy); text-decoration: none;
+  transition: color 0.2s; background: none; border: none; cursor: pointer;
+}
+.nav-link:hover { color: var(--blue); }
+
+/* Features dropdown — pure CSS, real <a> links in the markup so Googlebot
+   crawls every sub-page without executing JS. Opens on hover and on
+   keyboard focus-within for accessibility. */
+.nav-dropdown { position: relative; }
+.nav-dropdown > .nav-link::after { content: ' ▾'; font-size: 0.85em; }
+.nav-menu {
+  position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%) translateY(6px);
+  min-width: 230px; padding: 8px;
+  background: var(--white); border: 1px solid rgba(6,35,75,0.10);
+  border-radius: var(--r); box-shadow: 0 18px 40px rgba(6,35,75,0.14);
+  opacity: 0; visibility: hidden; transition: opacity 0.18s, transform 0.18s;
+  display: grid; gap: 2px;
+}
+.nav-dropdown:hover .nav-menu,
+.nav-dropdown:focus-within .nav-menu {
+  opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0);
+}
+.nav-menu a {
+  display: block; padding: 9px 12px; border-radius: 8px;
+  font-size: 0.9rem; font-weight: 500; color: var(--navy); text-decoration: none;
+  white-space: nowrap; transition: background 0.15s, color 0.15s;
+}
+.nav-menu a:hover, .nav-menu a:focus { background: var(--warm); color: var(--blue); }
+
+/* ── BUTTONS ──────────────────────────────────────────────────────────────── */
+.btn-primary, .btn-gold {
+  display: inline-block; font-family: 'DM Sans', sans-serif; font-weight: 600;
+  border-radius: var(--r); border: none; cursor: pointer;
+  text-decoration: none; white-space: nowrap; transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.btn-primary { background: var(--navy); color: var(--white); font-size: 0.9rem; padding: 14px 24px; }
+.btn-primary:hover { background: var(--navy2); transform: translateY(-1px); box-shadow: 0 8px 22px rgba(6,35,75,0.22); }
+.btn-gold { background: var(--gold); color: var(--navy); font-size: 0.9rem; font-weight: 700; padding: 16px 28px; }
+.btn-gold:hover { background: var(--gold2); transform: translateY(-1px); box-shadow: 0 8px 22px rgba(232,160,32,0.30); }
+
+/* ── FEATURE PAGE — hero ──────────────────────────────────────────────────── */
+.feature-hero { padding: 150px 0 60px; }
+.feature-hero .container { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center; }
+.feature-hero .lead { margin-bottom: 1.5rem; }
+.feature-hero-media {
+  border-radius: 16px; overflow: hidden;
+  border: 1px solid rgba(6,35,75,0.10); box-shadow: 0 24px 60px rgba(6,35,75,0.16);
+  background: var(--white);
+}
+.feature-hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+
+/* Breadcrumb */
+.crumb { font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; }
+.crumb a { color: var(--muted); text-decoration: none; }
+.crumb a:hover { color: var(--blue); }
+
+/* ── FEATURE PAGE — alternating detail rows ───────────────────────────────── */
+.feature-row { padding: 56px 0; border-top: 1px solid rgba(6,35,75,0.07); }
+.feature-row .container { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+.feature-row.reverse .feature-row-media { order: -1; }
+.feature-row-media {
+  border-radius: 16px; overflow: hidden;
+  border: 1px solid rgba(6,35,75,0.10); box-shadow: 0 18px 44px rgba(6,35,75,0.12);
+  background: var(--white);
+}
+.feature-list { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: 12px; }
+.feature-list li { position: relative; padding-left: 28px; }
+.feature-list li::before {
+  content: '✓'; position: absolute; left: 0; top: 0;
+  color: var(--gold); font-weight: 800;
+}
+
+/* ── FEATURES HUB — card grid ─────────────────────────────────────────────── */
+.hub-hero { padding: 150px 0 40px; text-align: center; }
+.hub-hero .lead { max-width: 720px; margin: 0 auto 1.5rem; }
+.card-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  padding: 20px 0 72px;
+}
+.feature-card {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 24px; border-radius: 16px; text-decoration: none;
+  background: var(--white); border: 1px solid rgba(6,35,75,0.09);
+  box-shadow: 0 6px 20px rgba(6,35,75,0.06);
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+  color: var(--text);
+}
+.feature-card:hover { transform: translateY(-3px); box-shadow: 0 18px 40px rgba(6,35,75,0.14); border-color: rgba(17,85,204,0.35); }
+.feature-card .card-icon { font-size: 1.6rem; }
+.feature-card h3 { margin: 0; }
+.feature-card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+.feature-card .card-more { margin-top: auto; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--blue); }
+
+/* Media placeholder — for pages awaiting a real screenshot / video capture. */
+.media-placeholder {
+  display: grid; place-content: center; text-align: center; gap: 8px;
+  min-height: 260px; padding: 32px;
+  border-radius: 16px; border: 1px dashed rgba(6,35,75,0.22);
+  background: linear-gradient(135deg, var(--warm), var(--cream));
+  color: var(--muted); box-shadow: none;
+}
+.media-placeholder .ph-icon { font-size: 2rem; }
+.media-placeholder .ph-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; }
+
+/* ── CTA band ─────────────────────────────────────────────────────────────── */
+.cta-band { background: var(--navy); color: var(--white); text-align: center; padding: 72px 0; }
+.cta-band h2 { color: var(--white); }
+.cta-band p { color: rgba(255,255,255,0.82); max-width: 560px; margin: 0 auto 1.5rem; }
+
+/* ── FOOTER ───────────────────────────────────────────────────────────────── */
+footer { background: var(--navy); color: rgba(255,255,255,0.72); padding: 48px 24px; text-align: center; }
+.footer-logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 900; color: var(--white); margin-bottom: 12px; }
+.footer-logo span { color: var(--gold); }
+.footer-links { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+.footer-links a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9rem; }
+.footer-links a:hover { color: var(--gold2); }
+.footer-copy { font-size: 0.78rem; color: rgba(255,255,255,0.5); }
+
+/* ── RESPONSIVE ───────────────────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .feature-hero .container,
+  .feature-row .container { grid-template-columns: 1fr; }
+  .feature-row.reverse .feature-row-media { order: 0; }
+  .card-grid { grid-template-columns: 1fr 1fr; }
+  .nav-menu { left: auto; right: 0; transform: translateY(6px); }
+  .nav-dropdown:hover .nav-menu, .nav-dropdown:focus-within .nav-menu { transform: translateY(0); }
+}
+@media (max-width: 560px) {
+  .card-grid { grid-template-columns: 1fr; }
+  .nav-link { font-size: 0.64rem; letter-spacing: 0.12em; }
+  .feature-hero { padding: 130px 0 40px; }
+}
