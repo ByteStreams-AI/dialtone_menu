@@ -413,16 +413,30 @@ function buildMenuSuccessResponse(payload, slug, url, surfaceHint = 'auto', env 
 function buildSurfaceLinks(url, slug) {
   const onBrandedHost = extractMenuSlugFromHost(url.hostname) !== null;
   const origin = `${url.protocol}//${url.host}`;
+  const branded = brandedOrigin(slug);
   return onBrandedHost
-    ? { homeUrl: `${origin}/`, menuUrl: `${origin}/menu`, pathForm: false }
+    ? { homeUrl: `${origin}/`, menuUrl: `${origin}/menu`, pathForm: false, branded }
     : {
         // No home link on the legacy path form: /m/<slug> is always the menu,
         // and sending a visitor to a different host mid-session is more than a
         // nav link should do. The branded host is where the site lives.
         homeUrl: '',
         menuUrl: `${origin}/m/${encodeURIComponent(slug)}`,
-        pathForm: true
+        pathForm: true,
+        branded
       };
+}
+
+/**
+ * `https://<slug>.m.dialtone.menu`, or null when the slug can't be a DNS label.
+ *
+ * Slugs are constrained upstream, but a canonical pointing at an unresolvable
+ * host is worse than no canonical at all, so this refuses rather than guesses.
+ */
+function brandedOrigin(slug) {
+  const label = String(slug || '').toLowerCase();
+  if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label)) return null;
+  return `https://${label}${MENU_HOST_SUFFIX}`;
 }
 
 /**
@@ -432,14 +446,24 @@ function buildSurfaceLinks(url, slug) {
  * the root — the address the operator promotes. In home_and_menu each surface
  * is canonical for itself.
  *
- * The design doc also says /m/<slug> should canonicalize to its branded
- * equivalent. That is deliberately NOT done yet: `<slug>.m.dialtone.menu` needs
- * a cert, a DNS record and a route first (#991), and pointing a canonical at a
- * host that doesn't resolve is worse than pointing at the working URL.
- * Self-canonical until it does.
+ * `/m/<slug>` canonicalizes to the BRANDED host (#991), so the two URLs that
+ * serve identical HTML consolidate into one page in search results — under the
+ * restaurant's own address, which is the one worth ranking. The path form keeps
+ * working forever regardless; this only decides which URL search engines show.
+ *
+ * Which branded surface depends on the mode, because the path form is always
+ * the menu: in menu_only the branded root IS the menu, so it canonicalizes
+ * there; in home_and_menu the equivalent page is /menu.
+ *
+ * Falls back to self-canonical if the slug can't form a hostname — pointing at
+ * a host that doesn't resolve is worse than pointing at the working URL, which
+ * is why this stayed self-canonical until the host was live and verified.
  */
 function canonicalFor(links, surface, homeEnabled) {
-  if (links.pathForm) return links.menuUrl;
+  if (links.pathForm) {
+    if (!links.branded) return links.menuUrl;
+    return homeEnabled ? `${links.branded}/menu` : `${links.branded}/`;
+  }
   if (!homeEnabled) return links.homeUrl; // root owns both copies of the menu
   return surface === 'home' ? links.homeUrl : links.menuUrl;
 }
