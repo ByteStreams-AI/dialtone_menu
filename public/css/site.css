@@ -88,6 +88,12 @@ nav {
   opacity: 0; visibility: hidden; transition: opacity 0.18s, transform 0.18s;
   display: grid; gap: 2px;
 }
+/* Invisible bridge across the 10px gap above the menu so the pointer stays
+   "inside" the dropdown while travelling from the trigger down to the items —
+   otherwise the gap drops :hover and the menu closes before you reach a link. */
+.nav-menu::before {
+  content: ''; position: absolute; left: 0; right: 0; top: -12px; height: 12px;
+}
 .nav-dropdown:hover .nav-menu,
 .nav-dropdown:focus-within .nav-menu {
   opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0);
@@ -114,10 +120,43 @@ nav {
 .feature-hero { padding: 150px 0 60px; }
 .feature-hero .container { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center; }
 .feature-hero .lead { margin-bottom: 1.5rem; }
+.feature-hero.feature-hero-centered .container {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  text-align: center;
+  max-width: 760px;
+}
+.feature-hero.feature-hero-centered .crumb { width: 100%; }
+.feature-hero.feature-hero-centered .lead {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
 .feature-hero-media {
   border-radius: 16px; overflow: hidden;
   border: 1px solid rgba(6,35,75,0.10); box-shadow: 0 24px 60px rgba(6,35,75,0.16);
   background: var(--white);
+}
+/* Portrait phone screenshot / video — no card frame; sits on the page, top-aligned to the heading. */
+.feature-hero-media.is-phone,
+.feature-row-media.is-phone {
+  display: grid; place-content: center; align-self: start;
+  padding: 0; background: none; border: none; box-shadow: none;
+}
+.is-phone img,
+.is-phone video {
+  max-height: 520px; width: auto; border-radius: 22px;
+  box-shadow: 0 24px 60px rgba(6,35,75,0.18);
+}
+/* Clickable image links in feature pages — no underline, preserve image styling */
+.feature-hero-media a[target="_blank"],
+.feature-row-media a[target="_blank"] {
+  display: block; line-height: 0; cursor: zoom-in;
+  text-decoration: none;
+}
+/* Hero only: drop the phone media past the breadcrumb + eyebrow so its top meets the H1. */
+@media (min-width: 861px) {
+  .feature-hero-media.is-phone { margin-top: 4.2rem; }
 }
 .feature-hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
 
@@ -175,12 +214,12 @@ nav {
 .media-placeholder .ph-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; }
 
 /* ── CTA band ─────────────────────────────────────────────────────────────── */
-.cta-band { background: var(--navy); color: var(--white); text-align: center; padding: 72px 0; }
+.cta-band { background: var(--navy); color: var(--white); text-align: center; padding: 72px 0 40px; }
 .cta-band h2 { color: var(--white); }
 .cta-band p { color: rgba(255,255,255,0.82); max-width: 560px; margin: 0 auto 1.5rem; }
 
 /* ── FOOTER ───────────────────────────────────────────────────────────────── */
-footer { background: var(--navy); color: rgba(255,255,255,0.72); padding: 48px 24px; text-align: center; }
+footer { background: var(--navy); color: rgba(255,255,255,0.72); padding: 28px 24px 48px; text-align: center; }
 .footer-logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 900; color: var(--white); margin-bottom: 12px; }
 .footer-logo span { color: var(--gold); }
 .footer-links { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }

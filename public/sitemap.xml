@@ -10,7 +10,7 @@
 
   <url>
     <loc>https://dialtone.menu/features.html</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -37,14 +37,7 @@
   </url>
 
   <url>
-    <loc>https://dialtone.menu/features/kitchen-display.html</loc>
-    <lastmod>2026-07-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://dialtone.menu/features/beverage-display.html</loc>
+    <loc>https://dialtone.menu/features/command.html</loc>
     <lastmod>2026-07-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -58,6 +51,13 @@
   </url>
 
   <url>
+    <loc>https://dialtone.menu/features/analytics.html</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
     <loc>https://dialtone.menu/features/kiosk.html</loc>
     <lastmod>2026-07-07</lastmod>
     <changefreq>monthly</changefreq>
@@ -65,8 +65,8 @@
   </url>
 
   <url>
-    <loc>https://dialtone.menu/features/staff-ordering.html</loc>
-    <lastmod>2026-07-07</lastmod>
+    <loc>https://dialtone.menu/features/pos-staff.html</loc>
+    <lastmod>2026-07-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
