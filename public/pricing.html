@@ -12,15 +12,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pricing — DialTone</title>
-  <meta name="description" content="DialTone pricing for restaurants — pilot program, Starter, Pro, and Enterprise tiers for AI voice ordering." />
+  <meta name="description" content="DialTone pricing for restaurants — Pilot, Food Truck, Single Location, Multi-Location, and Enterprise tiers for AI voice ordering." />
   <meta name="robots" content="index, follow" />
 
   <meta property="og:title" content="Pricing — DialTone" />
-  <meta property="og:description" content="Pay when the phone rings. Pilot, Starter, Pro, and Enterprise tiers for AI voice ordering." />
+  <meta property="og:description" content="Pay when the phone rings. Pilot, Food Truck, Single Location, Multi-Location, and Enterprise tiers for AI voice ordering." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://dialtone.menu/pricing.html" />
 
-  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg?v=20260605" />
+  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg?v=20260724" />
   <link rel="canonical" href="https://dialtone.menu/pricing.html" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -239,18 +239,19 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 0;
       border-top: 1px solid var(--line);
       border-left: 1px solid var(--line);
     }
-    @media (max-width: 1000px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 640px)  { .grid { grid-template-columns: 1fr; } }
+    @media (max-width: 1180px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 760px)  { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px)  { .grid { grid-template-columns: 1fr; } }
 
     .tier {
       border-right: 1px solid var(--line);
       border-bottom: 1px solid var(--line);
-      padding: 2rem 1.75rem 2.25rem;
+      padding: 1.75rem 1.3rem 2rem;
       display: flex;
       flex-direction: column;
       position: relative;
@@ -272,7 +273,7 @@
     .tier-name {
       font-family: var(--font-display);
       font-weight: 500;
-      font-size: 1.75rem;
+      font-size: 1.45rem;
       letter-spacing: -0.01em;
       color: var(--navy);
       margin: 0 0 0.35rem;
@@ -286,7 +287,7 @@
     .tier-price {
       font-family: var(--font-display);
       font-weight: 400;
-      font-size: 2.6rem;
+      font-size: 2.15rem;
       letter-spacing: -0.02em;
       line-height: 1;
       color: var(--navy);
@@ -553,6 +554,7 @@
     <div class="nav-inner">
       <a class="logo" href="/" aria-label="DialTone.Menu home">Dial<span>Tone</span>.Menu</a>
       <span class="nav-right">
+        <a class="nav-link" href="/#contact" style="color: #E8A020;">BOOK A CALL</a>
         <a class="nav-link" href="/features.html">Features</a>
         <a class="nav-link" href="/">Home</a>
         <a class="nav-link" href="/privacy.html">Privacy</a>
@@ -567,7 +569,7 @@
         <p class="eyebrow">§00 · For restaurants</p>
         <h1>One Price. <em>The Same Every Month.</em></h1>
         <p class="lede">
-          One flat monthly price — $149 or $299. the same every month.<strong> No setup fees. No annual contracts. No per-minute charges.</strong> Plus a small fee only on the orders we bring you.
+          One flat monthly price, the same every month. Plus a small 1.5% fee only on the orders we bring you.<strong> No setup fees. No annual contracts. No hardware. No per-minute charges.</strong>
         </p>
       </div>
     </section>
@@ -575,7 +577,7 @@
     <section class="tiers">
       <div class="tiers-inner">
         <div class="tiers-head">
-          <h2><span class="num">01 -</span>Four ways to run DialTone</h2>
+          <h2><span class="num">01 -</span>Five ways to run DialTone</h2>
           <span class="tiers-note">All prices USD · Billed monthly · Cancel anytime</span>
         </div>
 
@@ -589,15 +591,16 @@
               <span class="from">Starting at</span>
               $0<span class="unit"> / 15 days</span>
             </div>
+            <p class="tier-fee">Transaction fee: <strong>1.5%</strong><br/>on the orders we bring to you.</p>
 
             <ul class="tier-features">
-              <li>Voice ordering, one location</li>
-              <li>Live Menu &amp; hours dashboard</li>
-              <li>Kitchen Display</li>
-              <li>SMS payment links via Stripe</li>
+              <li>Voice AI ordering, one location</li>
+              <li>Live menu &amp; hours dashboard</li>
+              <li>Kitchen Display included</li>
+              <li>SMS payment links &amp; order-ready texts</li>
               <li>Walk-up and dine-in order entry</li>
               <li>Direct line to the founder</li>
-              <li class="muted">After 15 days, seamlessly transition to Starter or Pro to keep your kitchen humming.</li>
+              <li class="muted">Converts to a paid tier after 15 days.</li>
             </ul>
 
             <a class="tier-cta" href="/#contact">Apply for Pilot →</a>
@@ -605,21 +608,22 @@
 
           <div class="tier">
             <p class="tier-no">Tier 02</p>
-            <h3 class="tier-name">Starter</h3>
-            <p class="tier-tag">For independent restaurants that want to stop missing phone orders.</p>
+            <h3 class="tier-name">Food Truck</h3>
+            <p class="tier-tag">For mobile and single-window operators who live on the phone.</p>
             <div class="tier-price">
               <span class="from">Starting at</span>
-              $149<span class="unit"> / month</span>
+                $149<span class="unit"> / month</span>
             </div>
-            <p class="tier-fee">Transaction fee: <strong>1.5%</strong><br/>on the orders we bring to you. </p>
+            <p class="tier-fee">Transaction fee: <strong>1.5%</strong><br/>on the orders we bring to you.</p>
 
             <ul class="tier-features">
-              <li>Voice ordering, one location</li>
-              <li>Live Menu - set hours per category</li>
-              <li>SMS payment links &amp; confirmations</li>
-              <li>Walk-up and dine-in order entry</li>
-              <li>Order history &amp; exports</li>
-              <li>Email support</li>
+              <li>Voice AI ordering, one phone line</li>
+              <li>Stripe payments &amp; Apple Pay</li>
+              <li>Menu management — modifiers &amp; allergens</li>
+              <li>SMS order-ready texts (10DLC)</li>
+              <li>Orders dashboard &amp; daily order numbers</li>
+              <li>Kitchen Display</li>
+              <li class="muted">Walk-up card reader — available as an add-on</li>
             </ul>
 
             <a class="tier-cta" href="/#contact">Get Started →</a>
@@ -627,24 +631,20 @@
 
           <div class="tier featured">
             <p class="tier-no">Tier 03 · Most common</p>
-            <h3 class="tier-name">Pro</h3>
-            <p class="tier-tag">For restaurants doing real volume - phone orders, walk-ups, and dine-in one place.</p>
+            <h3 class="tier-name">Single Location</h3>
+            <p class="tier-tag">For one restaurant running phone orders, walk-ups, and dine-in together.</p>
             <div class="tier-price">
               <span class="from">Starting at</span>
-              $299<span class="unit"> / month</span>
+                $249<span class="unit"> / month</span>
             </div>
-            <p class="tier-fee">Transaction fee: <strong>1.5%</strong><br/>on the orders we bring to you. </p>
+            <p class="tier-fee">Transaction fee: <strong>1.5%</strong><br/>on the orders we bring to you.</p>
 
             <ul class="tier-features">
-              <li>Everything in Starter</li>
-              <li>Returning-caller recognition</li>
-              <li>Item specials & sale pricing</li>
-              <li>Modifiers & add-ons, handled on the call</li>
-              <li>DoorDash delivery, dispatched automatically</li>
-              <li>Table reservations &amp; reminders</li>
-              <li>Reservation timeline with table & cover management</li>
-              <!-- <li>Basic analytics &amp; weekly summary</li> -->
-              <li>Custom voice personality</li>
+              <li>Everything in Food Truck</li>
+              <li>Kitchen Display included</li>
+              <li>Walk-up / Stripe Terminal reader included</li>
+              <li>Dine-in — table &amp; serve time (optional)</li>
+              <li>Team accounts</li>
               <li>Priority email support</li>
             </ul>
 
@@ -653,20 +653,43 @@
 
           <div class="tier">
             <p class="tier-no">Tier 04</p>
+            <h3 class="tier-name">Multi-Location</h3>
+            <p class="tier-tag">For groups running several locations from one system.</p>
+            <div class="tier-price">
+              <span class="from">Starting at</span>
+              $349<span class="unit"> / month</span>
+            </div>
+            <p class="tier-fee">Transaction fee: <strong>1.5%</strong><br/>on the orders we bring to you.</p>
+
+            <ul class="tier-features">
+              <li>Everything in Single Location</li>
+              <li>Multiple locations &amp; phone numbers</li>
+              <li>Cross-location shared menu &amp; items</li>
+              <li>Expo coordination tools across kitchen and bar workflows</li>
+              <li>Consolidated multi-location reporting</li>
+              <li>Team accounts with roles</li>
+            </ul>
+
+            <a class="tier-cta" href="/#contact">Contact Sales →</a>
+          </div>
+
+          <div class="tier">
+            <p class="tier-no">Tier 05</p>
             <h3 class="tier-name">Enterprise</h3>
-            <p class="tier-tag">Multi-location groups, franchises.</p>
+            <p class="tier-tag">Franchises and large groups with custom needs.</p>
             <div class="tier-price">
               <span class="from">Custom</span>
               Let's talk
             </div>
-            <p class="tier-fee">Transaction fee: <strong>Custom</strong><br />Volume-based on the orders we bring to you.</p>
+            <p class="tier-fee">Transaction fee: <strong>Custom</strong><br />Volume-based on the orders we bring you.</p>
 
             <ul class="tier-features">
-              <li>Everything in Pro</li>
-              <li>Multi-location support</li>
-              <li>SSO &amp; role-based admin</li>
-              <li>Custom SLA &amp; uptime commitments</li>
-              <li>Dedicated support channel</li>
+              <li>Everything in Multi-Location</li>
+              <li>Fire/Hold + Coursing workflows</li>
+              <li>SSO &amp; advanced role-based admin</li>
+              <li>Custom transaction rate / volume pricing</li>
+              <li>Priority support &amp; SLA</li>
+              <li>Dedicated onboarding</li>
             </ul>
 
             <a class="tier-cta" href="/#contact">Contact Sales →</a>
@@ -698,23 +721,24 @@
         <div class="detail-block">
           <p class="detail-label">02 · Pilot program</p>
           <div class="detail-body">
-            <p>The Pilot tier is a curated program for restaurants willing to give real feedback during v1.0. We're taking a small number of design-partner restaurants and working closely with each of them. You pay no subscription for 15 days; Stripe's standard processing fees and our 1.5% transaction fee still apply on card orders.</p>
-            <p>At day 16, pilots convert to Starter or Pro — or off DialTone entirely, no hard feelings. Pilot spots require a short application so we can make sure we're a mutual fit.</p>
+            <p>The Pilot tier is a curated program for restaurants with a desire to see if DialTone is a good fit. After we demo DialTone, we will provide setup of your account. You pay a $50 setup fee for branding and your selected images. No subscription for 15 days; Stripe's standard processing fees and our 1.5% transaction fee still apply on card orders.</p>
+            <p>At day 16, pilots convert to a paid tier — Food Truck, Single Location, or Multi-Location — or off DialTone entirely, no hard feelings. Pilot spots require a short application so we can make sure we're a mutual fit.</p>
           </div>
         </div>
 
         <div class="detail-block">
           <p class="detail-label">03 · No-contract, cancel anytime</p>
           <div class="detail-body">
-            <p>Starter and Pro are month-to-month. Cancel and you keep access through the end of the billing period. We do not lock restaurants into annual contracts, and we do not charge setup or onboarding fees.</p>
+            <p>Food Truck, Single Location, and Multi-Location are month-to-month. Cancel and you keep access through the end of the billing period. We do not lock restaurants into annual contracts, and we do not charge setup or onboarding fees.</p>
             <p>Enterprise contracts are bespoke and may include annual terms and SLA commitments negotiated in the agreement.</p>
+            <p>A $50 setup fee applies to all new accounts.</p>
           </div>
         </div>
 
         <div class="detail-block">
           <p class="detail-label">04 · Prices may change</p>
           <div class="detail-body">
-            <p>We're now live! The numbers on this page reflect our current "starting at" rates for paying restaurants. Pre-launch customers who signed up during launch will be grandfathered at their original rate for at least twelve months, even if we adjust public pricing.</p>
+            <p>The numbers on this page reflect our current rates for paying restaurants. </p>
             <p>Material pricing changes will be announced at least 30 days in advance by email to billing contacts.</p>
           </div>
         </div>

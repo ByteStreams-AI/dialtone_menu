@@ -26,7 +26,7 @@
   <meta name="twitter:description" content="DialTone.Menu  is a Restaurant software platform for for restaurants. Answering every call, takes every order, and sends it straight to your kitchen, 24/7." />
 
   <link rel="canonical" href="https://dialtone.menu/" />
-  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg?v=20260605" />
+  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg?v=20260724" />
 
   <meta name="keywords" content="smarter processes for restaurants, restaurant operations, restaurant phone answering, automated menus, restaurant voice assistant, order taking for restaurants, restaurant technology" />
 
@@ -211,6 +211,39 @@
       transition: color 0.2s;
     }
     .nav-link:hover { color: var(--blue); }
+
+    /* Features dropdown — real <a> anchors, opens on hover/focus (matches /css/site.css). */
+    .nav-dropdown { position: relative; }
+    .nav-dropdown > .nav-link::after { content: ' ▾'; font-size: 0.85em; }
+    .nav-menu {
+      position: absolute; top: calc(100% + 10px); left: 50%;
+      transform: translateX(-50%) translateY(6px);
+      min-width: 230px; padding: 8px;
+      background: var(--white); border: 1px solid rgba(6,35,75,0.10);
+      border-radius: var(--r); box-shadow: 0 18px 40px rgba(6,35,75,0.14);
+      opacity: 0; visibility: hidden; transition: opacity 0.18s, transform 0.18s;
+      display: grid; gap: 2px; z-index: 101;
+    }
+    /* Invisible bridge across the 10px gap above the menu so the pointer stays
+       "inside" the dropdown while travelling from the trigger down to the items —
+       otherwise the gap drops :hover and the menu closes before you reach a link. */
+    .nav-menu::before {
+      content: ''; position: absolute; left: 0; right: 0; top: -12px; height: 12px;
+    }
+    .nav-dropdown:hover .nav-menu, .nav-dropdown:focus-within .nav-menu {
+      opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0);
+    }
+    .nav-menu a {
+      display: block; padding: 9px 12px; border-radius: 8px;
+      font-size: 0.9rem; font-weight: 500; color: var(--navy);
+      text-decoration: none; white-space: nowrap; text-transform: none; letter-spacing: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-menu a:hover, .nav-menu a:focus { background: var(--warm); color: var(--blue); }
+    @media (max-width: 860px) {
+      .nav-menu { left: auto; right: 0; transform: translateY(6px); }
+      .nav-dropdown:hover .nav-menu, .nav-dropdown:focus-within .nav-menu { transform: translateY(0); }
+    }
 
     /* ── HERO ──────────────────────────────────────────────────── */
     #hero {
@@ -1198,7 +1231,20 @@
   <nav>
     <a href="/" class="nav-logo">Dial<span>Tone</span>.Menu</a>
     <span class="nav-right">
-      <a class="nav-link" href="/features.html">Features</a>
+        <a class="nav-link" href="/#contact" style="color: #E8A020;">BOOK A CALL</a>
+      <span class="nav-dropdown">
+        <a class="nav-link" href="/features.html">Features</a>
+        <span class="nav-menu">
+          <a href="/features/voice-agent.html">Voice Agent</a>
+          <a href="/features/app.html">Customer App</a>
+          <a href="/features/dynamic-menu.html">Dynamic Menu</a>
+          <a href="/features/command.html">Kitchen Command System</a>
+          <a href="/features/admin.html">Admin</a>
+          <a href="/features/analytics.html">Analytics</a>
+          <a href="/features/kiosk.html">Kiosk</a>
+          <a href="/features/pos-staff.html">DialTone POS (Staff)</a>
+        </span>
+      </span>
       <a class="nav-link" href="/pricing.html">Pricing</a>
       <a class="nav-link" href="/privacy.html">Privacy</a>
       <a class="nav-link" href="/terms.html">Terms</a>
@@ -1347,19 +1393,6 @@
         </audio>
       </div>
       <p class="video-caption reveal">A real DialTone call  — tap play to listen</p>
-    </div>
-  </section>
-
-  <!-- TESTIMONIAL: IN THEIR WORDS -->
-  <section id="testimonial">
-    <div class="container">
-      <div class="reveal">
-        <h2 class="section-h2">In Their Words</h2>
-        <blockquote class="testimonial-quote">
-          “Efficiency is the heartbeat of a restaurant. I'm always looking for ways to streamline our process, <strong>and DialTone.Menu has been a game‑changer.</strong> It doesn't just pick up the phone — it sends clean, detailed orders straight to my kitchen. Everything runs smoother. I recommend it to any operator who cares about their operations.”
-          <cite class="testimonial-cite">— Al Walker, Al's Place</cite>
-        </blockquote>
-      </div>
     </div>
   </section>
 

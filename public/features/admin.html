@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18191398410"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'AW-18191398410');
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="index, follow" />
+  <title>Restaurant Admin Dashboard | DialTone</title>
+  <meta name="description" content="DialTone's restaurant admin dashboard puts every call, order, reservation, and payment in one real-time view — plus menu, hours, staff, branding, and analytics." />
+  <meta name="keywords" content="restaurant admin dashboard, restaurant management dashboard, restaurant order management, restaurant analytics software, restaurant back office, real-time restaurant orders" />
+  <link rel="canonical" href="https://dialtone.menu/features/admin.html" />
+  <meta property="og:title" content="Restaurant Admin Dashboard | DialTone" />
+  <meta property="og:description" content="Every call, order, reservation, and payment in one real-time dashboard — plus menu, hours, staff, and analytics." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://dialtone.menu/features/admin.html" />
+  <meta property="og:image" content="https://dialtone.menu/images/dialtone-banner.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Restaurant Admin Dashboard | DialTone" />
+  <meta name="twitter:description" content="Every call, order, reservation, and payment in one real-time dashboard — plus menu, hours, staff, and analytics." />
+  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg?v=20260724" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/site.css" />
+  <style>
+    .manual-slideshow {
+      position: relative;
+      width: 100%;
+    }
+
+    .manual-slideshow img {
+      width: 100%;
+      display: block;
+      border-radius: 12px;
+    }
+
+    .manual-slideshow .slide-link {
+      display: block;
+      cursor: zoom-in;
+    }
+
+    .manual-slideshow button {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 999px;
+      cursor: pointer;
+      background: rgba(15, 20, 42, 0.72);
+      color: #ffffff;
+      font-size: 1.2rem;
+      font-weight: 700;
+      line-height: 1;
+      z-index: 2;
+    }
+
+    .manual-slideshow button:hover {
+      background: rgba(17, 85, 204, 0.78);
+    }
+
+    .manual-slideshow button:focus-visible {
+      outline: 2px solid #E8A020;
+      outline-offset: 2px;
+    }
+
+    .manual-slideshow .prev {
+      left: 10px;
+    }
+
+    .manual-slideshow .next {
+      right: 10px;
+    }
+
+    .manual-slideshow .counter {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(15, 20, 42, 0.72);
+      color: #ffffff;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .video-frame {
+      position: relative;
+    }
+
+    .video-expand {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 2;
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(15, 20, 42, 0.72);
+      color: #ffffff;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .video-expand:hover {
+      background: rgba(17, 85, 204, 0.78);
+    }
+
+    .video-expand:focus-visible {
+      outline: 2px solid #E8A020;
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/" class="nav-logo">Dial<span>Tone</span>.Menu</a>
+    <span class="nav-right">
+        <a class="nav-link" href="/#contact" style="color: #E8A020;">BOOK A CALL</a>
+      <span class="nav-dropdown">
+        <a class="nav-link" href="/features.html">Features</a>
+        <span class="nav-menu">
+          <a href="/features/voice-agent.html">Voice Agent</a>
+          <a href="/features/app.html">Customer App</a>
+          <a href="/features/dynamic-menu.html">Dynamic Menu</a>
+          <a href="/features/command.html">Kitchen Command System</a>
+          <a href="/features/admin.html">Admin</a>
+          <a href="/features/analytics.html">Analytics</a>
+          <a href="/features/kiosk.html">Kiosk</a>
+          <a href="/features/pos-staff.html">DialTone POS (Staff)</a>
+        </span>
+      </span>
+      <a class="nav-link" href="/pricing.html">Pricing</a>
+      <a class="nav-link" href="/privacy.html">Privacy</a>
+      <a class="nav-link" href="/terms.html">Terms</a>
+    </span>
+  </nav>
+
+  <header class="feature-hero">
+    <div class="container">
+      <div>
+        <div class="crumb"><a href="/features.html">Features</a> / Admin</div>
+        <span class="eyebrow">Admin</span>
+        <h1>Every call, every order — in one place.</h1>
+        <p class="lead">The DialTone restaurant admin dashboard is the back office for the whole operation: live order call transcripts, reservations, and payments in real time — and the settings that drive it all, from your menu and hours to staff, branding, and analytics. One login instead of five.</p>
+      </div>
+      <div class="feature-hero-media">
+        <div class="manual-slideshow" id="adminSlideshow" aria-label="Admin dashboard screenshots">
+          <a id="adminSlideLink" class="slide-link" href="/images/admin-view01-v2.jpg" target="_blank" rel="noopener noreferrer" aria-label="Open current screenshot in a new tab">
+            <img
+              id="adminSlideImage"
+              src="/images/admin-view01-v2.jpg"
+              alt="Admin dashboard screenshot 1"
+              loading="eager"
+              decoding="async"
+            />
+          </a>
+          <button class="prev" type="button" aria-label="Previous screenshot">&#8592;</button>
+          <button class="next" type="button" aria-label="Next screenshot">&#8594;</button>
+          <span class="counter" id="adminSlideCounter">1 / 4</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="feature-row">
+    <div class="container">
+      <div>
+        <h2>Live orders, with the whole story.</h2>
+        <p>Watch orders arrive in real time and open any one for the full picture — items, totals, payment status, and a timeline of exactly when it was placed, paid, prepped, and picked up. For dine-in, a live kitchen signal shows whether the food's up.</p>
+        <ul class="feature-list">
+          <li>Real-time order feed with status filters</li>
+          <li>Per-order lifecycle timeline — placed → paid → ready → done</li>
+          <li>Refunds, resends, and cancellations handled in place</li>
+        </ul>
+      </div>
+      <div class="feature-row-media video-frame">
+        <video id="adminOrdersVideo" controls muted playsinline webkit-playsinline preload="metadata" style="width: 100%;">
+          <source src="/media/admin-orders-v2.mp4" type="video/mp4" />
+        </video>
+        <button class="video-expand" type="button" data-video-fullscreen="adminOrdersVideo" aria-label="Open orders video in fullscreen">⤢</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="feature-row">
+    <div class="container">
+      <div>
+        <h2>Calls and reservations, on the record.</h2>
+        <p>Every call the voice agent handles is logged with its outcome; every reservation lands on a timeline and a floor plan you can actually see. Assign tables, track no-shows, and manage the book without a paper ledger.</p>
+        <ul class="feature-list">
+          <li>Call history with outcomes and transcript references</li>
+          <li>Reservations timeline + spatial floor plan</li>
+          <li>Reminder texts fire automatically</li>
+        </ul>
+      </div>
+      <div class="feature-row-media"><a href="/images/admin-orders-v2.jpg" target="_blank" rel="noopener noreferrer" aria-label="Open reservations and floor planning screenshot in a new tab"><img src="/images/admin-orders-v2.jpg" alt="Admin reservations and floor planning view" /></a></div>
+    </div>
+  </section>
+
+  <section class="feature-row">
+    <div class="container">
+      <div>
+        <h2>Know your numbers.</h2>
+        <p>Sales and orders by day, loyalty and customer trends, day-of-week patterns — the analytics that tell you what's actually working, without exporting anything to a spreadsheet.</p>
+        <ul class="feature-list">
+          <li>Sales & order analytics, day-of-week labeled</li>
+          <li>Loyalty and customer insights</li>
+          <li>Transaction history and CSV export</li>
+        </ul>
+      </div>
+      <div class="feature-row-media video-frame">
+        <video id="adminAnalyticsVideo" controls muted playsinline webkit-playsinline preload="metadata" style="width: 100%;">
+          <source src="/media/admin-analytics-v2.mp4" type="video/mp4" />
+        </video>
+        <button class="video-expand" type="button" data-video-fullscreen="adminAnalyticsVideo" aria-label="Open analytics video in fullscreen">⤢</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="feature-row">
+    <div class="container">
+      <div>
+        <h2>Set it up your way.</h2>
+        <p>Menu, modifiers, hours, tax, delivery, branding, staff, payments, and your voice-agent greeting — all self-serve. Change what you need, when you need it, and it's live everywhere in seconds.</p>
+        <ul class="feature-list">
+          <li>Menu, hours, tax, and delivery settings</li>
+          <li>Branding (logo, colors, font) and voice-agent config</li>
+          <li>Staff invites, roles, and scheduling</li>
+        </ul>
+      </div>
+      <div class="feature-row-media">
+        <div class="manual-slideshow" id="settingsSlideshow" aria-label="Admin settings screenshots">
+          <a id="settingsSlideLink" class="slide-link" href="/images/admin-settings01-v2.jpg" target="_blank" rel="noopener noreferrer" aria-label="Open current settings screenshot in a new tab">
+            <img
+              id="settingsSlideImage"
+              src="/images/admin-settings01-v2.jpg"
+              alt="Admin settings screenshot 1"
+              loading="lazy"
+              decoding="async"
+            />
+          </a>
+          <button class="prev" type="button" aria-label="Previous settings screenshot">&#8592;</button>
+          <button class="next" type="button" aria-label="Next settings screenshot">&#8594;</button>
+          <span class="counter" id="settingsSlideCounter">1 / 6</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-band">
+    <div class="container">
+      <h2>Run the whole floor from one screen.</h2>
+      <p>The back office for your phone, your kitchen, your bar, and your counter — together.</p>
+      <a class="btn-gold" href="/#contact">Book a call</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-logo">Dial<span>Tone</span>Menu</div>
+    <div class="footer-links">
+      <a href="/#contact">hello@dialtone.menu</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/terms.html">Terms</a>
+    </div>
+    <div class="footer-copy">© 2026 DialTone · Built in Nashville, TN · Operated by ByteStreams LLC (Tennessee)</div>
+  </footer>
+  <script>
+    (() => {
+      function initSlideshow({ slideshowId, imageId, linkId, counterId, slides, altPrefix }) {
+        const slideshow = document.getElementById(slideshowId);
+        const image = document.getElementById(imageId);
+        const link = document.getElementById(linkId);
+        const counter = document.getElementById(counterId);
+        if (!slideshow || !image || !link || !counter || !Array.isArray(slides) || slides.length === 0) {
+          return;
+        }
+
+        const prevButton = slideshow.querySelector('.prev');
+        const nextButton = slideshow.querySelector('.next');
+        if (!prevButton || !nextButton) {
+          return;
+        }
+
+        let currentIndex = 0;
+
+        function renderSlide(index) {
+          image.src = slides[index];
+          link.href = slides[index];
+          image.alt = `${altPrefix} ${index + 1}`;
+          counter.textContent = `${index + 1} / ${slides.length}`;
+        }
+
+        function showPrevious() {
+          currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+          renderSlide(currentIndex);
+        }
+
+        function showNext() {
+          currentIndex = (currentIndex + 1) % slides.length;
+          renderSlide(currentIndex);
+        }
+
+        slideshow.tabIndex = 0;
+        prevButton.addEventListener('click', showPrevious);
+        nextButton.addEventListener('click', showNext);
+
+        slideshow.addEventListener('keydown', (event) => {
+          if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            showPrevious();
+          } else if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            showNext();
+          }
+        });
+
+        renderSlide(currentIndex);
+      }
+
+      initSlideshow({
+        slideshowId: 'adminSlideshow',
+        imageId: 'adminSlideImage',
+        linkId: 'adminSlideLink',
+        counterId: 'adminSlideCounter',
+        slides: [
+          '/images/admin-view01-v2.jpg',
+          '/images/admin-view02-v2.jpg',
+          '/images/admin-view03-v2.jpg',
+          '/images/admin-view04-v2.jpg'
+        ],
+        altPrefix: 'Admin dashboard screenshot'
+      });
+
+      initSlideshow({
+        slideshowId: 'settingsSlideshow',
+        imageId: 'settingsSlideImage',
+        linkId: 'settingsSlideLink',
+        counterId: 'settingsSlideCounter',
+        slides: [
+          '/images/admin-settings01-v2.jpg',
+          '/images/admin-settings02-v2.jpg',
+          '/images/admin-settings03-v2.jpg',
+          '/images/admin-settings04-v2.jpg',
+          '/images/admin-settings05-v2.jpg',
+          '/images/admin-settings06-v2.jpg'
+        ],
+        altPrefix: 'Admin settings screenshot'
+      });
+
+      const fullscreenButtons = document.querySelectorAll('[data-video-fullscreen]');
+      fullscreenButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const videoId = button.getAttribute('data-video-fullscreen');
+          const video = videoId ? document.getElementById(videoId) : null;
+          if (!video) return;
+
+          if (video.requestFullscreen) {
+            video.requestFullscreen().catch(() => {});
+            return;
+          }
+
+          if (video.webkitEnterFullscreen) {
+            video.webkitEnterFullscreen();
+            return;
+          }
+
+          if (video.webkitRequestFullscreen) {
+            video.webkitRequestFullscreen();
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
