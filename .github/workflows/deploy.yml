@@ -64,3 +64,25 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm wrangler deploy
+
+      # A green `wrangler deploy` is NOT proof the new code is live: a stale
+      # worker once kept serving the marketing page on every branded menu host
+      # for a day while every deploy showed green (2026-07-24). Verify by
+      # CONTENT, not a 200. Hits a branded `.m.` host at /menu (renders the menu
+      # regardless of site_mode) with a cache-buster so the edge misses and we
+      # check the FRESH worker. `suis-sushi` is a stable tenant in the staging
+      # DB the prod worker reads. Retries because a deploy takes ~10-30s to
+      # propagate globally.
+      - name: Verify branded menu host serves the menu (not stale/marketing)
+        run: |
+          URL="https://suis-sushi.m.dialtone.menu/menu?cb=$(date +%s%N)"
+          for i in 1 2 3 4 5 6; do
+            body=$(curl -fsS --max-time 15 "$URL" || true)
+            if printf '%s' "$body" | grep -q 'Menu | DialTone'; then
+              echo "✓ branded menu host is live (attempt $i)"; exit 0
+            fi
+            echo "attempt $i: not the menu yet (propagating), retrying in 10s…"
+            sleep 10
+          done
+          echo "::error::Branded menu host is NOT serving the menu — deploy went green but stale code is live. See the 2026-07-24 stale-worker incident."
+          exit 1
