@@ -99,6 +99,15 @@ async function routeRequest(request, env, url, ctx) {
     return serveStaticPage(request, env, '/features.html');
   }
 
+  // Clean URL aliases for app-store / legal pages (used in Google Play Console
+  // Data deletion and Privacy policy cards).
+  if (url.pathname === '/app/delete-account' || url.pathname === '/app/delete-account/') {
+    return serveStaticPage(request, env, '/delete-account.html');
+  }
+  if (url.pathname === '/app/privacy' || url.pathname === '/app/privacy/') {
+    return serveStaticPage(request, env, '/privacy.html');
+  }
+
   const menuSlug = extractMenuSlug(url.pathname);
   if (menuSlug !== null) {
     // The legacy path form is what every QR code minted so far points at, and
