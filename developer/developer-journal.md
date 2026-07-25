@@ -1,5 +1,15 @@
 # Developer Journal
 
+## 2026-07-23
+
+- Updated pricing tiers in [public/pricing.html](public/pricing.html): Food Truck monthly price from `$99` to `$149`, and Single Location monthly price from `$199` to `$249`.
+- Added an Expo-focused feature bullet to the Multi-Location tier list in [public/pricing.html](public/pricing.html).
+- Added a Fire/Hold + Coursing feature bullet to the Enterprise tier list in [public/pricing.html](public/pricing.html).
+- Updated the pricing summary line in [public/pricing.html](public/pricing.html) to read: "No setup fees. No annual contracts. No hardware. No per-minute charges."
+- Reordered the pricing summary sentence in [public/pricing.html](public/pricing.html) so "Plus a small 1.5% fee only on the orders we bring you." appears before the bold no-fees/no-contracts clause.
+- Added a sitewide top-nav `BOOK A CALL` link (first item in each `nav-right` block) across all public HTML pages, pointing to [public/index.html](public/index.html) `/#contact`; updated its color token to `#E8A020` for consistent placement and color.
+- Removed the homepage testimonial block (`In Their Words`) from [public/index.html](public/index.html) so the page now transitions directly from the demo section into `Who It's For`.
+
 ## 2026-06-09
 
 - Replaced the kitchen handoff preview in [public/features.html](public/features.html) from `kitchen-orders.png` to the production video [public/media/kitchen-order.mp4](public/media/kitchen-order.mp4), using an inline `<video>` player with controls for direct in-page playback.
@@ -84,6 +94,52 @@
 - Replaced the old roadmap/final-CTA scaffold placeholder with a concrete replacement checklist section so remaining launch tasks are explicit (real screenshot swaps only).
 - Replaced Issue 5 payment placeholders in [public/features.html](public/features.html) with real captures from [public/images/order_review_sms.jpg](public/images/order_review_sms.jpg) and [public/images/payment_received_sms.jpg](public/images/payment_received_sms.jpg).
 - Updated payment card labels to `production-screenshot` and added descriptive image alt text for accessibility.
+- Updated [public/features/admin.html](public/features/admin.html) hero media to a manual click-arrow slideshow using `admin-view01-v2.jpg` through `admin-view04-v2.jpg`.
+- Added lightweight inline slideshow styling and script with previous/next controls and a `1 / 4` counter.
+- Fixed slideshow asset publishing by allowlisting the four admin screenshots in [public/.assetsignore](public/.assetsignore) so images resolve in deployed/static asset mode.
+- Improved slideshow controls in [public/features/admin.html](public/features/admin.html) with stronger arrow layering (`z-index`) and keyboard navigation support (left/right arrows when slideshow is focused).
+- Added per-slide open-in-new-tab support in [public/features/admin.html](public/features/admin.html) by wrapping the active screenshot in a `_blank` link that updates as the slideshow advances.
+- Replaced the first admin feature-row placeholder in [public/features/admin.html](public/features/admin.html) with the real orders demo video source [public/media/admin-orders-v2.mp4](public/media/admin-orders-v2.mp4) using `type="video/mp4"`.
+- Added explicit fullscreen fallback controls for admin videos in [public/features/admin.html](public/features/admin.html) (`⤢` button) using `requestFullscreen` with WebKit fallbacks for browsers where native video fullscreen controls are unreliable.
+- Updated analytics video source in [public/features/admin.html](public/features/admin.html) from `admin-analytics-01.webm` to [public/media/admin-analytics-v2.mp4](public/media/admin-analytics-v2.mp4) with `type="video/mp4"`.
+- Replaced the settings placeholder at [public/features/admin.html](public/features/admin.html) with a manual image slideshow using [public/images/admin-settings01-v2.jpg](public/images/admin-settings01-v2.jpg) through [public/images/admin-settings06-v2.jpg](public/images/admin-settings06-v2.jpg).
+- Refactored slideshow JavaScript in [public/features/admin.html](public/features/admin.html) into a reusable initializer so both the hero admin slideshow and settings slideshow share arrow controls, keyboard navigation, counter updates, and open-in-new-tab behavior.
+- Allowlisted the six `admin-settings*-v2.jpg` assets in [public/.assetsignore](public/.assetsignore) so they deploy correctly.
+- Updated the Kitchen Command System card copy in [public/features.html](public/features.html) to explicitly describe KDS, BDS, and Expo roles in the operational flow.
+- Reworked [public/features/command.html](public/features/command.html) to present three dedicated sections in order (KDS, BDS, Expo) with focused operational copy for each workflow.
+- Removed the hero MP4 from [public/features/command.html](public/features/command.html) and switched that hero to a centered single-column layout using a new `feature-hero-centered` style modifier in [public/css/site.css](public/css/site.css).
+- Left-aligned the centered hero paragraph on [public/features/command.html](public/features/command.html) via the `.feature-hero-centered .lead` rule in [public/css/site.css](public/css/site.css).
+- Replaced the Expo placeholder panel in [public/features/command.html](public/features/command.html) with a manual slideshow cycling [public/images/expo01-v2.jpg](public/images/expo01-v2.jpg) through [public/images/expo03-v2.jpg](public/images/expo03-v2.jpg), including arrow controls, keyboard navigation, counter, and open-in-new-tab behavior.
+- Allowlisted Expo slideshow assets in [public/.assetsignore](public/.assetsignore) so the three images are served in deployed static-asset mode.
+- Replaced the KDS section media in [public/features/command.html](public/features/command.html) from a static image to an inline player using [public/media/kds-v2.mp4](public/media/kds-v2.mp4).
+- Updated the BDS image block in [public/features/command.html](public/features/command.html) so the screenshot opens in a new tab for enlarged viewing.
+- Updated [public/features/pos-staff.html](public/features/pos-staff.html) to remove the hero media/image block under "Your whole POS. In a server's pocket." and center that hero section.
+- Updated the "Check splitting has never been easier." copy in [public/features/pos-staff.html](public/features/pos-staff.html) to include "tap to pay or cash" and added a UI list line: "Tap to pay at table".
+- Removed the full "Take the payment at the table — one tap." and "Print the receipt on the spot." sections from [public/features/pos-staff.html](public/features/pos-staff.html).
+- Left-justified the header paragraphs in [public/features/pos-staff.html](public/features/pos-staff.html) while preserving the centered hero section layout.
+- Replaced the split-check media placeholder in [public/features/pos-staff.html](public/features/pos-staff.html) with [public/media/staff-pos-splitcheck.mp4](public/media/staff-pos-splitcheck.mp4).
+- Added a page-specific top-alignment style for the split-check and handoff sections in [public/features/pos-staff.html](public/features/pos-staff.html) so the heading column and media top line up horizontally.
+- Replaced the "One check, open all night — then hand it off." placeholder with [public/media/suis-sushi-checkout.mp4](public/media/suis-sushi-checkout.mp4).
+- Tightened the POS row alignment in [public/features/pos-staff.html](public/features/pos-staff.html) with a small top offset on the media column so the headings and MP4 frames visually line up more cleanly.
+- Updated the "One check, open all night — then hand it off." section in [public/features/pos-staff.html](public/features/pos-staff.html) to use [public/media/staff-pos-rounds.mp4](public/media/staff-pos-rounds.mp4).
+- Added a new loyalty-focused section to [public/features/pos-staff.html](public/features/pos-staff.html) describing how allergy flags, last orders, and aggregate order data are shown to servers as soon as guests are seated.
+- Replaced the loyalty profile placeholder media in [public/features/pos-staff.html](public/features/pos-staff.html) with [public/media/staff-pos-guest.mp4](public/media/staff-pos-guest.mp4).
+- Normalized all MP4 blocks in [public/features/pos-staff.html](public/features/pos-staff.html) to the same phone-media sizing/style pattern used in [public/features/app.html](public/features/app.html) by switching rows to `.feature-row-media.is-phone` with inline autoplay loop video markup.
+- Staged currently unreferenced runtime assets into [public/_temp_unused_asset_review_2026-07-23](public/_temp_unused_asset_review_2026-07-23) (split into `images/` and `media/`) for manual inspection before any permanent removal; added a move manifest at [public/_temp_unused_asset_review_2026-07-23/MOVED_FROM_UNUSED_SCAN.txt](public/_temp_unused_asset_review_2026-07-23/MOVED_FROM_UNUSED_SCAN.txt).
+- During review, restored analytics-related media assets from the temp folder back to [public/media](public/media): `admin-analytics-01.webm`, `admin-analytics-kitchen.mp4`, `admin-analytics-loyalty.mp4`, `admin-analytics-orders.mp4`, and `admin-analytics-sales.mp4`.
+- Centered the Analytics page hero section in [public/features/analytics.html](public/features/analytics.html) using the same single-column header pattern as the POS staff page and removed the hero media placeholder block.
+- Replaced the "Sales and orders over time." media placeholder in [public/features/analytics.html](public/features/analytics.html) with [public/media/admin-analytics-sales.mp4](public/media/admin-analytics-sales.mp4).
+- Replaced the "Your busiest days and hours." media placeholder in [public/features/analytics.html](public/features/analytics.html) with [public/media/admin-analytics-orders.mp4](public/media/admin-analytics-orders.mp4).
+- Replaced the "New faces and regulars." media placeholder in [public/features/analytics.html](public/features/analytics.html) with [public/media/admin-analytics-loyalty.mp4](public/media/admin-analytics-loyalty.mp4).
+- Updated the final Analytics section in [public/features/analytics.html](public/features/analytics.html) to kitchen-performance messaging (cook time, fire-to-table, pass timing, station load) and added a "Coming soon" bullet for menu-item cook-time analytics.
+- Replaced the final kitchen-performance media placeholder in [public/features/analytics.html](public/features/analytics.html) with [public/media/admin-analytics-kitchen.mp4](public/media/admin-analytics-kitchen.mp4).
+- Refactored [public/features/kiosk.html](public/features/kiosk.html): removed the hero media panel, centered the hero layout with left-aligned paragraph/list text, moved the "Ordering guests actually enjoy." paragraph and list into the hero, removed all other detail sections, and added one standalone image placeholder section directly below the header.
+- Added two new kiosk hero list bullets in [public/features/kiosk.html](public/features/kiosk.html) for (1) Tap to Pay/cash checkout options and (2) dynamically updated menu data from the live catalog.
+- Replaced the kiosk standalone placeholder section in [public/features/kiosk.html](public/features/kiosk.html) with [public/images/kiosk-home.jpg](public/images/kiosk-home.jpg) and allowlisted that asset in [public/.assetsignore](public/.assetsignore).
+- Added [public/images/admin-orders-v2.jpg](public/images/admin-orders-v2.jpg) (created from the existing admin hero screenshot set) and appended it to the Admin hero slideshow in [public/features/admin.html](public/features/admin.html); updated the hero counter to `1 / 5` and allowlisted the asset in [public/.assetsignore](public/.assetsignore).
+- Corrected placement in [public/features/admin.html](public/features/admin.html): removed `admin-orders-v2.jpg` from the hero slideshow and inserted it in the Calls/Reservations feature row media slot (around line 206 context), restoring the hero slideshow counter to `1 / 4`.
+- Updated that Calls/Reservations image in [public/features/admin.html](public/features/admin.html) to open in a new tab when clicked.
+- Removed currently unused files under [public](public): deleted `public/images/admin-orders-v2.jpg`, `public/media/admin-analytics-01.webm`, `public/media/.wrangler/cache/cf.json`, and removed the temporary review stash directory `public/_temp_unused_asset_review_2026-07-23/` after final inspection.
 
 ## 2026-04-28
 - Updated the hero CTA text in `public/index.html` from "Go To Full Waitlist Form" to "Join the Waitlist" to match the requested landing-page copy.
