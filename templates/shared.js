@@ -201,6 +201,72 @@ function buildSite(payload, options) {
   };
 }
 
+// schema.org dayOfWeek names, indexed 0=Sunday to match the DB day_of_week.
+const SCHEMA_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/**
+ * schema.org/Restaurant JSON-LD (dialtone#986 Phase 3). The structured identity
+ * that lets a search engine read the branded site as a RESTAURANT — name,
+ * address, hours, phone, socials, menu link — instead of an anonymous page. It
+ * is what makes the site eligible for rich results (hours, a map pin, a Menu
+ * link) rather than a prettier page nobody finds. Pure emission of data the
+ * admin already collects; no operator input, and emitted on both `/` and `/menu`.
+ *
+ * Reads raw `payload.hours` / `payload.contact` (not the display-formatted
+ * `ctx.site`) because openingHoursSpecification needs 24h times + the weekday.
+ * The serialized `<`/`>`/`&` are unicode-escaped so no value can break out of
+ * the `<script>` (the JSON-LD injection guard); values are normalizeText-bounded.
+ */
+function buildRestaurantJsonLd(payload, fields) {
+  const contact = payload.contact && typeof payload.contact === 'object' ? payload.contact : {};
+  const hours = Array.isArray(payload.hours) ? payload.hours : [];
+
+  const address = {};
+  const line1 = normalizeText(contact.address_line1, 200);
+  const city = normalizeText(contact.city, 120);
+  const state = normalizeText(contact.state, 40);
+  const zip = normalizeText(contact.postal_code, 20);
+  if (line1) address.streetAddress = line1;
+  if (city) address.addressLocality = city;
+  if (state) address.addressRegion = state;
+  if (zip) address.postalCode = zip;
+
+  const openingHours = hours
+    .filter(
+      (h) =>
+        h &&
+        Number.isInteger(h.day_of_week) &&
+        h.day_of_week >= 0 &&
+        h.day_of_week <= 6 &&
+        !h.is_closed &&
+        normalizeText(h.open_time, 8) &&
+        normalizeText(h.close_time, 8),
+    )
+    .map((h) => ({
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: `https://schema.org/${SCHEMA_DAYS[h.day_of_week]}`,
+      opens: normalizeText(h.open_time, 8),
+      closes: normalizeText(h.close_time, 8),
+    }));
+
+  const data = { '@context': 'https://schema.org', '@type': 'Restaurant', name: fields.name };
+  if (fields.url) data.url = fields.url;
+  if (fields.menuUrl) data.menu = fields.menuUrl;
+  if (fields.image) data.image = fields.image;
+  const phone = normalizeText(contact.phone, 40);
+  if (phone) data.telephone = phone;
+  if (Object.keys(address).length) data.address = { '@type': 'PostalAddress', ...address };
+  const sameAs = (fields.socials || []).map((s) => s.url).filter(Boolean);
+  if (sameAs.length) data.sameAs = sameAs;
+  if (openingHours.length) data.openingHoursSpecification = openingHours;
+
+  const json = JSON.stringify(data)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
+  return `<script type="application/ld+json">${json}</script>`;
+}
+
 export function buildMenuCtx(payload, slug, options = {}) {
   const restaurant = payload.restaurant && typeof payload.restaurant === 'object' ? payload.restaurant : {};
   const categories = Array.isArray(payload.categories) ? payload.categories : [];
@@ -229,17 +295,32 @@ export function buildMenuCtx(payload, slug, options = {}) {
   // instead would mean importing the registry, which imports this file.
   const menuTemplate = normalizeText(restaurant.menu_template, 20);
 
+  const site = buildSite(payload, options);
+  const canonicalUrl = normalizeText(options.canonicalUrl || '', 400);
+  const menuUrl = normalizeText(options.menuUrl || '', 400);
+  const homeUrl = normalizeText(options.homeUrl || '', 400);
+  // Same structured identity on every surface + template — the restaurant is the
+  // same restaurant whether the menu is Editorial or the home page is showing.
+  const jsonLd = buildRestaurantJsonLd(payload, {
+    name: wordmark,
+    url: homeUrl || canonicalUrl || menuUrl,
+    menuUrl,
+    image: heroImageUrl || logoUrl,
+    socials: site.socials,
+  });
+
   return {
     restaurant, categories, restaurantName, displayName, wordmark, tagline,
     timezone, websiteUrl, logoUrl, heroImageUrl, primaryColor, secondaryColor,
     pageTitle, pageDescription, fontFamily, fontHref, menuTemplate, slug,
-    site: buildSite(payload, options),
+    site,
+    jsonLd,
     // Which surface this request resolved to, and the URL that should own it in
     // search results. Both are decided by the worker (it knows the host and the
     // path); templates only render them.
     surface: options.surface === 'home' ? 'home' : 'menu',
-    canonicalUrl: normalizeText(options.canonicalUrl || '', 400),
-    menuUrl: normalizeText(options.menuUrl || '', 400),
-    homeUrl: normalizeText(options.homeUrl || '', 400)
+    canonicalUrl,
+    menuUrl,
+    homeUrl
   };
 }
