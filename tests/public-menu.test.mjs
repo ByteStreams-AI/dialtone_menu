@@ -89,7 +89,11 @@ async function run() {
     assert.equal(parsedBody.p_slug, 'main-street');
     assert.equal(options.headers.apikey, 'anon-key');
 
-    return new Response(JSON.stringify(samplePayload()), {
+    // This comprehensive render test asserts the lacquer hero specifically, so
+    // pin the template — the DEFAULT is now 'standard' (dialtone#1010).
+    const p = samplePayload();
+    p.restaurant.menu_template = 'lacquer';
+    return new Response(JSON.stringify(p), {
       status: 200,
       headers: {
         'content-type': 'application/json'
@@ -406,12 +410,12 @@ async function runSiteSurfaces() {
     assert.match(home, /11:00 AM/, `${template} home renders hours from the admin`);
   }
 
-  // An unknown template id falls back to the default template's home rather
-  // than rendering nothing.
+  // An unknown template id falls back to the default template's home (standard,
+  // the neutral default — dialtone#1010) rather than rendering nothing.
   const unknownHome = withSite('home_and_menu');
   unknownHome.restaurant.menu_template = 'no-such-template';
   const fallbackHome = await serve(unknownHome, 'https://main-street.m.dialtone.menu/');
-  assert.match(fallbackHome, homeSignatures.lacquer, 'an unknown template falls back to the default home');
+  assert.match(fallbackHome, homeSignatures.standard, 'an unknown template falls back to the standard home');
 
   // Each template's MENU carries the Home link, not just Standard's.
   for (const template of ['lacquer', 'cards', 'standard']) {
@@ -425,13 +429,14 @@ async function runSiteSurfaces() {
 }
 
 async function runTemplateSelection() {
-  // Default template (no menu_template) → the editorial 'lacquer' body.
+  // Default template (no menu_template) → the neutral 'standard' body (#1010).
   globalThis.fetch = async () =>
     new Response(JSON.stringify(samplePayload()), { status: 200, headers: { 'content-type': 'application/json' } });
-  const lacquer = await (await worker.fetch(new Request('https://dialtone.menu/m/main-street'), makeEnv())).text();
-  assert.match(lacquer, /class="menu-hero/, 'default template renders the lacquer hero');
-  assert.match(lacquer, /class="item"/, 'default template renders typographic item rows');
-  assert.doesNotMatch(lacquer, /id="catSelect"/, 'default template has no cards category dropdown');
+  const dflt = await (await worker.fetch(new Request('https://dialtone.menu/m/main-street'), makeEnv())).text();
+  assert.match(dflt, /class="menu-header"/, 'default template renders the standard header card');
+  assert.match(dflt, /class="categories"/, 'default template renders the standard category list');
+  assert.doesNotMatch(dflt, /class="menu-hero/, 'default template is not the lacquer hero');
+  assert.doesNotMatch(dflt, /id="catSelect"/, 'default template has no cards category dropdown');
 
   // menu_template = 'cards' → the photo-forward cards body, with item photos.
   const cardsPayload = samplePayload();
@@ -479,13 +484,15 @@ async function runTemplateSelection() {
   );
   assert.doesNotMatch(standard, /<script>alert\(1\)<\/script>/, 'untrusted font input is sanitized in standard');
 
-  // An unknown/legacy value falls back to lacquer rather than 500ing or blanking.
+  // An unknown/legacy value falls back to standard (the neutral default, #1010)
+  // rather than 500ing or blanking.
   const legacyPayload = samplePayload();
   legacyPayload.restaurant.menu_template = 'no-such-template';
   globalThis.fetch = async () =>
     new Response(JSON.stringify(legacyPayload), { status: 200, headers: { 'content-type': 'application/json' } });
   const legacy = await (await worker.fetch(new Request('https://dialtone.menu/m/main-street'), makeEnv())).text();
-  assert.match(legacy, /class="menu-hero/, 'an unknown template id falls back to lacquer');
+  assert.match(legacy, /class="menu-header"/, 'an unknown template id falls back to standard');
+  assert.doesNotMatch(legacy, /class="menu-hero/, 'the unknown-value fallback is not lacquer');
 
   console.log('menu template selection tests passed');
 }

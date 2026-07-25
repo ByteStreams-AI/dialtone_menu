@@ -58,7 +58,7 @@ async function loadPayload() {
 const payload = await loadPayload();
 if (template) payload.restaurant = { ...payload.restaurant, menu_template: template };
 const ctx = buildMenuCtx(payload, slug);
-const resolved = TEMPLATE_REGISTRY[ctx.menuTemplate] ? ctx.menuTemplate : `${ctx.menuTemplate} → lacquer (fallback)`;
+const resolved = TEMPLATE_REGISTRY[ctx.menuTemplate] ? ctx.menuTemplate : `${ctx.menuTemplate} → standard (fallback)`;
 const html = renderMenu(ctx);
 
 if (outFile) { writeFileSync(outFile, html); console.error(`[${resolved}] ${html.length} bytes → ${outFile}`); }

@@ -1,7 +1,10 @@
 // templates/index.js — the template registry. Dispatch is
-// (REGISTRY[ctx.menuTemplate] ?? REGISTRY.lacquer).render(ctx), so an unknown
-// or unset menu_template falls back to lacquer. Adding a template is: add its
-// module, add one line here — no new if/else branch in worker.js.
+// (REGISTRY[ctx.menuTemplate] ?? DEFAULT_TEMPLATE).render(ctx), so an unknown
+// or unset menu_template falls back to `standard` — the neutral card list. An
+// unrecognized value renders something the operator didn't choose, so it gets
+// the same neutral default as a brand-new tenant (dialtone#1010), not Lacquer's
+// editorial look. Adding a template is: add its module, add one line here — no
+// new if/else branch in worker.js.
 import { lacquer } from './lacquer.js';
 import { cards } from './cards.js';
 import { standard } from './standard.js';
@@ -15,7 +18,7 @@ export const TEMPLATE_REGISTRY = {
 /** Registered ids, for callers that need to enumerate (preview, tests). */
 export const TEMPLATE_IDS = Object.keys(TEMPLATE_REGISTRY);
 
-export const DEFAULT_TEMPLATE = lacquer;
+export const DEFAULT_TEMPLATE = standard;
 
 export function renderMenu(ctx) {
   const template = TEMPLATE_REGISTRY[ctx.menuTemplate] ?? DEFAULT_TEMPLATE;
