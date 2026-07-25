@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import worker from '../worker.js';
+
+const marketingSitemap = await readFile(new URL('../public/sitemap.xml', import.meta.url), 'utf8');
 
 async function getRobots(hostname) {
   const request = new Request(`https://${hostname}/robots.txt`);
@@ -120,7 +123,17 @@ async function run() {
   );
 
   const sitemapRequest = new Request('https://dialtone.menu/sitemap.xml');
-  const sitemapResponse = await worker.fetch(sitemapRequest, throwingAssetsEnv);
+  const sitemapAssetsEnv = {
+    ASSETS: {
+      fetch: async (request) => {
+        assert.equal(new URL(request.url).pathname, '/sitemap.xml', 'Sitemap route should request the static asset');
+        return new Response(marketingSitemap, {
+          headers: { 'content-type': 'application/xml; charset=utf-8' }
+        });
+      }
+    }
+  };
+  const sitemapResponse = await worker.fetch(sitemapRequest, sitemapAssetsEnv);
   const sitemapBody = await sitemapResponse.text();
   assert.equal(sitemapResponse.status, 200, 'Explicit sitemap route should return 200');
   assert.match(
@@ -129,6 +142,12 @@ async function run() {
     'Sitemap should return application/xml content type'
   );
   assert.match(sitemapBody, /<loc>https:\/\/dialtone\.menu\/<\/loc>/, 'Sitemap should include homepage');
+  assert.match(sitemapBody, /<lastmod>2026-07-24<\/lastmod>/, 'Sitemap should include repository metadata');
+  assert.match(
+    sitemapBody,
+    /<loc>https:\/\/dialtone\.menu\/features\/voice-agent\.html<\/loc>/,
+    'Sitemap should include feature detail pages'
+  );
   assert.match(
     sitemapBody,
     /<loc>https:\/\/dialtone\.menu\/pricing\.html<\/loc>/,

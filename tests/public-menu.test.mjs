@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import worker from '../worker.js';
 
 const originalFetch = globalThis.fetch;
+const marketingSitemap = await readFile(new URL('../public/sitemap.xml', import.meta.url), 'utf8');
 
 function makeEnv(overrides = {}) {
   return {
@@ -562,8 +564,14 @@ async function runDiscoverability() {
   assert.match(robots, /Sitemap: https:\/\/main-street\.m\.dialtone\.menu\/sitemap\.xml/, 'branded robots points at its own sitemap');
 
   // --- the marketing sitemap is unchanged (still lists the marketing pages)
-  const marketing = await (await worker.fetch(new Request('https://dialtone.menu/sitemap.xml'), makeEnv())).text();
+  const marketingEnv = makeEnv({
+    ASSETS: {
+      fetch: async () => new Response(marketingSitemap, { headers: { 'content-type': 'application/xml' } })
+    }
+  });
+  const marketing = await (await worker.fetch(new Request('https://dialtone.menu/sitemap.xml'), marketingEnv)).text();
   assert.match(marketing, /pricing\.html/, 'marketing sitemap still serves the marketing pages');
+  assert.match(marketing, /features\/voice-agent\.html/, 'marketing sitemap includes feature detail pages');
 
   console.log('discoverability (JSON-LD + per-restaurant sitemap) tests passed');
 }
