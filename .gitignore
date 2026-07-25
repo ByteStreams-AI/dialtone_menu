@@ -2,3 +2,6 @@ node_modules/
 .DS_Store
 .wrangler/
 .dev.vars
+
+# Supabase CLI scratch/cache — machine-generated, must not be tracked
+supabase/.temp/
