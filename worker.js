@@ -87,6 +87,11 @@ async function routeRequest(request, env, url, ctx) {
     if (url.pathname === '/.well-known/security.txt') {
       return handleSecurityTxt();
     }
+    // The restaurant's OWN sitemap (/, /menu) — #986 Phase 3. Without this,
+    // /sitemap.xml would fall through to the menu renderer below.
+    if (url.pathname === '/sitemap.xml') {
+      return handleMenuSitemap(url);
+    }
     // `/menu` is the STABLE menu URL — the one QR codes and printed cards
     // point at — so it renders the menu regardless of site_mode. Every other
     // path on the host takes whatever the mode says the root is (#986).
@@ -524,9 +529,14 @@ function notFoundResponse() {
 function handleRobots(url) {
   const host = url.hostname.toLowerCase();
   const isByteStreamsHost = host === 'bytestreams.ai' || host === 'www.bytestreams.ai';
-  const sitemap = isByteStreamsHost
-    ? 'https://bytestreams.ai/sitemap.xml'
-    : 'https://dialtone.menu/sitemap.xml';
+  // A branded menu host points at its OWN per-restaurant sitemap (/, /menu), not
+  // the marketing one — so search discovers that restaurant's two surfaces (#986 P3).
+  const sitemap =
+    extractMenuSlugFromHost(url.hostname) !== null
+      ? `${url.origin}/sitemap.xml`
+      : isByteStreamsHost
+        ? 'https://bytestreams.ai/sitemap.xml'
+        : 'https://dialtone.menu/sitemap.xml';
 
   const body = [
     'User-agent: *',
@@ -584,6 +594,26 @@ function handleSecurityTxt() {
   return new Response(body, {
     headers: {
       'content-type': 'text/plain; charset=utf-8'
+    }
+  });
+}
+
+// Per-restaurant sitemap for a branded menu host (#986 Phase 3): the two URLs
+// this restaurant's site lives at — the root and the stable /menu — so search
+// discovers both surfaces. Distinct from the static marketing sitemap below.
+function handleMenuSitemap(url) {
+  const body = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    `  <url><loc>${escapeXml(`${url.origin}/`)}</loc></url>`,
+    `  <url><loc>${escapeXml(`${url.origin}/menu`)}</loc></url>`,
+    '</urlset>',
+    ''
+  ].join('\n');
+
+  return new Response(body, {
+    headers: {
+      'content-type': 'application/xml; charset=utf-8'
     }
   });
 }

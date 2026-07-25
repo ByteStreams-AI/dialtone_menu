@@ -168,6 +168,7 @@ function renderStandardMenuBody(ctx) {
     // a logo — same order the other two templates use.
     `  <meta property="og:image" content="${escapeHtml(heroImageUrl || logoUrl || 'https://dialtone.menu/images/dialtone-banner.png')}">`,
     '  <meta name="twitter:card" content="summary_large_image">',
+    ctx.jsonLd,
     `  <meta name="twitter:title" content="${escapeHtml(pageTitle)}">`,
     `  <meta name="twitter:description" content="${escapeHtml(pageDescription)}">`,
     fontHref ? '  <link rel="preconnect" href="https://fonts.googleapis.com">' : '',
@@ -371,6 +372,7 @@ function renderStandardHomeBody(ctx) {
       ctx.heroImageUrl || site.gallery[0] || logoUrl || 'https://dialtone.menu/images/dialtone-banner.png'
     )}">`,
     '  <meta name="twitter:card" content="summary_large_image">',
+    ctx.jsonLd,
     fontHref ? '  <link rel="preconnect" href="https://fonts.googleapis.com">' : '',
     fontHref ? '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' : '',
     fontHref ? `  <link rel="stylesheet" href="${escapeHtml(fontHref)}">` : '',

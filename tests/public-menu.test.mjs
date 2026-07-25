@@ -490,10 +490,82 @@ async function runTemplateSelection() {
   console.log('menu template selection tests passed');
 }
 
+// #986 Phase 3 — discoverability: schema.org/Restaurant JSON-LD on both surfaces,
+// and a per-restaurant sitemap + robots on the branded host.
+async function runDiscoverability() {
+  const payload = samplePayload();
+  payload.restaurant.hero_image_url = 'https://cdn.example.com/hero.jpg';
+  payload.site = {
+    mode: 'home_and_menu',
+    story_headline: 'Fire, salt, time',
+    story_body: 'We opened in 2019.',
+    gallery: [],
+    social_instagram: 'https://instagram.com/place',
+    social_facebook: 'https://facebook.com/place'
+  };
+  payload.contact = { phone: '+15551110000', address_line1: '1 Main St', city: 'Chicago', state: 'IL', postal_code: '60654' };
+  payload.hours = [
+    { day_of_week: 1, open_time: '11:00', close_time: '21:00', is_closed: false },
+    { day_of_week: 0, open_time: '', close_time: '', is_closed: true }
+  ];
+
+  const serve = async (requestUrl) => {
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } });
+    return (await worker.fetch(new Request(requestUrl), makeEnv())).text();
+  };
+
+  // --- JSON-LD on the MENU surface
+  const menu = await serve('https://main-street.m.dialtone.menu/menu');
+  assert.match(menu, /<script type="application\/ld\+json">/, 'menu emits JSON-LD');
+  assert.match(menu, /"@type":"Restaurant"/, 'JSON-LD is a Restaurant');
+  assert.match(menu, /"name":"Main Street Kitchen"/, 'JSON-LD carries the name');
+  assert.match(menu, /"telephone":"\+15551110000"/, 'JSON-LD carries the phone');
+  assert.match(menu, /"@type":"PostalAddress"/, 'address is a PostalAddress');
+  assert.match(menu, /"streetAddress":"1 Main St"/, 'JSON-LD carries the street address');
+  assert.match(menu, /"postalCode":"60654"/, 'JSON-LD carries the postal code');
+  assert.match(menu, /"openingHoursSpecification"/, 'JSON-LD carries opening hours');
+  assert.match(menu, /schema\.org\/Monday/, 'hours use schema.org weekday URIs');
+  assert.doesNotMatch(menu, /schema\.org\/Sunday/, 'a closed day is omitted from hours');
+  assert.match(menu, /"sameAs":\["https:\/\/instagram\.com\/place"/, 'socials become sameAs');
+  assert.match(menu, /"menu":"https:\/\/main-street\.m\.dialtone\.menu\/menu"/, 'JSON-LD links the menu URL');
+
+  // --- JSON-LD on the HOME surface too
+  const home = await serve('https://main-street.m.dialtone.menu/');
+  assert.match(home, /<script type="application\/ld\+json">/, 'home emits JSON-LD');
+  assert.match(home, /"@type":"Restaurant"/, 'home JSON-LD is a Restaurant');
+
+  // --- injection guard: a value with </script> cannot break out of the tag
+  payload.restaurant.display_name = 'Bad</script><b>x';
+  const escaped = await serve('https://main-street.m.dialtone.menu/menu');
+  assert.doesNotMatch(escaped, /Bad<\/script><b>x/, 'JSON-LD escapes < so a value cannot break out of the script tag');
+  assert.match(escaped, /Bad\\u003c\/script/, 'the < is unicode-escaped inside the JSON-LD');
+  payload.restaurant.display_name = 'Main Street Kitchen';
+
+  // --- the branded host serves its OWN sitemap (/, /menu), not the marketing one
+  const sitemapResp = await worker.fetch(new Request('https://main-street.m.dialtone.menu/sitemap.xml'), makeEnv());
+  const sitemap = await sitemapResp.text();
+  assert.match(sitemapResp.headers.get('content-type') || '', /application\/xml/, 'branded sitemap is XML');
+  assert.match(sitemap, /<loc>https:\/\/main-street\.m\.dialtone\.menu\/<\/loc>/, 'branded sitemap lists the root');
+  assert.match(sitemap, /<loc>https:\/\/main-street\.m\.dialtone\.menu\/menu<\/loc>/, 'branded sitemap lists /menu');
+  assert.doesNotMatch(sitemap, /pricing\.html/, 'branded sitemap is NOT the marketing sitemap');
+
+  // --- the branded robots points at the host's own sitemap
+  const robots = await (await worker.fetch(new Request('https://main-street.m.dialtone.menu/robots.txt'), makeEnv())).text();
+  assert.match(robots, /Sitemap: https:\/\/main-street\.m\.dialtone\.menu\/sitemap\.xml/, 'branded robots points at its own sitemap');
+
+  // --- the marketing sitemap is unchanged (still lists the marketing pages)
+  const marketing = await (await worker.fetch(new Request('https://dialtone.menu/sitemap.xml'), makeEnv())).text();
+  assert.match(marketing, /pricing\.html/, 'marketing sitemap still serves the marketing pages');
+
+  console.log('discoverability (JSON-LD + per-restaurant sitemap) tests passed');
+}
+
 run()
   .then(runHostRouting)
   .then(runTemplateSelection)
   .then(runSiteSurfaces)
+  .then(runDiscoverability)
   .catch((error) => {
     console.error(error);
     process.exitCode = 1;
