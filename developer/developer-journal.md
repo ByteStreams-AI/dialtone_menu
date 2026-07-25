@@ -4,6 +4,7 @@
 
 - Fixed `/sitemap.xml` drift by serving [public/sitemap.xml](public/sitemap.xml) through the Worker assets binding instead of maintaining a second hardcoded marketing sitemap in [worker.js](worker.js).
 - Added regression coverage that verifies the deployed route includes repository sitemap metadata and feature detail pages while preserving dynamic restaurant-host sitemaps.
+- Removed the homepage `Ready to Serve` section and its unused styles, changed the homepage footer background to `#0A3260`, and updated the homepage sitemap date.
 
 ## 2026-07-23
 
