@@ -1009,153 +1009,9 @@
       line-height: 1.6;
     }
 
-    /* ── WAITLIST ──────────────────────────────────────────────── */
-    #waitlist {
-      background: var(--navy);
-      padding: 120px 24px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    #waitlist .container {
-      position: relative;
-      z-index: 1;
-    }
-
-    #waitlist::before {
-      content: '';
-      position: absolute;
-      width: 800px; height: 800px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(34,113,232,0.15), transparent 60%);
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
-
-    #waitlist .section-label { color: var(--gold); margin-bottom: 20px; }
-
-    .waitlist-h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(2.2rem, 4.5vw, 3.4rem);
-      font-weight: 900;
-      color: var(--white);
-      line-height: 1.1;
-      letter-spacing: -1px;
-      margin-bottom: 20px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .waitlist-sub {
-      font-size: 1.575rem;
-      color: rgba(255,255,255,0.6);
-      max-width: 520px;
-      margin: 0 auto 50px;
-      line-height: 1.7;
-      position: relative;
-      z-index: 1;
-    }
-
-    .perks {
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-bottom: 50px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .perk {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 100px;
-      padding: 10px 20px;
-      font-size: 0.88rem;
-      color: rgba(255,255,255,0.8);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .perk-icon { font-size: 1rem; }
-
-    .waitlist-launch-line {
-      color: var(--gold);
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(1.1rem, 2.25vw, 1.7rem);
-      font-weight: 900;
-      line-height: 1.1;
-      letter-spacing: -0.5px;
-      margin: 0 0 18px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .waitlist-form {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      max-width: 500px;
-      margin: 0 auto;
-      position: relative;
-      z-index: 1;
-    }
-
-    .waitlist-form input,
-    .waitlist-form textarea {
-      padding: 14px 18px;
-      border-radius: var(--r);
-      border: 1.5px solid rgba(255,255,255,0.15);
-      background: rgba(255,255,255,0.06);
-      color: var(--white);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .waitlist-form input::placeholder,
-    .waitlist-form textarea::placeholder { color: rgba(255,255,255,0.35); }
-    .waitlist-form input:focus,
-    .waitlist-form textarea:focus { border-color: rgba(255,255,255,0.4); }
-    
-    .waitlist-form textarea {
-      min-height: 80px;
-      resize: vertical;
-    }
-
-    .btn-gold {
-      background: var(--gold);
-      color: var(--navy);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 700;
-      padding: 16px 28px;
-      border-radius: var(--r);
-      border: none;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-    }
-    .btn-gold:hover {
-      background: var(--gold2);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(232,160,32,0.3);
-    }
-
-    .waitlist-note {
-      margin-top: 16px;
-      font-size: 0.82rem;
-      color: rgba(255,255,255,0.35);
-      position: relative;
-      z-index: 1;
-    }
-
     /* ── FOOTER ────────────────────────────────────────────────── */
     footer {
-      background: #030F1E;
+      background: #0A3260;
       padding: 40px 24px;
       display: flex;
       align-items: center;
@@ -1226,7 +1082,6 @@
       .step:last-child { border-radius: 0 0 var(--r) var(--r); }
       .step-connector { display: none; }
       .who-grid { grid-template-columns: 1fr; }
-      .waitlist-form { flex-direction: column; }
       footer { flex-direction: column; align-items: flex-start; }
       .stats-grid { grid-template-columns: 1fr; }
       .stat-card:first-child { grid-column: auto; }
@@ -1466,20 +1321,6 @@
         <button type="submit" class="btn-primary">Book a 15-minute call</button>
         <p id="claimNote" class="contact-note">We usually reply the same day.</p>
       </form>
-    </div>
-  </section>
-
-  <!-- LIVE -->
-  <section id="waitlist">
-    <div class="container">
-      <div class="section-label">Ready to Serve</div>
-      <h2 class="waitlist-h2">We're Live.</h2>
-      <p class="waitlist-sub">DialTone is taking orders. Start answering every call today.</p>
-
-      <div style="display: flex; gap: 16px; justify-content: center; margin-top: 32px;">
-        <a href="/features.html" class="btn-gold" style="padding: 14px 32px; text-decoration: none;">See Features</a>
-        <a href="/pricing.html" class="btn-primary" style="padding: 14px 32px; text-decoration: none; border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 12px;">View Pricing</a>
-      </div>
     </div>
   </section>
 

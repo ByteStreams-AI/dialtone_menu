@@ -133,7 +133,7 @@ async function routeRequest(request, env, url, ctx) {
   }
 
   if (url.pathname === '/sitemap.xml') {
-    return handleSitemap(url);
+    return serveStaticPage(request, env, '/sitemap.xml');
   }
 
   if (url.pathname === '/api/contact') {
@@ -607,23 +607,6 @@ function handleMenuSitemap(url) {
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     `  <url><loc>${escapeXml(`${url.origin}/`)}</loc></url>`,
     `  <url><loc>${escapeXml(`${url.origin}/menu`)}</loc></url>`,
-    '</urlset>',
-    ''
-  ].join('\n');
-
-  return new Response(body, {
-    headers: {
-      'content-type': 'application/xml; charset=utf-8'
-    }
-  });
-}
-
-function handleSitemap(url) {
-  const pages = ['/', '/features', '/pricing.html', '/privacy.html', '/terms.html', '/delete-account.html'];
-  const body = [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    ...pages.map((path) => `  <url><loc>${escapeXml(`${url.origin}${path}`)}</loc></url>`),
     '</urlset>',
     ''
   ].join('\n');
