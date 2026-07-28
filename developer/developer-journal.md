@@ -9,6 +9,7 @@
 - Validation completed successfully with `pnpm run test:seo`, `pnpm run test:robots`, and `pnpm run test:menu`.
 - Added DoorDash and Uber Eats delivery to the Single Location feature list in [public/pricing.html](public/pricing.html).
 - Added [public/hardware.html](public/hardware.html), a branded restaurant hardware guide covering Android payment kiosks, supported handheld POS options, non-payment iPad workflows, hardened cases, stands, mounts, power, and payment fallback guidance.
+- Added direct manufacturer or official-store links to every hardware device card, with model-family links for current phone and tablet ranges and a retailer availability search for the retired HMD T21 product page.
 - Made the platform boundary explicit: DialTone payment kiosks require compatible Android hardware because iPad does not support Tap to Pay; iPad remains suitable for KDS, expo, menu management, reporting, and administration.
 - Added `Hardware` as the final far-right navigation link across every public page, added the page to [public/sitemap.xml](public/sitemap.xml), and extended [tests/robots.test.mjs](tests/robots.test.mjs) to protect sitemap discovery.
 - Established the marketing hierarchy from cold-call and demo feedback: present DialTone as a **restaurant operating system** first, with answering the phone as its lead differentiator, followed by connected ordering, payments, kitchen flow, and delivery.
