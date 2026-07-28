@@ -1,5 +1,21 @@
 # Developer Journal
 
+## 2026-07-28
+
+- Strengthened on-site SEO across the marketing pages: promoted the homepage hero to the sole `<h1>`, aligned homepage and pricing titles with `restaurant operating system`, normalized key descriptions, and added contextual links between related features.
+- Reworked homepage JSON-LD into connected `Organization`, `WebSite`, and `SoftwareApplication` entities, replaced the stale `$0` offer with the published `$199`–`$399` paid-plan range, and aligned FAQ schema with the visible FAQ cards.
+- Added `BreadcrumbList` JSON-LD to every feature detail page while preserving the existing visible `Features / Page` breadcrumbs, completed social metadata for privacy, terms, and account deletion, and refreshed changed sitemap dates.
+- Added `pnpm run test:seo` regression coverage for title and description limits, self-canonicals, one visible `<h1>`, social metadata, parseable JSON-LD, homepage entity and pricing accuracy, visible FAQ parity, feature breadcrumbs, sitemap coverage, and 404 exclusion/noindex behavior.
+- Validation completed successfully with `pnpm run test:seo`, `pnpm run test:robots`, and `pnpm run test:menu`.
+- Added DoorDash and Uber Eats delivery to the Single Location feature list in [public/pricing.html](public/pricing.html).
+- Added [public/hardware.html](public/hardware.html), a branded restaurant hardware guide covering Android payment kiosks, supported handheld POS options, non-payment iPad workflows, hardened cases, stands, mounts, power, and payment fallback guidance.
+- Made the platform boundary explicit: DialTone payment kiosks require compatible Android hardware because iPad does not support Tap to Pay; iPad remains suitable for KDS, expo, menu management, reporting, and administration.
+- Added `Hardware` as the final far-right navigation link across every public page, added the page to [public/sitemap.xml](public/sitemap.xml), and extended [tests/robots.test.mjs](tests/robots.test.mjs) to protect sitemap discovery.
+- Established the marketing hierarchy from cold-call and demo feedback: present DialTone as a **restaurant operating system** first, with answering the phone as its lead differentiator, followed by connected ordering, payments, kitchen flow, and delivery.
+- Removed AI-first positioning from future marketing guidance because operators have shown resistance to an AI-led pitch. Prospect-facing headlines, metadata, pricing, and opening descriptions should explain operational outcomes instead of categorizing DialTone as a `voice AI agent`.
+- Preserved an explicit exception for legal, privacy, consent, compliance, and technical documentation, where automation and AI terminology must remain when required for accurate disclosure.
+- Applied the positioning across homepage metadata and FAQ schema, the feature overview, pricing metadata and tier bullets, the phone-answering feature page, and the new hardware page. Legal disclosures and internal implementation identifiers were intentionally left unchanged.
+
 ## 2026-07-25
 
 - Fixed `/sitemap.xml` drift by serving [public/sitemap.xml](public/sitemap.xml) through the Worker assets binding instead of maintaining a second hardcoded marketing sitemap in [worker.js](worker.js).

@@ -11,12 +11,12 @@
   </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DialTone.Menu &amp; Automated operations for Restaurants</title>
-  <meta name="description" content="DialTone.Menu is a restaurant operating system, answers every call, takes every order, while managing your kitchen and deliveries, 24/7." />
-  <meta property="og:title" content="DialTone.Menu &amp; process automation for Restaurants" />
-  <meta property="og:description" content="DialTone.Menu, process automation for restaurants — answers every call, takes every order, and sends it straight to your kitchen, 24/7." />
+  <title>Restaurant Operating System | DialTone</title>
+  <meta name="description" content="DialTone is a restaurant operating system that answers every call and connects orders, payments, kitchen workflows, and delivery in one platform." />
+  <meta property="og:title" content="Restaurant Operating System | DialTone" />
+  <meta property="og:description" content="DialTone is a restaurant operating system that answers every call and connects orders, payments, kitchen workflows, and delivery in one platform." />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://dialtone.menu" />
+  <meta property="og:url" content="https://dialtone.menu/" />
   <meta property="og:image" content="https://dialtone.menu/images/dialtone-banner.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -24,8 +24,8 @@
   <meta property="og:locale" content="en_US" />
 
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="DialTone.Menu — Voice AI Agent &amp; Automated operations for Restaurants" />
-  <meta name="twitter:description" content="DialTone.Menu is a restaurant software platform that answers every call, takes every order, and sends it straight to your kitchen, 24/7." />
+  <meta name="twitter:title" content="Restaurant Operating System | DialTone" />
+  <meta name="twitter:description" content="DialTone is a restaurant operating system that answers every call and connects orders, payments, kitchen workflows, and delivery in one platform." />
   <meta name="twitter:image" content="https://dialtone.menu/images/dialtone-banner.png" />
   <meta property="og:see_also" content="https://www.instagram.com/dialtone.menu/" />
   <meta property="og:see_also" content="https://www.facebook.com/profile.php?id=61591570856435" />
@@ -33,42 +33,74 @@
   <link rel="canonical" href="https://dialtone.menu/" />
   <link rel="icon" type="image/svg+xml" href="/images/favicon.svg?v=20260724" />
 
-  <meta name="keywords" content="smarter processes for restaurants, restaurant operations, restaurant phone answering, automated menus, restaurant voice assistant, order taking for restaurants, restaurant technology" />
+  <meta name="keywords" content="restaurant operating system, restaurant operations platform, restaurant phone answering system, restaurant order management system, restaurant kitchen display system, restaurant ordering platform, automated restaurant phone ordering" />
 
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "DialTone",
-    "applicationCategory": "BusinessApplication",
-    "operatingSystem": "Any",
-    "description": "DialTone is a restaurant management system for restaurants that answers every inbound call, takes phone orders, handles modifications, and sends orders directly to the kitchen — 24/7, and more.",
-    "url": "https://dialtone.menu",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD",
-      "availability": "https://schema.org/InStock",
-      "description": "See dialtone.menu/pricing.html for current plans.",
-      "url": "https://dialtone.menu/pricing.html"
-    },
-    "provider": {
-      "@type": "Organization",
-      "name": "ByteStreams LLC",
-      "url": "https://dialtone.menu",
-      "contactPoint": {
-        "@type": "ContactPoint",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://dialtone.menu/#organization",
+        "name": "DialTone",
+        "legalName": "ByteStreams LLC",
+        "url": "https://dialtone.menu/",
+        "logo": "https://dialtone.menu/images/favicon.png",
+        "image": "https://dialtone.menu/images/dialtone-banner.png",
         "email": "hello@dialtone.menu",
-        "contactType": "sales"
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "email": "hello@dialtone.menu",
+          "contactType": "sales"
+        },
+        "sameAs": [
+          "https://www.instagram.com/dialtone.menu/",
+          "https://www.facebook.com/profile.php?id=61591570856435"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://dialtone.menu/#website",
+        "url": "https://dialtone.menu/",
+        "name": "DialTone",
+        "alternateName": "DialTone.Menu",
+        "publisher": {
+          "@id": "https://dialtone.menu/#organization"
+        }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://dialtone.menu/#software",
+        "name": "DialTone",
+        "url": "https://dialtone.menu/",
+        "applicationCategory": "BusinessApplication",
+        "applicationSubCategory": "Restaurant management software",
+        "operatingSystem": "Web, Android, iOS",
+        "description": "DialTone is a restaurant operating system that answers phone calls and connects ordering, payments, kitchen workflows, delivery, and reporting.",
+        "provider": {
+          "@id": "https://dialtone.menu/#organization"
+        },
+        "offers": {
+          "@type": "AggregateOffer",
+          "lowPrice": "199",
+          "highPrice": "399",
+          "priceCurrency": "USD",
+          "offerCount": "3",
+          "url": "https://dialtone.menu/pricing.html"
+        },
+        "audience": {
+          "@type": "Audience",
+          "audienceType": "Independent restaurants and small restaurant chains"
+        },
+        "featureList": [
+          "Restaurant phone answering",
+          "Order and reservation management",
+          "Payment processing",
+          "Kitchen display system",
+          "Pickup and delivery coordination",
+          "Restaurant analytics"
+        ]
       }
-    },
-    "audience": {
-      "@type": "Audience",
-      "audienceType": "Independent restaurants and small restaurant chains"
-    },
-    "sameAs": [
-      "https://www.instagram.com/dialtone.menu/",
-      "https://www.facebook.com/profile.php?id=61591570856435"
     ]
   }
   </script>
@@ -80,58 +112,42 @@
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "Is DialTone.Menu a Restaurant Operating System?",
+        "name": "Will my customers know how it works?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. DialTone.Menu is a Restaurant Operating System (ROS) that handles phone orders, as well as a suite of tools for managing orders, tracking performance, and optimizing operations. The platform provides a complete operations suite for restaurants to streamline their phone ordering process and improve customer experience as well as a restaurant supply chain module."
+          "text": "Customers call your same number, place their order, and get updates by text. They don’t need an app, an account, or anything new."
         }
       },
       {
         "@type": "Question",
-        "name": "What is a operations management system for restaurants?",
+        "name": "What if a customer asks something complicated?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "An operations management system for restaurants is a software system that answers inbound phone calls, takes orders from customers, handles menu questions and substitutions, and sends completed orders directly to the kitchen — automatically, without any staff involvement. DialTone is a platform built specifically for independent restaurants and small chains."
+          "text": "DialTone.Menu uses your live menu for pricing, specials, availability, modifiers, substitutions, and item details. If something requires staff input, it can transfer or take a message."
         }
       },
       {
         "@type": "Question",
-        "name": "How does DialTone's operations management system for restaurants work?",
+        "name": "Do I need new hardware?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "When a customer calls your restaurant, DialTone answers in seconds, greets them by name if they have previously ordered, takes their order conversationally, reads back the total, sends them payment processing, and sends the ticket straight to your kitchen . No hold music, no missed calls, no extra staff required."
+          "text": "No. If you already have a computer, tablet, or phone, DialTone.Menu works with your existing hardware."
         }
       },
       {
         "@type": "Question",
-        "name": "How does DialTone.Menu Handle Menus",
+        "name": "How long does setup take?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "You provide your menu during the onboarding process. Once loaded, with every change, DialTone.Menu updates the website, kitchen and phone answering system automatically.  You can designate menu items as specials, specify specify hours of availability, and options. "
+          "text": "DialTone.Menu works with your existing phone number. To use your existing number, setup can take 1 - 5 days, depending on your provider. For new numbers, less than a day."
         }
       },
       {
         "@type": "Question",
-        "name": "Can DialTone.Menu manage walk-in orders?",
+        "name": "What does it cost?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. DialTone.Menu can manage walk-in orders by allowing staff to place orders in DialTone.Menu's POS screen, which integrates seamlessly with the kitchen processes."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What types of restaurants benefit most from an AI phone agent?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Any restaurant that receives phone orders benefits from an AI phone agent. Pizza shops, Chinese takeout, delis, and fast-casual restaurants see the highest ROI because they handle high call volumes during peak hours when staff are too busy to answer every call."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "How much does DialTone.Menu cost?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "DialTone is priced for independent restaurants and small chains. Visit dialtone.menu/pricing.html for current plans."
+          "text": "See the full pricing details on our Pricing page."
         }
       }
     ]
@@ -1112,6 +1128,7 @@
       <a class="nav-link" href="/pricing.html">Pricing</a>
       <a class="nav-link" href="/privacy.html">Privacy</a>
       <a class="nav-link" href="/terms.html">Terms</a>
+      <a class="nav-link" href="/hardware.html">Hardware</a>
     </span>
   </nav>
 
@@ -1120,7 +1137,7 @@
     <div class="hero-inner">
       <div class="hero-content">
         <span class="hero-label">PHONE · ORDERS · RESERVATIONS · PAYMENTS, ALL IN ONE PLACE </span>
-        <h2 class="hero-h1">Your phone,<br />your orders,<br />your tables.<br /><em>One unified system.</em></h2>
+        <h1 class="hero-h1">Your phone,<br />your orders,<br />your tables.<br /><em>One unified system.</em></h1>
         <p class="hero-sub">DialTone is a unified system that connects your phone, your kitchen, your bar, and your counter onto a single platform. When a customer calls, the automated system takes the order, texts a secure payment link, and drops a ticket directly onto DialTone's KDS with clear order details—without your staff ever touching a phone or a piece of paper. Leaving your staff to handle orders on user friendly screens.</p>
         <p class="hero-sub">DialTone manages pickup, dine-in, and DoorDash delivery options. It provides reservations and live menus. Tap-to-Pay, SMS, cash payments handled. The whole front of your restaurant on one system, not five.</p>
         <p class="hero-sub">Accurate, consistent, up‑to‑date operations across every process.</p>
@@ -1297,7 +1314,7 @@
           </div>
           <div class="faq-card">
             <div class="faq-q">What does it cost?</div>
-            <div class="faq-a">See the full pricing details on our <a href="/pricing.html" style="display:inline-block; padding:4px 12px; background:var(--gold); color:var(--navy); border-radius:6px; font-size:0.82rem; font-weight:600; text-decoration:none; vertical-align:middle;">Pricing</a>.</div>
+            <div class="faq-a">See the full pricing details on our <a href="/pricing.html" style="display:inline-block; padding:4px 12px; background:var(--gold); color:var(--navy); border-radius:6px; font-size:0.82rem; font-weight:600; text-decoration:none; vertical-align:middle;">Pricing page</a>.</div>
           </div>
         </div>
       </div>

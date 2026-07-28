@@ -142,7 +142,7 @@ async function run() {
     'Sitemap should return application/xml content type'
   );
   assert.match(sitemapBody, /<loc>https:\/\/dialtone\.menu\/<\/loc>/, 'Sitemap should include homepage');
-  assert.match(sitemapBody, /<lastmod>2026-07-24<\/lastmod>/, 'Sitemap should include repository metadata');
+  assert.match(sitemapBody, /<lastmod>2026-07-28<\/lastmod>/, 'Sitemap should include repository metadata');
   assert.match(
     sitemapBody,
     /<loc>https:\/\/dialtone\.menu\/features\/voice-agent\.html<\/loc>/,
@@ -152,6 +152,11 @@ async function run() {
     sitemapBody,
     /<loc>https:\/\/dialtone\.menu\/pricing\.html<\/loc>/,
     'Sitemap should include pricing page'
+  );
+  assert.match(
+    sitemapBody,
+    /<loc>https:\/\/dialtone\.menu\/hardware\.html<\/loc>/,
+    'Sitemap should include hardware page'
   );
   assert.match(
     sitemapBody,
