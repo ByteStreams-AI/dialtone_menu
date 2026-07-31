@@ -692,87 +692,30 @@ async function handleContact(request, env) {
     return jsonResponse({ error: 'Contact destination is not configured.' }, 503);
   }
 
-  if (!env.RESEND_API_KEY) {
-    // Surfaces in observability; client-side error keeps submitters in
-    // the form rather than bouncing them to a mail app.
-    console.log('Contact form unavailable: RESEND_API_KEY secret is not set.');
+  if (!env.EMAIL) {
+    console.log('Contact form unavailable: EMAIL binding is not configured.');
     return jsonResponse({
       error: 'Contact form is temporarily unavailable. Please try again shortly.'
     }, 503);
   }
 
-  const result = await forwardToResend({
-    destinationEmail,
-    siteName: env.SITE_NAME,
-    name,
-    restaurantName,
-    email,
-    message,
-    apiKey: env.RESEND_API_KEY
-  });
-
-  if (!result.ok) {
-    // Log provider response for CF Workers observability — rate-limit
-    // reasons, invalid-key errors, and domain-unverified states all
-    // surface here. Details stay server-side.
-    console.log('Resend failure:', JSON.stringify({
-      httpStatus: result.httpStatus,
-      errorName: result.errorName,
-      errorMessage: result.errorMessage
-    }));
-
+  try {
+    await env.EMAIL.send({
+      to: destinationEmail,
+      from: { email: 'contact@dialtone.menu', name: env.SITE_NAME || 'DialTone' },
+      replyTo: email,
+      subject: `${env.SITE_NAME || 'DialTone'} Contact: ${restaurantName} (${name})`,
+      text: buildTextBody({ siteName: env.SITE_NAME, name, restaurantName, email, message }),
+      html: buildHtmlBody({ siteName: env.SITE_NAME, name, restaurantName, email, message })
+    });
+  } catch (error) {
+    console.log('Email send failure:', String(error));
     return jsonResponse({
       error: 'Message delivery failed. Please try again shortly.'
     }, 502);
   }
 
   return jsonResponse({ ok: true });
-}
-
-async function forwardToResend({ destinationEmail, siteName, name, restaurantName, email, message, apiKey }) {
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      // Sender lives on the shared `send.bytestreams.ai` Resend domain
-      // (see developer/resend-notes or the project plan memo). `hello@`
-      // local-part kept in sync with the recipient mailbox for symmetry.
-      from: `${siteName} <contact@send.bytestreams.ai>`,
-      to: [destinationEmail],
-      // Reply-To: the submitter's address so hitting Reply in Gmail goes
-      // straight back to the person who filled out the form. Passed as a
-      // single-element array to match Resend's documented canonical form;
-      // the regex check in `handleContact` already rejects display-name /
-      // bracketed-address syntax (whitespace and `<>` fail the anchored
-      // `[^\s@]+@[^\s@]+\.[^\s@]+` pattern), so `email` is a bare address.
-      reply_to: [email],
-      subject: `${siteName} Contact: ${restaurantName} (${name})`,
-      text: buildTextBody({ siteName, name, restaurantName, email, message }),
-      html: buildHtmlBody({ siteName, name, restaurantName, email, message })
-    })
-  });
-
-  let payload = null;
-  try {
-    payload = await response.json();
-  } catch {
-    payload = null;
-  }
-
-  // Resend success returns `{ id: "<resend_message_id>" }`; errors return
-  // `{ statusCode, name, message }`. Treat presence of `id` as the ok signal.
-  const ok = response.ok && payload !== null && typeof payload.id === 'string';
-
-  return {
-    ok,
-    httpStatus: response.status,
-    errorName: payload && payload.name ? String(payload.name) : '',
-    errorMessage: payload && payload.message ? String(payload.message) : ''
-  };
 }
 
 function buildTextBody({ siteName, name, restaurantName, email, message }) {

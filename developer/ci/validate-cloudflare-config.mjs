@@ -41,7 +41,6 @@ function validateWrangler(content) {
   requireMatch(content, /^binding\s*=\s*"ASSETS"\s*$/m, 'wrangler.toml: assets binding must be ASSETS');
   requireMatch(content, /run_worker_first\s*=\s*\[[\s\S]*"\/api\/\*"[\s\S]*\]/m, 'wrangler.toml: run_worker_first must include /api/*');
   requireMatch(content, /^\[secrets\]$/m, 'wrangler.toml: missing [secrets] block — required for deploy-time enforcement');
-  requireMatch(content, /RESEND_API_KEY/, 'wrangler.toml: RESEND_API_KEY not listed under [secrets]');
   requireMatch(content, /SUPABASE_SERVICE_ROLE_KEY/, 'wrangler.toml: SUPABASE_SERVICE_ROLE_KEY not listed under [secrets]');
   requireMatch(content, /SUPABASE_KEY/, 'wrangler.toml: SUPABASE_KEY not listed under [secrets]');
 
@@ -65,7 +64,6 @@ function validateWorker(content) {
   requireMatch(content, /if \(url\.pathname === '\/api\/contact'\)/, 'worker.js: /api/contact route handler is missing');
   requireMatch(content, /env\.SUPABASE_SERVICE_ROLE_KEY\s*\|\|\s*env\.SUPABASE_KEY/, 'worker.js: expected SUPABASE_SERVICE_ROLE_KEY fallback to SUPABASE_KEY');
   requireMatch(content, /env\.SUPABASE_URL/, 'worker.js: expected SUPABASE_URL usage');
-  requireMatch(content, /env\.RESEND_API_KEY/, 'worker.js: expected RESEND_API_KEY usage');
   requireMatch(content, /\/rest\/v1\/waitlist_submissions/, 'worker.js: expected waitlist_submissions persistence endpoint');
 }
 

@@ -53,10 +53,6 @@ jobs:
             echo "ERROR: Neither SUPABASE_SERVICE_ROLE_KEY nor SUPABASE_KEY is set in Cloudflare."
             exit 1
           fi
-          if ! echo "$SECRETS_JSON" | grep -q 'RESEND_API_KEY'; then
-            echo "ERROR: RESEND_API_KEY is not set in Cloudflare."
-            exit 1
-          fi
           echo "All required secrets are present."
 
       - name: Deploy to Cloudflare Workers

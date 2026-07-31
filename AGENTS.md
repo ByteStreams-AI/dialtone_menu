@@ -23,7 +23,8 @@
 - The rebrand + waitlist pipeline shipped and is now the production baseline on `main`.
 - Keep `/api/contact` IP rate limiting in place using `CF-Connecting-IP` before DB/email calls.
 - Keep secrets out of git (`.env.supabase`, `supabase/.temp/`); rotate immediately if exposure is suspected.
-- Preserve CI deploy secret checks (`RESEND_API_KEY` and at least one Supabase DB key).
+- Preserve CI deploy secret checks (at least one Supabase DB key required).
+- Email notifications go to `hello@dialtone.menu` (Google Workspace); sent via Cloudflare Email Service binding (`env.EMAIL`).
 
 ---
 

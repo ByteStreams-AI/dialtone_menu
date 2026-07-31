@@ -16,16 +16,11 @@ compatibility_date = "2026-04-20"
 compatibility_flags = []
 
 # Contact form destination. The Worker's `/api/contact` handler sends
-# validated submissions via Resend's API; messages are delivered here.
-# `hello@bytestreams.ai` is shared across the ByteStreams/DialTone
-# brands as the single monitored inbox.
+# validated submissions via Cloudflare Email Service; messages are delivered here.
 [vars]
-CONTACT_EMAIL = "hello@bytestreams.ai"
+CONTACT_EMAIL = "hello@dialtone.menu"
 # Identifies this site in the contact-form email From display name and
-# subject prefix (e.g. `DialTone Contact: <submitter name>`), since
-# both DialTone and ByteStreams share one sending domain on Resend
-# (`send.bytestreams.ai`). Distinguishing by SITE_NAME keeps inbox
-# sorting clean.
+# subject prefix (e.g. `DialTone Contact: <submitter name>`).
 SITE_NAME = "DialToneMenu"
 
 # Supabase configuration for form submission persistence.
@@ -57,16 +52,11 @@ binding = "RATE_LIMIT_KV"
 id = "40a06e879d7b4cb3aa9752af39cf4de8"
 preview_id = "be9cdfc34c7344d4966b2b6b55a02389"
 
-# Required secret (not stored in this file): RESEND_API_KEY
-# The `/api/contact` handler uses this to authenticate with Resend's
-# API. Set it once per environment via:
-#
-#   npx wrangler secret put RESEND_API_KEY
-#
-# The value is encrypted at rest by Cloudflare and exposed to the
-# Worker at runtime as `env.RESEND_API_KEY`. Never commit the raw key.
-# If the secret is missing, `/api/contact` returns a user-friendly 503
-# directing submitters to email `hello@bytestreams.ai` manually.
+# Email Sending binding — sends contact form notifications via Cloudflare Email Service.
+# The `from` domain (dialtone.menu) must be onboarded to Email Sending in the Dashboard
+# before deploying. No API key needed — the binding is authorized by the zone.
+[[send_email]]
+name = "EMAIL"
 
 # Required secret (not stored in this file): SUPABASE_KEY
 # The `/api/contact` handler uses this to insert waitlist submissions into
@@ -183,7 +173,6 @@ run_worker_first = [
 # Upload values with: bash developer/ci/deploy-prod-secrets.sh
 [secrets]
 required = [
-  "RESEND_API_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
   "SUPABASE_KEY"
 ]

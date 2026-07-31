@@ -1,5 +1,15 @@
 # Developer Journal
 
+## 2026-07-30
+
+- Removed `RESEND_API_KEY` from the project: Resend is no longer used for email sending. `hello@dialtone.menu` is now a real Google Workspace address, and the Worker already uses the Cloudflare Email Service binding (`env.EMAIL`) for outbound notifications.
+- Updated `CONTACT_EMAIL` in [wrangler.toml](wrangler.toml) from `hello@bytestreams.ai` to `hello@dialtone.menu`.
+- Removed `RESEND_API_KEY` from the `[secrets]` block in [wrangler.toml](wrangler.toml) and cleaned up the stale Resend comments.
+- Removed `RESEND_API_KEY` checks from [developer/ci/validate-cloudflare-config.mjs](developer/ci/validate-cloudflare-config.mjs) (`validateWrangler` and `validateWorker`).
+- Removed `RESEND_API_KEY` secret verification from the GitHub Actions workflow [.github/workflows/deploy.yml](.github/workflows/deploy.yml).
+- Removed all `RESEND_API_KEY` prompting, argument parsing, and uploading from [developer/ci/deploy-prod-secrets.sh](developer/ci/deploy-prod-secrets.sh); the script now only handles the two Supabase keys.
+- Updated [AGENTS.md](AGENTS.md) production baseline to reflect the new email destination and remove the Resend requirement.
+
 ## 2026-07-28
 
 - Strengthened on-site SEO across the marketing pages: promoted the homepage hero to the sole `<h1>`, aligned homepage and pricing titles with `restaurant operating system`, normalized key descriptions, and added contextual links between related features.

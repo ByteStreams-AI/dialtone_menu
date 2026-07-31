@@ -8,17 +8,16 @@ set -euo pipefail
 # after initial setup or any time a secret needs to be rotated.
 #
 # Required secrets for production:
-#   RESEND_API_KEY            — Resend API key for sending contact emails
 #   SUPABASE_SERVICE_ROLE_KEY — Supabase service-role key for DB inserts (preferred)
 #   SUPABASE_KEY              — Supabase anon/publishable key (fallback)
 #
 # Usage:
 #   bash developer/ci/deploy-prod-secrets.sh
 #   bash developer/ci/deploy-prod-secrets.sh --yes   # skip confirmation
-#   RESEND_API_KEY=... SUPABASE_SERVICE_ROLE_KEY=... SUPABASE_KEY=... \
+#   SUPABASE_SERVICE_ROLE_KEY=... SUPABASE_KEY=... \
 #     bash developer/ci/deploy-prod-secrets.sh --yes
 #   bash developer/ci/deploy-prod-secrets.sh --yes \
-#     --resend-api-key "..." --supabase-service-role-key "..." --supabase-key "..."
+#     --supabase-service-role-key "..." --supabase-key "..."
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
@@ -27,7 +26,6 @@ SKIP_CONFIRM=false
 COMPLETED=false
 TERMINATED_BY_SIGNAL=false
 HIDE_INPUT=false
-RESEND_API_KEY_INPUT="${RESEND_API_KEY:-}"
 SUPABASE_SERVICE_ROLE_KEY_INPUT="${SUPABASE_SERVICE_ROLE_KEY:-}"
 SUPABASE_KEY_INPUT="${SUPABASE_KEY:-}"
 
@@ -36,10 +34,6 @@ while [[ $# -gt 0 ]]; do
     --yes|-y)
       SKIP_CONFIRM=true
       shift
-      ;;
-    --resend-api-key)
-      RESEND_API_KEY_INPUT="${2:-}"
-      shift 2
       ;;
     --supabase-service-role-key)
       SUPABASE_SERVICE_ROLE_KEY_INPUT="${2:-}"
@@ -52,9 +46,9 @@ while [[ $# -gt 0 ]]; do
     --help|-h)
       echo "Usage:"
       echo "  bash developer/ci/deploy-prod-secrets.sh [--yes]"
-      echo "  bash developer/ci/deploy-prod-secrets.sh --yes --resend-api-key <value> --supabase-service-role-key <value> --supabase-key <value>"
+      echo "  bash developer/ci/deploy-prod-secrets.sh --yes --supabase-service-role-key <value> --supabase-key <value>"
       echo "  bash developer/ci/deploy-prod-secrets.sh --hide-input"
-      echo "  RESEND_API_KEY=<value> SUPABASE_SERVICE_ROLE_KEY=<value> SUPABASE_KEY=<value> bash developer/ci/deploy-prod-secrets.sh --yes"
+      echo "  SUPABASE_SERVICE_ROLE_KEY=<value> SUPABASE_KEY=<value> bash developer/ci/deploy-prod-secrets.sh --yes"
       exit 0
       ;;
     --hide-input)
@@ -87,9 +81,8 @@ print_banner() {
   echo "Values are never stored on disk by this script."
   echo
   echo "Required secrets:"
-  echo "  1) RESEND_API_KEY"
-  echo "  2) SUPABASE_SERVICE_ROLE_KEY"
-  echo "  3) SUPABASE_KEY"
+  echo "  1) SUPABASE_SERVICE_ROLE_KEY"
+  echo "  2) SUPABASE_KEY"
   if [[ "$HIDE_INPUT" == "true" ]]; then
     echo
     echo "Input mode: hidden (characters will not be shown)."
@@ -191,16 +184,10 @@ mask_value() {
   printf '%s' "${value:0:4}...${value:len-4:4}"
 }
 
-prompt_secret RESEND_API_KEY             "RESEND_API_KEY"             "$RESEND_API_KEY_INPUT"
 prompt_secret SUPABASE_SERVICE_ROLE_KEY  "SUPABASE_SERVICE_ROLE_KEY"  "$SUPABASE_SERVICE_ROLE_KEY_INPUT"
 prompt_secret SUPABASE_KEY               "SUPABASE_KEY"               "$SUPABASE_KEY_INPUT"
 
 # Validate nothing critical is blank.
-if [[ -z "$RESEND_API_KEY" ]]; then
-  echo "Error: RESEND_API_KEY cannot be empty."
-  exit 1
-fi
-
 if [[ -z "$SUPABASE_SERVICE_ROLE_KEY" && -z "$SUPABASE_KEY" ]]; then
   echo "Error: at least one Supabase DB key is required (SUPABASE_SERVICE_ROLE_KEY or SUPABASE_KEY)."
   exit 1
@@ -210,7 +197,6 @@ fi
 echo
 echo "🧾 Confirm Secrets"
 echo "----------------------------------------------"
-echo "RESEND_API_KEY:             $(mask_value "$RESEND_API_KEY")"
 echo "SUPABASE_SERVICE_ROLE_KEY:  $(mask_value "${SUPABASE_SERVICE_ROLE_KEY:-}")"
 echo "SUPABASE_KEY:               $(mask_value "${SUPABASE_KEY:-}")"
 echo "----------------------------------------------"
@@ -227,21 +213,19 @@ if [[ "$SKIP_CONFIRM" != "true" ]]; then
 fi
 
 echo
-echo "[1/3] Uploading RESEND_API_KEY"
-printf '%s' "$RESEND_API_KEY" | "${WRANGLER_CMD[@]}" secret put RESEND_API_KEY
-
+echo "[1/2] Uploading SUPABASE_SERVICE_ROLE_KEY / SUPABASE_KEY"
 if [[ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
-  echo "[2/3] Uploading SUPABASE_SERVICE_ROLE_KEY"
+  echo "[1/2] Uploading SUPABASE_SERVICE_ROLE_KEY"
   printf '%s' "$SUPABASE_SERVICE_ROLE_KEY" | "${WRANGLER_CMD[@]}" secret put SUPABASE_SERVICE_ROLE_KEY
 else
-  echo "[2/3] Skipping SUPABASE_SERVICE_ROLE_KEY (not provided)"
+  echo "[1/2] Skipping SUPABASE_SERVICE_ROLE_KEY (not provided)"
 fi
 
 if [[ -n "${SUPABASE_KEY:-}" ]]; then
-  echo "[3/3] Uploading SUPABASE_KEY"
+  echo "[2/2] Uploading SUPABASE_KEY"
   printf '%s' "$SUPABASE_KEY" | "${WRANGLER_CMD[@]}" secret put SUPABASE_KEY
 else
-  echo "[3/3] Skipping SUPABASE_KEY (not provided)"
+  echo "[2/2] Skipping SUPABASE_KEY (not provided)"
 fi
 
 echo
