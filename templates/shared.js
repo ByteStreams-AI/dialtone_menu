@@ -136,9 +136,9 @@ export const APP_QR_SVG =
 
 export function renderAppQr() {
   return (
-    `<a class="app-qr" href="https://dialtone.menu" target="_blank" rel="noopener noreferrer" aria-label="Download the app to order">` +
+    `<a class="app-qr" href="https://dialtone.menu" target="_blank" rel="noopener noreferrer" aria-label="Earn points — download the app to order">` +
     `<span class="app-qr-code">${APP_QR_SVG}</span>` +
-    `<span class="app-qr-caption">Download the app to order</span></a>`
+    `<span class="app-qr-caption">Earn points! Download to order.</span></a>`
   );
 }
 // ---- the ctx normalizer (the seam) ----
