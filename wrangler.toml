@@ -196,3 +196,94 @@ invocation_logs = true
 
 [observability.traces]
 enabled = false
+
+# ── Preview environment (dialtone#1183) ────────────────────────────────────
+# A SECOND Worker, on a free `*.workers.dev` host, so a branch can be deployed
+# without touching production. Until this existed there was exactly one target
+# and it was the live site: every merge to `main` deployed straight to prod, and
+# the only non-deploy loop was `dev/preview-menu.mjs`, which renders template
+# modules but cannot exercise worker ROUTING or a payment flow.
+#
+# That was survivable while this Worker served brochure pages. It is not
+# survivable for web ordering (dialtone#1182), which adds a service binding,
+# proxied asset paths and eventually a Stripe Payment Element — none of which
+# can be built deploy-to-find-out on the page that takes money.
+#
+# DELIBERATELY NO CUSTOM DOMAIN. `workers.dev` needs no ACM certificate, no
+# proxied DNS record and no Worker route — which is the expensive, fiddly part
+# of the branded-host setup and the reason `*.pay` and `*.m` each took real
+# effort. The cost of this environment is therefore a config block and a
+# workflow, not a day of dashboard work.
+#
+# WHAT PREVIEW CANNOT TEST: host-based slug extraction
+# (`<slug>.m.dialtone.menu` → `extractMenuSlugFromHost`), because a workers.dev
+# host has no slug in it. Use the PATH form `/m/<slug>`, which is retained and
+# works identically below the host-parsing layer. Host routing is already live,
+# already guarded by the content-verify step in deploy.yml, and unchanged by
+# #1182 — so it is not on the critical path. If it ever changes, THAT is when to
+# buy a `*.m-preview` certificate.
+#
+# WRANGLER GOTCHA — ENVIRONMENTS DO NOT INHERIT MOST CONFIG. `main` and
+# `compatibility_date` are inherited; `vars`, `kv_namespaces`, `assets` and
+# `observability` are NOT. Everything below is restated on purpose. Omitting a
+# var here does not fall back to the top-level value — it is simply absent at
+# runtime, and the failure shows up as a 503 from a handler that looks fine in
+# the diff. When you change a top-level var, change it here too.
+#
+# SECRETS ARE PER-ENVIRONMENT and must be uploaded separately:
+#   npx wrangler secret put PUBLIC_MENU_SUPABASE_ANON_KEY --env preview
+#   npx wrangler secret put SUPABASE_KEY --env preview          # contact form
+#   npx wrangler secret put RESEND_API_KEY --env preview        # contact form
+# Only the first is needed for menus. Without the other two `/api/contact`
+# returns 503 on preview, which is correct — preview should not be emailing.
+[env.preview]
+name = "dialtone-menu-preview"
+workers_dev = true
+
+[env.preview.vars]
+CONTACT_EMAIL = "hello@bytestreams.ai"
+SITE_NAME = "DialToneMenu (preview)"
+SUPABASE_URL = "https://hltmzafywzqajjzjpqva.supabase.co"
+# Same project the production Worker reads today — the public menu is served
+# from the STAGING app database by deliberate decision (dialtone#979). Preview
+# changes WHERE THE CODE RUNS, not which data it reads, which is what keeps
+# this environment cheap. Flipping menus to the prod app project is #979 and is
+# a launch gate for a real paying tenant, not a build gate.
+PUBLIC_MENU_SUPABASE_URL = "https://mxhyvvgjtqllohpvrwon.supabase.co"
+
+[[env.preview.kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+# The preview namespace that already existed as `preview_id` on the production
+# binding — so preview rate-limiting cannot evict production's entries.
+id = "be9cdfc34c7344d4966b2b6b55a02389"
+
+[env.preview.assets]
+directory = "./public/"
+binding = "ASSETS"
+not_found_handling = "404-page"
+run_worker_first = [
+  "/",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/favicon.ico",
+  "/.well-known/*",
+  "/m/*",
+  "/menu",
+  "/menu/",
+  "/api/*"
+]
+
+[env.preview.observability.logs]
+enabled = true
+invocation_logs = true
+
+# Preview requires ONLY the menu key. Wrangler warns when `[secrets]` exists at
+# the top level but not here, because it is not inherited either — and the
+# narrower list is deliberate, not an oversight: RESEND_API_KEY and SUPABASE_KEY
+# drive `/api/contact`, and a preview environment has no business sending email
+# or writing waitlist rows. Without them that route returns 503, which is the
+# correct behaviour here.
+[env.preview.secrets]
+required = [
+  "PUBLIC_MENU_SUPABASE_ANON_KEY"
+]

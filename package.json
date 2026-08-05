@@ -3,11 +3,12 @@
   "private": true,
   "type": "module",
   "version": "0.1.0",
-  "description": "DialTone marketing site — dialtone.menu (Cloudflare Workers with Static Assets)",
+  "description": "DialTone marketing site \u2014 dialtone.menu (Cloudflare Workers with Static Assets)",
   "scripts": {
     "dev:wrangler": "wrangler dev",
     "validate:deploy": "node developer/ci/validate-cloudflare-config.mjs",
     "deploy": "wrangler deploy",
+    "deploy:preview": "wrangler deploy --env preview",
     "test:robots": "node tests/robots.test.mjs",
     "test:menu": "node tests/public-menu.test.mjs"
   },
