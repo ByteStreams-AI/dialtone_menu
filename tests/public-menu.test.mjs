@@ -129,7 +129,7 @@ async function run() {
   // App-download QR on the right of the header + its bold caption.
   assert.match(html, /class="app-qr"[^>]*href="https:\/\/dialtone\.menu"/, 'App QR should link to dialtone.menu (retargets to app stores later)');
   assert.match(html, /class="app-qr-code"><svg[^>]*viewBox="0 0 25 25"/, 'App QR should render the self-contained SVG');
-  assert.match(html, /class="app-qr-caption">Download the app to order</, 'QR caption should render');
+  assert.match(html, /class="app-qr-caption">Earn points! Download to order\./, 'QR caption should render');
   assert.match(html, /\.app-qr-caption \{[^}]*font-weight: 700/, 'QR caption should be bold');
   assert.match(html, /\.tagline \{[^}]*font-style: italic/, 'Tagline is an italic serif in the hero (Phase 1 redesign)');
   assert.match(html, /Served 7:00 AM-11:00 AM/, 'Serving window label should be rendered');
