@@ -358,6 +358,9 @@
     }
     .tier-features li.muted { color: var(--muted); }
     .tier-features li.muted::before { content: "—"; color: var(--muted); }
+    .tier-features li.muted ul { list-style: none; padding: 0.25rem 0 0 0.5rem; margin: 0; }
+    .tier-features li.muted ul li { padding: 0.15rem 0 0.15rem 1rem; font-size: 0.88rem; }
+    .tier-features li.muted ul li::before { content: "·"; color: var(--muted); }
 
     .tier-cta {
       display: inline-flex;
@@ -637,7 +640,14 @@
               <li>SMS order-ready texts (10DLC)</li>
               <li>Orders dashboard &amp; daily order numbers</li>
               <li>Kitchen Display</li>
-              <li class="muted">Walk-up card reader — available as an add-on</li>
+              <li>Truck Location Alerts</li>
+              <li class="muted">Available as add ons
+                <ul>
+                  <li>Branded Website</li>
+                  <li>Branded App</li>
+                  <li>Kiosk</li>
+                </ul>
+              </li>
             </ul>
 
             <a class="tier-cta" href="/#contact">Get Started →</a>
@@ -655,11 +665,19 @@
 
             <ul class="tier-features">
               <li>Everything in Food Truck</li>
-              <li>Kitchen Display included</li>
+              <li>Branded Website</li>
+              <li>Branded App</li>
+              <li>Beverage Display included</li>
               <li>Walk-up / Stripe Terminal reader included</li>
               <li>Dine-in — table &amp; serve time (optional)</li>
               <li>Team accounts</li>
               <li>Priority email support</li>
+              <li class="muted">Available as add ons
+                <ul>
+                  <li>Kiosk</li>
+                  <li>Analytics</li>
+                </ul>
+              </li>
             </ul>
 
             <a class="tier-cta" href="/#contact">Book a 15-Minute Call →</a>
@@ -677,11 +695,17 @@
 
             <ul class="tier-features">
               <li>Everything in Single Location</li>
+              <li>Kiosk</li>
+              <li>Analytics</li>
               <li>Multiple locations &amp; phone numbers</li>
               <li>Cross-location shared menu &amp; items</li>
-              <li>Expo coordination tools across kitchen and bar workflows</li>
               <li>Consolidated multi-location reporting</li>
-              <li>Team accounts with roles</li>
+              <li>Staff Management - roles, access controls, time management</li>
+              <li class="muted">Available as add ons
+                <ul>
+                  <li>Expo coordination tools across kitchen and bar workflows</li>
+                </ul>
+              </li>
             </ul>
 
             <a class="tier-cta" href="/#contact">Contact Sales →</a>
@@ -699,6 +723,7 @@
 
             <ul class="tier-features">
               <li>Everything in Multi-Location</li>
+              <li>Order velocity management</li>
               <li>Fire/Hold + Coursing workflows</li>
               <li>SSO &amp; advanced role-based admin</li>
               <li>Custom transaction rate / volume pricing</li>
