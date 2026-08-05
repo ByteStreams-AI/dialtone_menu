@@ -71,6 +71,19 @@ export default {
 };
 
 async function routeRequest(request, env, url, ctx) {
+  // ── Order app (dialtone#1182 Phase 2b) ────────────────────────────────────
+  // FIRST, and above the branded-host branch on purpose. On `<slug>.m…` every
+  // path falls through to the menu renderer, so an un-forwarded
+  // `/_order/assets/x.js` would return MENU HTML with a 200 — which looks
+  // exactly like success to a status-code check and renders a blank page in a
+  // browser. Matching before that catch-all is what makes the boundary real.
+  //
+  // It also sits above the host branch so the plumbing route works on hosts
+  // with no slug in them — notably the preview Worker's workers.dev host,
+  // which is where this gets proven (dialtone#1183).
+  const orderResponse = await routeOrderApp(request, env, url);
+  if (orderResponse) return orderResponse;
+
   // A per-restaurant menu host — `<slug>.m.dialtone.menu` — IS that
   // restaurant's menu for the whole host: `/` and any deep link render the
   // menu; only crawler / asset-support paths resolve to themselves. App hosts
@@ -856,4 +869,50 @@ function jsonResponse(body, status = 200) {
     status,
     headers: JSON_HEADERS
   });
+}
+
+// ── Order app forwarding (dialtone#1182) ────────────────────────────────────
+//
+// The ordering UI is a separate Worker (`apps/order` in the dialtone repo),
+// reached over a service binding rather than a public hostname. Customers stay
+// on `<slug>.m.dialtone.menu`; there is no second URL and no redirect.
+//
+// THE PREFIX CONTRACT. The order app builds with vite `base = '/_order/'`, so
+// every asset URL it emits is namespaced. This Worker owns the host, so it
+// forwards that one prefix and STRIPS it before handing the request over —
+// which is why the order Worker still serves its dist from the root and can be
+// opened directly for debugging. One prefix, one rule, no list of paths to keep
+// in sync as the app grows.
+//
+// `/__order-plumbing` is a PHASE 2B SCAFFOLD, not the product surface. It
+// exists so the binding and the asset path can be proven before the operator-
+// facing decision (which menu an operator selects) is built. 2c replaces it
+// with the real selection and this route should be deleted then.
+const ORDER_ASSET_PREFIX = '/_order/';
+const ORDER_PLUMBING_PATH = '/__order-plumbing';
+
+async function routeOrderApp(request, env, url) {
+  const isAsset = url.pathname.startsWith(ORDER_ASSET_PREFIX);
+  const isPlumbing = url.pathname === ORDER_PLUMBING_PATH;
+  if (!isAsset && !isPlumbing) return null;
+
+  // Unbound in an environment that has not wired the order Worker yet (prod,
+  // until there is something to serve). Say so plainly instead of throwing a
+  // TypeError on `undefined.fetch` — a 503 naming the binding is diagnosable
+  // from the response alone.
+  if (!env.ORDER_APP || typeof env.ORDER_APP.fetch !== 'function') {
+    return new Response('Order app is not enabled on this environment (no ORDER_APP binding).', {
+      status: 503,
+      headers: { 'content-type': 'text/plain; charset=utf-8' }
+    });
+  }
+
+  const target = new URL(request.url);
+  // Strip the prefix for assets; hand the plumbing route the app's root so its
+  // SPA fallback serves the shell.
+  target.pathname = isAsset
+    ? url.pathname.slice(ORDER_ASSET_PREFIX.length - 1) // keep the leading slash
+    : '/';
+
+  return env.ORDER_APP.fetch(new Request(target.toString(), request));
 }
