@@ -52,6 +52,9 @@ jobs:
       - name: Validate Cloudflare and Supabase deploy config
         run: pnpm run validate:deploy
 
+      - name: Run worker tests
+        run: pnpm test
+
       # Only the menu key is required here. RESEND_API_KEY / SUPABASE_KEY drive
       # /api/contact, and a preview environment has no business sending email or
       # writing waitlist rows — without them that route returns 503, which is

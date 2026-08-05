@@ -124,6 +124,13 @@ run_worker_first = [
   "/favicon.ico",
   "/.well-known/*",
   "/m/*",
+  # Order app (dialtone#1182). MUST be listed: with
+  # `not_found_handling = "404-page"` any path that is neither an asset nor on
+  # this list is short-circuited to /404.html WITHOUT invoking the Worker — so
+  # routing these inside worker.js alone would leave the bundle 404ing while the
+  # code looked correct. Same trap `/menu` hit below.
+  "/_order/*",
+  "/__order-plumbing",
   # `/menu` is the stable menu URL on a branded subdomain (#986 Phase 2). It
   # MUST be listed here: with `not_found_handling = "404-page"`, any path that
   # is neither an asset nor on this list is short-circuited to /404.html
@@ -268,6 +275,8 @@ run_worker_first = [
   "/favicon.ico",
   "/.well-known/*",
   "/m/*",
+  "/_order/*",
+  "/__order-plumbing",
   "/menu",
   "/menu/",
   "/api/*"
@@ -287,3 +296,17 @@ invocation_logs = true
 required = [
   "PUBLIC_MENU_SUPABASE_ANON_KEY"
 ]
+
+# ── Order app service binding (dialtone#1182 Phase 2b) ──────────────────────
+#
+# PREVIEW ONLY, deliberately. A binding names a Worker that must already exist,
+# so adding one for production before `dialtone-order` has been deployed there
+# would fail every production menu deploy — for a route no customer can reach
+# yet. The production binding lands with the surface that actually serves
+# customers (2c/2e), by which point the Worker exists.
+#
+# `worker.js` handles the unbound case explicitly (503 naming the binding)
+# rather than throwing, so production behaves predictably in the meantime.
+[[env.preview.services]]
+binding = "ORDER_APP"
+service = "dialtone-order-staging"
