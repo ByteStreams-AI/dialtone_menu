@@ -1,0 +1,114 @@
+name: Deploy preview
+
+# Deploys ANY branch to the `preview` Worker (`dialtone-menu-preview`) on its
+# free workers.dev host. dialtone#1183.
+#
+# This is a SEPARATE workflow from deploy.yml on purpose. That one owns
+# production and is triggered by a push to `main`; this one is
+# workflow_dispatch ONLY, so there is no trigger overlap and no path by which
+# an edit here can deploy to the live site. If you find yourself adding a
+# `push:` trigger, stop — a preview that deploys itself is one bad default away
+# from being a second production deploy path.
+#
+# Required GitHub Actions secrets (same as deploy.yml):
+#   CLOUDFLARE_API_TOKEN   — Workers edit permission on the account
+#   CLOUDFLARE_ACCOUNT_ID  — Cloudflare account ID
+#
+# Worker secrets are per-environment and are NOT shared with production:
+#   npx wrangler secret put PUBLIC_MENU_SUPABASE_ANON_KEY --env preview
+
+on:
+  workflow_dispatch:
+
+# Preview deploys are last-write-wins; cancel an in-flight run rather than
+# racing two branches onto the same Worker.
+concurrency:
+  group: deploy-preview
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy preview (${{ github.ref_name }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate Cloudflare and Supabase deploy config
+        run: pnpm run validate:deploy
+
+      # Only the menu key is required here. RESEND_API_KEY / SUPABASE_KEY drive
+      # /api/contact, and a preview environment has no business sending email or
+      # writing waitlist rows — without them that route returns 503, which is
+      # correct. Failing the deploy over them would be theatre.
+      - name: Verify the preview Worker has its menu key
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if ! pnpm wrangler secret list --env preview --format json 2>/dev/null \
+               | grep -q 'PUBLIC_MENU_SUPABASE_ANON_KEY'; then
+            echo "::error::PUBLIC_MENU_SUPABASE_ANON_KEY is not set on the preview Worker."
+            echo "Set it once with: npx wrangler secret put PUBLIC_MENU_SUPABASE_ANON_KEY --env preview"
+            exit 1
+          fi
+          echo "Preview menu key is present."
+
+      - name: Deploy to the preview Worker
+        id: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -o pipefail
+          pnpm wrangler deploy --env preview 2>&1 | tee deploy.log
+          # Read the host back out of wrangler's own output rather than
+          # hardcoding it: the workers.dev subdomain is account-scoped and
+          # nobody should have to keep a copy of it in sync here.
+          URL=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)
+          if [[ -z "$URL" ]]; then
+            echo "::error::Could not determine the preview URL from wrangler output."
+            exit 1
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Preview deployed to $URL"
+
+      # A green deploy is NOT proof the new code is live — that lesson cost a
+      # day of branded menus serving the marketing page while every deploy
+      # showed green (2026-07-24, see deploy.yml). Verify by CONTENT.
+      #
+      # Uses the PATH form `/m/<slug>`, not a branded host: workers.dev has no
+      # slug in the hostname, so `extractMenuSlugFromHost` cannot be exercised
+      # here. That is the documented limit of this environment, not an oversight
+      # — host routing is already live and guarded on the production workflow.
+      - name: Verify the preview serves a menu
+        run: |
+          URL="${{ steps.deploy.outputs.url }}/m/suis-sushi?cb=$(date +%s%N)"
+          for i in 1 2 3 4 5 6; do
+            body=$(curl -fsS --max-time 15 "$URL" || true)
+            if printf '%s' "$body" | grep -q 'Menu | DialTone'; then
+              echo "✓ preview is serving the menu (attempt $i)"
+              echo "### Preview live" >> "$GITHUB_STEP_SUMMARY"
+              echo "${{ steps.deploy.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            echo "attempt $i: not the menu yet (propagating), retrying in 10s…"
+            sleep 10
+          done
+          echo "::error::Preview deployed but is not serving the menu. Check that PUBLIC_MENU_SUPABASE_ANON_KEY is set for --env preview, and that suis-sushi is still an active tenant in the staging project."
+          exit 1

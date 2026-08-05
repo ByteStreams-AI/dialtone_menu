@@ -27,6 +27,26 @@
 
 ---
 
+## Environments (dialtone#1183)
+
+There are **two** deploy targets, and only one of them is the live site.
+
+| target | Worker | host | trigger |
+|---|---|---|---|
+| production | `dawn-pine-d058` | `dialtone.menu`, `*.m.dialtone.menu` | push to `main` (`deploy.yml`) |
+| preview | `dialtone-menu-preview` | `*.workers.dev` | manual `workflow_dispatch` (`deploy-preview.yml`) |
+
+- **Preview exists so a branch can be deployed without touching production.** Before it, a merge to `main` went straight to the live site and the only non-deploy loop was `dev/preview-menu.mjs` — which renders template modules but cannot exercise worker routing or a payment flow. That gap is what blocked web ordering (dialtone#1182).
+- **`dev/preview-menu.mjs` is still the right tool for template HTML and copy** — it is instant and needs no deploy. Reach for the preview Worker when the change is routing, bindings, or anything with a request lifecycle.
+- **Preview is on `workers.dev` deliberately**: no ACM certificate, no proxied DNS record, no Worker route. That is the expensive part of the branded-host setup and preview skips all of it.
+- **Preview cannot test host-based slug extraction** (`<slug>.m.dialtone.menu` → `extractMenuSlugFromHost`) — a workers.dev host has no slug in it. Use the path form `/m/<slug>`. Host routing is live, guarded by the content-verify step in `deploy.yml`, and if it ever changes materially, that is the point to buy a `*.m-preview` certificate.
+- **Wrangler environments do not inherit `vars`, `kv_namespaces`, `assets`, `observability` or `secrets`.** They are restated under `[env.preview]`. When you change a top-level var, change it there too — an omitted var does not fall back, it is simply absent at runtime, and the symptom is a 503 from a handler that looks correct in the diff.
+- **Worker secrets are per-environment.** Preview needs only `PUBLIC_MENU_SUPABASE_ANON_KEY`; without `RESEND_API_KEY` / `SUPABASE_KEY` its `/api/contact` returns 503, which is correct — preview should not send email or write waitlist rows.
+- **Both workflows verify by CONTENT, not by a 200.** A stale Worker once served the marketing page on every branded menu host for a day while every deploy showed green (2026-07-24). A green deploy is not evidence.
+- **Never `wrangler deploy` from local.** It ships your working tree over CI's deploy and has broken the branded menus twice. `pnpm deploy:preview` exists for emergencies and still writes to a real Worker — CI owns both targets.
+
+---
+
 ## SEO Standards & Instructions
 
 ### Target Keywords (as of 2026-05-21)
