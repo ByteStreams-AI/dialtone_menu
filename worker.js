@@ -877,12 +877,17 @@ function jsonResponse(body, status = 200) {
 // reached over a service binding rather than a public hostname. Customers stay
 // on `<slug>.m.dialtone.menu`; there is no second URL and no redirect.
 //
-// THE PREFIX CONTRACT. The order app builds with vite `base = '/_order/'`, so
-// every asset URL it emits is namespaced. This Worker owns the host, so it
-// forwards that one prefix and STRIPS it before handing the request over —
-// which is why the order Worker still serves its dist from the root and can be
-// opened directly for debugging. One prefix, one rule, no list of paths to keep
-// in sync as the app grows.
+// THE PREFIX CONTRACT. The order app EMITS its assets under `/_order/` — the
+// URL in its HTML and the path on its disk are the same string — so this Worker
+// forwards that one prefix UNTOUCHED. One prefix, one rule, no list of paths to
+// keep in sync as the app grows.
+//
+// An earlier version had the app emit to `/assets/` and stripped the prefix
+// here. It worked through this proxy and nowhere else: on the order Worker's
+// own host those URLs hit the SPA fallback, so the app could not be opened
+// directly to tell a proxy fault from an app fault, and its deploy-time check
+// could never pass. Forwarding unchanged is strictly fewer moving parts — see
+// dialtone#1188.
 //
 // `/__order-plumbing` is a PHASE 2B SCAFFOLD, not the product surface. It
 // exists so the binding and the asset path can be proven before the operator-
@@ -908,11 +913,10 @@ async function routeOrderApp(request, env, url) {
   }
 
   const target = new URL(request.url);
-  // Strip the prefix for assets; hand the plumbing route the app's root so its
-  // SPA fallback serves the shell.
-  target.pathname = isAsset
-    ? url.pathname.slice(ORDER_ASSET_PREFIX.length - 1) // keep the leading slash
-    : '/';
+  // Assets pass through unchanged — the order Worker serves exactly these
+  // paths. The plumbing route asks for the app's root so its SPA fallback
+  // returns the shell.
+  if (!isAsset) target.pathname = '/';
 
   return env.ORDER_APP.fetch(new Request(target.toString(), request));
 }

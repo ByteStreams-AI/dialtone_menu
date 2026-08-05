@@ -3,9 +3,13 @@
  *
  * The property under test is the BOUNDARY, not the app: which requests this
  * Worker hands to the order Worker, and what the path looks like when it gets
- * there. Getting the strip wrong is invisible in a status code — the order
- * Worker's SPA fallback answers 200 with HTML — so the assertions are about the
+ * there. Getting that wrong is invisible in a status code — the order Worker's
+ * SPA fallback answers 200 with HTML — so the assertions are about the
  * forwarded URL, not the response.
+ *
+ * The order app emits its assets under `/_order/`, so the prefix is forwarded
+ * UNCHANGED. Asserting the exact forwarded path is what would catch a
+ * reintroduced rewrite (dialtone#1188), which broke the app on its own host.
  *
  * KNOWN LIMIT, same as the `/menu` note in wrangler.toml: these call
  * worker.fetch() directly, which is BELOW the layer where
@@ -28,7 +32,7 @@ function makeOrderApp() {
         // Mimic Workers Static Assets with SPA fallback: real files answer as
         // themselves, everything else falls back to the shell. This is exactly
         // the behaviour that makes a wrong prefix look like success.
-        if (url.pathname.startsWith('/assets/')) {
+        if (url.pathname.startsWith('/_order/assets/')) {
           return new Response('console.log("bundle")', {
             status: 200,
             headers: { 'content-type': 'application/javascript' }
@@ -52,29 +56,29 @@ function envWith(orderApp) {
   };
 }
 
-// 1. The prefix is stripped. The order Worker serves its dist from the root, so
-//    a forwarded `/_order/assets/x.js` must arrive as `/assets/x.js` — and if it
-//    does not, the SPA fallback returns the shell with a 200 and the page loads
-//    blank.
+// 1. The prefix is forwarded UNCHANGED. The order Worker serves exactly these
+//    paths, so anything that rewrites here puts the request somewhere no file
+//    exists — and the SPA fallback then returns the shell with a 200, which
+//    loads blank in a browser.
 {
   const app = makeOrderApp();
   const res = await worker.fetch(
     new Request('https://suis-sushi.m.dialtone.menu/_order/assets/index-abc123.js'),
     envWith(app.binding)
   );
-  assert.deepEqual(app.seen, ['/assets/index-abc123.js']);
+  assert.deepEqual(app.seen, ['/_order/assets/index-abc123.js']);
   assert.equal(res.status, 200);
   assert.match(res.headers.get('content-type') ?? '', /javascript/);
 }
 
-// 2. Nested asset paths keep their shape — only the prefix comes off.
+// 2. Nested asset paths keep their shape.
 {
   const app = makeOrderApp();
   await worker.fetch(
     new Request('https://suis-sushi.m.dialtone.menu/_order/assets/fonts/inter.woff2'),
     envWith(app.binding)
   );
-  assert.deepEqual(app.seen, ['/assets/fonts/inter.woff2']);
+  assert.deepEqual(app.seen, ['/_order/assets/fonts/inter.woff2']);
 }
 
 // 3. The plumbing route asks the app for its root, so the SPA fallback serves
