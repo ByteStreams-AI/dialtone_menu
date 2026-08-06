@@ -256,10 +256,9 @@
 
     /* ── HERO ──────────────────────────────────────────────────── */
     #hero {
-      min-height: 100vh;
       display: flex;
       align-items: center;
-      padding: 120px 24px 80px;
+      padding: 100px 24px 72px;
       position: relative;
       overflow: hidden;
     }
@@ -272,27 +271,16 @@
       pointer-events: none;
     }
 
-    #hero::after {
-      content: '';
-      position: absolute;
-      width: 700px; height: 700px;
-      border-radius: 50%;
-      border: 1px solid rgba(17,85,204,0.08);
-      right: -200px; top: 50%;
-      transform: translateY(-50%);
-      pointer-events: none;
-    }
-
     .hero-inner {
       max-width: 1100px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 80px;
+      grid-template-columns: 1fr;
       align-items: center;
       position: relative;
       z-index: 1;
       width: 100%;
+      text-align: center;
     }
 
     .hero-label {
@@ -328,7 +316,7 @@
 
     .hero-h1 {
       font-family: 'Playfair Display', serif;
-      font-size: clamp(2.8rem, 5vw, 4.2rem);
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
       font-weight: 900;
       line-height: 1.08;
       color: var(--navy);
@@ -352,8 +340,11 @@
       font-weight: 400;
       color: #3D4B5E;
       line-height: 1.65;
-      margin-bottom: 40px;
-      max-width: 480px;
+      margin-bottom: 24px;
+      max-width: 860px;
+      margin-left: auto;
+      margin-right: auto;
+      text-wrap: balance;
       opacity: 0;
       animation: fadeUp 0.7s ease 0.35s forwards;
     }
@@ -401,127 +392,153 @@
       animation: fadeUp 0.7s ease 0.55s forwards;
     }
 
-    .hero-visual {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      opacity: 0;
-      animation: fadeIn 1s ease 0.6s forwards;
+    /* ── ECOSYSTEM ─────────────────────────────────────────────── */
+    #ecosystem {
+      padding: 72px 24px 80px;
+      border-bottom: 1px solid rgba(6,35,75,0.08);
     }
 
-    .phone-card {
-      background: var(--navy);
-      border-radius: 28px;
-      padding: 36px 32px;
-      width: 320px;
-      box-shadow: 0 40px 80px rgba(6,35,75,0.3), 0 0 0 1px rgba(255,255,255,0.05);
-      position: relative;
-      overflow: hidden;
+    .eco-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      text-align: center;
     }
 
-    .phone-card::before {
-      content: '';
-      position: absolute;
-      top: -80px; right: -80px;
-      width: 200px; height: 200px;
-      background: radial-gradient(circle, rgba(34,113,232,0.3), transparent 70%);
-      border-radius: 50%;
+    .eco-header {
+      margin-bottom: 48px;
     }
 
-    .phone-status {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 24px;
-    }
-
-    .status-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: #22C55E;
-      animation: pulse 2s ease infinite;
-    }
-
-    .status-text {
-      font-size: 0.75rem;
-      color: rgba(255,255,255,0.6);
-      font-weight: 500;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-
-    .phone-title {
+    .eco-header h2 {
       font-family: 'Playfair Display', serif;
-      font-size: 1.1rem;
-      color: var(--white);
-      margin-bottom: 24px;
+      font-size: clamp(1.5rem, 2.8vw, 2rem);
       font-weight: 700;
+      color: var(--navy);
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      margin: 0;
     }
 
-    .chat-bubble {
-      border-radius: 16px;
-      padding: 12px 16px;
-      margin-bottom: 10px;
-      font-size: 0.88rem;
-      line-height: 1.5;
-      max-width: 90%;
-      position: relative;
-      opacity: 0;
-    }
-
-    .chat-bubble.ai {
-      background: rgba(34,113,232,0.2);
-      border: 1px solid rgba(34,113,232,0.3);
-      color: rgba(255,255,255,0.9);
-      border-bottom-left-radius: 4px;
-      animation: fadeUp 0.5s ease forwards;
-    }
-
-    .chat-bubble.customer {
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.7);
-      margin-left: auto;
-      border-bottom-right-radius: 4px;
-      animation: fadeUp 0.5s ease forwards;
-    }
-
-    .chat-bubble:nth-child(3) { animation-delay: 0.8s; }
-    .chat-bubble:nth-child(4) { animation-delay: 1.4s; }
-    .chat-bubble:nth-child(5) { animation-delay: 2.0s; }
-    .chat-bubble:nth-child(6) { animation-delay: 2.6s; }
-    .chat-bubble:nth-child(7) { animation-delay: 3.2s; }
-
-    .chat-label {
+    .eco-row-label {
       font-size: 0.68rem;
       font-weight: 600;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      margin-bottom: 4px;
-      opacity: 0.5;
+      color: var(--muted);
+      margin-bottom: 14px;
     }
 
-    .phone-footer {
-      margin-top: 20px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(255,255,255,0.08);
+    .eco-row {
       display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .eco-node {
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 9px;
+      padding: 14px 12px 12px;
+      border: 1px solid rgba(6,35,75,0.1);
+      border-radius: 10px;
+      background: var(--white);
+      min-width: 72px;
+      transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
     }
 
-    .order-badge {
-      background: rgba(34,197,94,0.15);
-      border: 1px solid rgba(34,197,94,0.3);
-      color: #4ADE80;
-      font-size: 0.75rem;
+    .eco-node:hover {
+      border-color: rgba(6,35,75,0.22);
+      box-shadow: 0 4px 14px rgba(6,35,75,0.07);
+      transform: translateY(-2px);
+    }
+
+    .eco-node svg { color: var(--navy); opacity: 0.65; }
+
+    .eco-node-label {
+      font-size: 0.68rem;
       font-weight: 600;
-      padding: 4px 12px;
-      border-radius: 100px;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--navy);
+      white-space: nowrap;
     }
 
-    .order-text {
+    .eco-connector {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 14px 0 10px;
+    }
+
+    .eco-connector-line {
+      width: 1px;
+      height: 32px;
+      background: linear-gradient(to bottom, rgba(6,35,75,0.12), var(--gold));
+    }
+
+    .eco-connector-arrow {
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid var(--gold);
+    }
+
+    .eco-hub {
+      margin: 0 auto;
+      background: var(--navy);
+      border-radius: 14px;
+      padding: 26px 48px 28px;
+      max-width: 520px;
+      box-shadow: 0 16px 48px rgba(6,35,75,0.18);
+    }
+
+    .eco-hub-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--white);
+      letter-spacing: -0.5px;
+      margin-bottom: 14px;
+    }
+
+    .eco-hub-name span { color: var(--gold); }
+
+    .eco-hub-tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .eco-hub-tag {
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 100px;
+      color: rgba(255,255,255,0.55);
+    }
+
+    .eco-cta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 2.5rem;
+    }
+
+    .eco-tiers {
       font-size: 0.78rem;
-      color: rgba(255,255,255,0.4);
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-top: 20px;
+      margin-bottom: 0;
     }
 
     /* ── PROBLEM ───────────────────────────────────────────────── */
@@ -1053,11 +1070,6 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
     .reveal {
       opacity: 0;
       transform: translateY(28px);
@@ -1072,9 +1084,6 @@
     @media (max-width: 768px) {
       .nav-right { gap: 0.7rem; }
       .nav-link { font-size: 0.64rem; letter-spacing: 0.12em; }
-      .hero-inner { grid-template-columns: 1fr; gap: 50px; }
-      .hero-visual { order: -1; }
-      .phone-card { width: 100%; max-width: 340px; }
       .problem-grid { grid-template-columns: 1fr; gap: 40px; }
       .contact-wrap { grid-template-columns: 1fr; gap: 28px; }
       .steps { grid-template-columns: 1fr; gap: 2px; }
@@ -1120,47 +1129,96 @@
     <div class="hero-inner">
       <div class="hero-content">
         <span class="hero-label">PHONE · ORDERS · RESERVATIONS · PAYMENTS, ALL IN ONE PLACE </span>
-        <h2 class="hero-h1">Your phone,<br />your orders,<br />your tables.<br /><em>One unified system.</em></h2>
+        <h2 class="hero-h1">Your phone, your orders, your tables.<br /><em>One unified system.</em></h2>
         <p class="hero-sub">DialTone is a unified system that connects your phone, your kitchen, your bar, and your counter onto a single platform. When a customer calls, the automated system takes the order, texts a secure payment link, and drops a ticket directly onto DialTone's KDS with clear order details—without your staff ever touching a phone or a piece of paper. Leaving your staff to handle orders on user friendly screens.</p>
         <p class="hero-sub">DialTone manages pickup, dine-in, and DoorDash delivery options. It provides reservations and live menus. Tap-to-Pay, SMS, cash payments handled. The whole front of your restaurant on one system, not five.</p>
         <p class="hero-sub">Accurate, consistent, up‑to‑date operations across every process.</p>
-        <a class="btn-primary hero-cta-link" href="/features.html">See Features</a>
-        <p class="hero-note">No credit card · No commitment</p>
       </div>
 
-      <div class="hero-visual">
-        <div class="phone-card">
-          <div class="phone-status">
-            <div class="status-dot"></div>
-            <span class="status-text">Live Call</span>
-          </div>
-          <div class="phone-title">DialTone Answering...</div>
+    </div>
+  </section>
 
-          <div class="chat-bubble ai">
-            <div class="chat-label">DialTone.Menu</div>
-            Thanks for calling Rosie’s Kitchen. What can I get started for you?
-          </div>
-          <div class="chat-bubble customer">
-            <div class="chat-label">Customer</div>
-            Can I get a large pepperoni pizza for pickup?
-          </div>
-          <div class="chat-bubble ai">
-            <div class="chat-label">DialTone.Menu</div>
-            One large pepperoni — $12.99. I have your name listed as Marcus and phone as 555-321-1234, correct?
-          </div>
-          <div class="chat-bubble customer">
-            <div class="chat-label">Customer</div>
-            Yes, thats correct
-          </div>
-          <div class="chat-bubble ai">
-            <div class="chat-label">DialTone.Menu</div>
-            Marcus. You will receive a link with payment processing. Once your payment is confirmed, your order will go straight to the kitchen. You will receive a text when its ready. Thanks for calling Rosie's!
-          </div>
-          <div class="phone-footer">
-            <div class="order-badge">✓ Order Captured</div>
-            <span class="order-text">Sent to kitchen</span>
-          </div>
+  <!-- ECOSYSTEM -->
+  <section id="ecosystem">
+    <div class="eco-wrap">
+      <div class="eco-header">
+        <p class="section-label">The Ecosystem</p>
+        <h2>One platform. Every channel, every order.</h2>
+      </div>
+
+      <p class="eco-row-label">How orders come in</p>
+      <div class="eco-row">
+        <div class="eco-node">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.9 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9a16 16 0 0 0 6.91 6.91l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7a2 2 0 0 1 1.72 2.02z"/></svg>
+          <span class="eco-node-label">Phone</span>
         </div>
+        <div class="eco-node">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span class="eco-node-label">Online</span>
+        </div>
+        <div class="eco-node">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18" stroke-width="2"/></svg>
+          <span class="eco-node-label">App</span>
+        </div>
+        <div class="eco-node">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span class="eco-node-label">Kiosk</span>
+        </div>
+        <div class="eco-node">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span class="eco-node-label">Walk-Up</span>
+        </div>
+      </div>
+
+      <div class="eco-connector">
+        <div class="eco-connector-line"></div>
+        <div class="eco-connector-arrow"></div>
+      </div>
+
+      <div class="eco-hub">
+        <div class="eco-hub-name">Dial<span>Tone</span></div>
+        <div class="eco-hub-tags">
+          <span class="eco-hub-tag">Voice AI</span>
+          <span class="eco-hub-tag">Kitchen Display</span>
+          <span class="eco-hub-tag">Payments</span>
+          <span class="eco-hub-tag">Live Menus</span>
+          <span class="eco-hub-tag">Reservations</span>
+          <span class="eco-hub-tag">Kiosk</span>
+          <span class="eco-hub-tag">Expo</span>
+          <span class="eco-hub-tag">Analytics</span>
+        </div>
+      </div>
+
+      <div class="eco-connector">
+        <div class="eco-connector-line"></div>
+        <div class="eco-connector-arrow"></div>
+      </div>
+
+      <p class="eco-row-label">How orders go out</p>
+      <div class="eco-row">
+        <div class="eco-node">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3"/><path d="M21 15v7"/></svg>
+          <span class="eco-node-label">Dine-In</span>
+        </div>
+        <div class="eco-node">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span class="eco-node-label">Takeout</span>
+        </div>
+        <div class="eco-node">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          <span class="eco-node-label">Delivery</span>
+        </div>
+        <div class="eco-node">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span class="eco-node-label">Catering</span>
+        </div>
+      </div>
+
+      <p class="eco-tiers">Food Truck &nbsp;·&nbsp; Single Location &nbsp;·&nbsp; Multi-Location &nbsp;·&nbsp; Enterprise</p>
+
+      <div class="eco-cta">
+        <p class="hero-note">No credit card · No commitment</p>
+        <a class="btn-primary hero-cta-link" href="/features.html">See Features</a>
       </div>
     </div>
   </section>
