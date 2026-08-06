@@ -13,10 +13,14 @@
 // where a photo beats a logo and nothing on the page changes.)
 import {
   escapeHtml, normalizeText, normalizeCents, formatCurrency, hexToRgba,
-  isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay
+  isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay,
+  orderItemAttrs,
+  renderOrderButton,
+  renderMenuDataIsland,
+  ORDER_STYLES,
 } from './shared.js';
 
-function renderMenuCategory(category, timezone) {
+function renderMenuCategory(category, timezone, ordering) {
   const safeCategory = category && typeof category === 'object' ? category : {};
   const name = normalizeText(safeCategory.name, 160) || 'Menu Category';
   const description = normalizeText(safeCategory.description, 500);
@@ -30,7 +34,7 @@ function renderMenuCategory(category, timezone) {
     : '';
 
   const itemHtml = items.length
-    ? items.map((item) => renderMenuItem(item)).join('')
+    ? items.map((item) => renderMenuItem(item, ordering)).join('')
     : '<p class="empty-state">No items in this category right now.</p>';
 
   return [
@@ -47,7 +51,7 @@ function renderMenuCategory(category, timezone) {
   ].filter(Boolean).join('');
 }
 
-function renderMenuItem(item) {
+function renderMenuItem(item, ordering) {
   const safeItem = item && typeof item === 'object' ? item : {};
   const name = normalizeText(safeItem.name, 160) || 'Menu Item';
   const description = normalizeText(safeItem.description, 1200);
@@ -70,13 +74,14 @@ function renderMenuItem(item) {
     : '';
 
   return [
-    '<article class="item">',
+    `<article class="item"${orderItemAttrs(safeItem, ordering)}>`,
     '  <div class="item-head">',
     `    <h3 class="item-name">${escapeHtml(name)}${hasAlcohol ? '<span class="alcohol-pill">21+</span>' : ''}</h3>`,
     `    ${priceMarkup}`,
     '  </div>',
     description ? `  <p class="item-description">${escapeHtml(description)}</p>` : '',
     `  ${modifiersMarkup}`,
+    `  ${renderOrderButton(safeItem, ordering)}`,
     '</article>'
   ].filter(Boolean).join('');
 }
@@ -132,7 +137,7 @@ function renderStandardMenuBody(ctx) {
   } = ctx;
 
   const categoryHtml = categories.length
-    ? categories.map((category) => renderMenuCategory(category, timezone)).join('')
+    ? categories.map((category) => renderMenuCategory(category, timezone, ctx.orderingEnabled)).join('')
     : '<p class="empty-state">No menu items are currently available.</p>';
 
   const logoMarkup = logoUrl
@@ -217,6 +222,7 @@ function renderStandardMenuBody(ctx) {
     '      .site-link { width: 100%; }',
     '      .category-header { flex-direction: column; }',
     '    }',
+    ctx.orderingEnabled ? ORDER_STYLES : '',
     '  </style>',
     '</head>',
     '<body>',
@@ -264,6 +270,7 @@ function renderStandardMenuBody(ctx) {
     '      });',
     '    })();',
     '  </script>',
+    renderMenuDataIsland(ctx),
     '</body>',
     '</html>'
   ].filter(Boolean).join('\n');

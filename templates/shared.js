@@ -318,9 +318,119 @@ export function buildMenuCtx(payload, slug, options = {}) {
     // Which surface this request resolved to, and the URL that should own it in
     // search results. Both are decided by the worker (it knows the host and the
     // path); templates only render them.
+    // dialtone#1182 — whether this menu takes orders. The operator toggle,
+    // already resolved server-side; the templates only decide how to render it.
+    orderingEnabled: Boolean(restaurant.ordering_enabled),
     surface: options.surface === 'home' ? 'home' : 'menu',
     canonicalUrl,
     menuUrl,
     homeUrl
   };
 }
+
+// ── Ordering hooks (dialtone#1182 Phase 2c) ─────────────────────────────────
+//
+// Ordering is ORTHOGONAL to the template: an operator picks a look and,
+// separately, whether the menu takes orders. So the affordance lives here, in
+// ONE implementation themed by the per-tenant brand tokens, and each template
+// only decides WHERE it sits and how it is styled. Template four inherits
+// ordering by calling these, not by implementing a checkout.
+//
+// Nothing here renders when ordering is off — the brochure output is
+// byte-for-byte what it was.
+
+/**
+ * Per-item attributes the cart binds to. Emitted on the item element itself so
+ * a click anywhere in the row can resolve which item it was, without the cart
+ * needing its own copy of the menu structure.
+ */
+export function orderItemAttrs(item, orderingEnabled) {
+  if (!orderingEnabled) return '';
+  const id = normalizeText(item && item.id, 64);
+  if (!id) return '';
+  return ` data-dt-item="${escapeHtml(id)}"`;
+}
+
+/**
+ * The add affordance, in its three states.
+ *
+ * ALCOHOL IS SHOWN BUT NOT ORDERABLE. `0162` decided the public menu displays
+ * alcohol in every state, while `_price_order_items` refuses it on web (#881 /
+ * `0141`) because this channel cannot verify age. So the item keeps its 21+
+ * pill and its place on the menu, and the button is replaced by the reason —
+ * mirroring the customer app. Hiding it, or letting a guest reach the server
+ * refusal, both reproduce #1158 on a customer-facing surface.
+ */
+export function renderOrderButton(item, orderingEnabled) {
+  if (!orderingEnabled) return '';
+  const safe = item && typeof item === 'object' ? item : {};
+  const id = normalizeText(safe.id, 64);
+  if (!id) return '';
+
+  if (safe.is_alcohol) {
+    return '<p class="dt-order-note">Order in person — we can\u2019t take 21+ items online</p>';
+  }
+  return `<button type="button" class="dt-order-add" data-dt-add="${escapeHtml(id)}">Add</button>`;
+}
+
+/**
+ * One JSON island carrying the orderable shape of the menu — ids, prices and
+ * modifier rules — so the cart can build a valid line without a second network
+ * call on every menu view.
+ *
+ * PRICES HERE ARE FOR DISPLAY. This page is edge-cached for 300s and the server
+ * re-prices every order (dialtone#1153), so the cart must show the SERVER's
+ * total before payment rather than its own arithmetic. A page that quietly
+ * charges a different number than it displayed is the worst version of this.
+ *
+ * Escaped the same way as the JSON-LD block: a literal `</script>` inside the
+ * data would otherwise close the tag and inject the remainder as markup.
+ */
+export function renderMenuDataIsland(ctx) {
+  if (!ctx || !ctx.orderingEnabled) return '';
+  const items = [];
+  for (const category of ctx.categories || []) {
+    for (const item of (category && category.items) || []) {
+      const id = normalizeText(item && item.id, 64);
+      if (!id) continue;
+      items.push({
+        id,
+        name: normalizeText(item.name, 160),
+        price_cents: normalizeCents(item.special_price_cents) === null
+          ? normalizeCents(item.base_price_cents)
+          : normalizeCents(item.special_price_cents),
+        is_alcohol: Boolean(item.is_alcohol),
+        modifier_groups: (Array.isArray(item.modifier_groups) ? item.modifier_groups : []).map((g) => ({
+          id: normalizeText(g && g.id, 64),
+          name: normalizeText(g && g.name, 160),
+          is_required: Boolean(g && g.is_required),
+          min_selections: normalizeCents(g && g.min_selections),
+          max_selections: normalizeCents(g && g.max_selections),
+          options: (Array.isArray(g && g.options) ? g.options : []).map((o) => ({
+            id: normalizeText(o && o.id, 64),
+            name: normalizeText(o && o.name, 160),
+            price_delta_cents: normalizeCents(o && o.price_delta_cents) || 0
+          }))
+        }))
+      });
+    }
+  }
+
+  const json = JSON.stringify({ slug: ctx.slug, items })
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
+  return `<script type="application/json" id="dt-menu-data">${json}</script>`;
+}
+
+/**
+ * Styling for the order affordance — one string, interpolated by every
+ * template's <style>, so the three cannot drift apart on the thing that is
+ * meant to be template-agnostic. Colours come from the per-tenant brand tokens
+ * each template already sets, so it inherits the restaurant's look without
+ * knowing anything about the template.
+ */
+export const ORDER_STYLES = `    .dt-order-add{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:600;letter-spacing:.01em;padding:.5rem 1rem;border-radius:999px;background:var(--brand,#111);color:#fff;margin-top:.6rem;}
+    .dt-order-add:hover{filter:brightness(1.08);}
+    .dt-order-add:focus-visible{outline:2px solid currentColor;outline-offset:2px;}
+    .dt-order-note{margin:.6rem 0 0;font-size:.8rem;opacity:.7;}`;

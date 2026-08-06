@@ -7,12 +7,13 @@
   "scripts": {
     "dev:wrangler": "wrangler dev",
     "validate:deploy": "node developer/ci/validate-cloudflare-config.mjs",
-    "test": "node tests/robots.test.mjs && node tests/public-menu.test.mjs && node tests/order-app.test.mjs",
+    "test": "node tests/robots.test.mjs && node tests/public-menu.test.mjs && node tests/order-app.test.mjs && node tests/order-hooks.test.mjs",
     "deploy": "wrangler deploy",
     "deploy:preview": "wrangler deploy --env preview",
     "test:robots": "node tests/robots.test.mjs",
     "test:menu": "node tests/public-menu.test.mjs",
-    "test:order": "node tests/order-app.test.mjs"
+    "test:order": "node tests/order-app.test.mjs",
+    "test:hooks": "node tests/order-hooks.test.mjs"
   },
   "devDependencies": {
     "wrangler": "4.85.0"
