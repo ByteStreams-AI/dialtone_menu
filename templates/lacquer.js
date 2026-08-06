@@ -4,7 +4,11 @@
 // stays the default the registry falls back to.
 import {
   escapeHtml, normalizeText, normalizeCents, formatCurrency, hexToRgba,
-  isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay
+  isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay,
+  orderItemAttrs,
+  renderOrderButton,
+  renderMenuDataIsland,
+  ORDER_STYLES,
 } from './shared.js';
 
 const MENU_CSS = `
@@ -61,7 +65,7 @@ const MENU_CSS = `
     a:focus-visible, .site-link:focus-visible { outline: 2px solid var(--brand-secondary); outline-offset: 3px; border-radius: 6px; }
     @media (max-width: 560px) { .category-header { flex-direction: column; align-items: flex-start; gap: 0.4rem; } .served-label { align-self: flex-start; } }
 `;
-function renderMenuCategory(category, timezone) {
+function renderMenuCategory(category, timezone, ordering) {
   const safeCategory = category && typeof category === 'object' ? category : {};
   const name = normalizeText(safeCategory.name, 160) || 'Menu Category';
   const description = normalizeText(safeCategory.description, 500);
@@ -75,7 +79,7 @@ function renderMenuCategory(category, timezone) {
     : '';
 
   const itemHtml = items.length
-    ? items.map((item) => renderMenuItem(item)).join('')
+    ? items.map((item) => renderMenuItem(item, ordering)).join('')
     : '<p class="empty-state">No items in this category right now.</p>';
 
   return [
@@ -92,7 +96,7 @@ function renderMenuCategory(category, timezone) {
   ].filter(Boolean).join('');
 }
 
-function renderMenuItem(item) {
+function renderMenuItem(item, ordering) {
   const safeItem = item && typeof item === 'object' ? item : {};
   const name = normalizeText(safeItem.name, 160) || 'Menu Item';
   const description = normalizeText(safeItem.description, 1200);
@@ -115,13 +119,14 @@ function renderMenuItem(item) {
     : '';
 
   return [
-    '<article class="item">',
+    `<article class="item"${orderItemAttrs(safeItem, ordering)}>`,
     '  <div class="item-head">',
     `    <h3 class="item-name">${escapeHtml(name)}${hasAlcohol ? '<span class="alcohol-pill">21+</span>' : ''}</h3>`,
     `    ${priceMarkup}`,
     '  </div>',
     description ? `  <p class="item-description">${escapeHtml(description)}</p>` : '',
     `  ${modifiersMarkup}`,
+    `  ${renderOrderButton(safeItem, ordering)}`,
     '</article>'
   ].filter(Boolean).join('');
 }
@@ -178,7 +183,7 @@ function renderLacquerMenuBody(ctx) {
   } = ctx;
 
   const categoryHtml = categories.length
-    ? categories.map((category) => renderMenuCategory(category, timezone)).join('')
+    ? categories.map((category) => renderMenuCategory(category, timezone, ctx.orderingEnabled)).join('')
     : '<p class="empty-state">No menu items are currently available.</p>';
 
   // A logo (when present) is the hero brand mark, with the wordmark kept for SEO
@@ -255,6 +260,7 @@ function renderLacquerMenuBody(ctx) {
     // near-black --hero-ground keep it dark and legible whatever the hue.
     `    :root { --brand-primary: ${primaryColor}; --brand-secondary: ${secondaryColor}; --brand-soft: ${hexToRgba(primaryColor, 0.08)}; --font-display: ${fontFamily}; --hero-a: ${hexToRgba(primaryColor, 0.72)}; --hero-b: ${hexToRgba(primaryColor, 0.44)}; --hero-c: ${hexToRgba(primaryColor, 0.20)}; --hero-glow: ${hexToRgba(secondaryColor, 0.22)}; }`,
     MENU_CSS,
+    ctx.orderingEnabled ? ORDER_STYLES : '',
     '  </style>',
     '</head>',
     '<body>',
@@ -300,6 +306,7 @@ function renderLacquerMenuBody(ctx) {
     '      });',
     '    })();',
     '  </script>',
+    renderMenuDataIsland(ctx),
     '</body>',
     '</html>'
   ].filter(Boolean).join('\n');
