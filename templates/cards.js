@@ -2,7 +2,11 @@
 // Body + CSS + item/section renderers, extracted verbatim from worker.js.
 import {
   escapeHtml, normalizeText, normalizeCents, formatCurrency, hexToRgba,
-  safeLogoUrl, isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay
+  safeLogoUrl, isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay,
+  orderItemAttrs,
+  renderOrderButton,
+  renderMenuDataIsland,
+  ORDER_STYLES,
 } from './shared.js';
 
 const MENU_CARDS_CSS = `
@@ -96,7 +100,7 @@ const MENU_CARDS_CSS = `
       .select-wrap{flex:1 1 0;}
       .search{flex:1 1 0;}
     }`;
-function renderCardsItem(item) {
+function renderCardsItem(item, ordering) {
   const safe = item && typeof item === 'object' ? item : {};
   const name = normalizeText(safe.name, 160) || 'Menu Item';
   const description = normalizeText(safe.description, 600);
@@ -115,25 +119,26 @@ function renderCardsItem(item) {
     : `<div class="card-price">${onSpecial ? '<span class="badge">Special</span>' : ''}<span class="amt">${escapeHtml(formatCurrency(active))}</span>${onSpecial ? `<s class="was">${escapeHtml(formatCurrency(base))}</s>` : ''}</div>`;
   const searchKey = `${name} ${description}`.toLowerCase();
   return [
-    `<article class="card" data-search="${escapeHtml(searchKey)}">`,
+    `<article class="card" data-search="${escapeHtml(searchKey)}"${orderItemAttrs(safe, ordering)}>`,
     '  <div class="card-body">',
     `    <h3 class="card-name">${escapeHtml(name)}${hasAlcohol ? '<span class="pill-21">21+</span>' : ''}</h3>`,
     description ? `    <p class="card-desc">${escapeHtml(description)}</p>` : '',
     `    ${priceMarkup}`,
+    `    ${renderOrderButton(safe, ordering)}`,
     '  </div>',
     `  ${thumb}`,
     '</article>'
   ].filter(Boolean).join('');
 }
 
-function renderCardsSection(id, title, note, items) {
+function renderCardsSection(id, title, note, items, ordering) {
   return [
     `<section class="cat" id="${escapeHtml(id)}">`,
     '  <div class="cat-head">',
     `    <h2>${escapeHtml(title)}<span class="dot">.</span></h2>`,
     note ? `    <span class="served">${escapeHtml(note)}</span>` : '',
     '  </div>',
-    `  <div class="grid">${items.map((it) => renderCardsItem(it)).join('')}</div>`,
+    `  <div class="grid">${items.map((it) => renderCardsItem(it, ordering)).join('')}</div>`,
     '</section>'
   ].filter(Boolean).join('');
 }
@@ -157,8 +162,8 @@ function renderCardsMenuBody(ctx) {
   };
 
   const sections = [
-    specials.length ? renderCardsSection('cat-specials', 'Chef’s Specials', '', specials) : '',
-    ...categories.map((c, i) => renderCardsSection(`cat-${i}`, normalizeText(c.name, 160) || 'Menu Category', servedNote(c), c.items))
+    specials.length ? renderCardsSection('cat-specials', 'Chef’s Specials', '', specials, ctx.orderingEnabled) : '',
+    ...categories.map((c, i) => renderCardsSection(`cat-${i}`, normalizeText(c.name, 160) || 'Menu Category', servedNote(c), c.items, ctx.orderingEnabled))
   ].filter(Boolean).join('\n');
 
   const options = [
@@ -226,6 +231,7 @@ function renderCardsMenuBody(ctx) {
     '  <style>',
     `    :root { --primary: ${ctx.primaryColor}; --gold: ${ctx.secondaryColor}; --font-display: ${ctx.fontFamily}; --bg:#121110; --bar:rgba(18,17,16,.92); --card:#1c1a18; --ink:#f4efe8; --muted:#a49a8f; --line:rgba(255,255,255,.09); --ph-a:${hexToRgba(ctx.secondaryColor, 0.16)}; --ph-b:${hexToRgba(ctx.primaryColor, 0.55)}; }`,
     MENU_CARDS_CSS,
+    ctx.orderingEnabled ? ORDER_STYLES : '',
     '  </style>',
     '</head>',
     '<body>',
@@ -253,6 +259,7 @@ function renderCardsMenuBody(ctx) {
     '      });',
     '    })();',
     '  </script>',
+    renderMenuDataIsland(ctx),
     '</body>',
     '</html>'
   ].filter(Boolean).join('\n');
