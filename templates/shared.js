@@ -386,6 +386,24 @@ export function renderOrderButton(item, orderingEnabled) {
  * Escaped the same way as the JSON-LD block: a literal `</script>` inside the
  * data would otherwise close the tag and inject the remainder as markup.
  */
+/**
+ * The script tag that loads the cart bundle (dialtone#1182).
+ *
+ * STABLE FILENAME BY CONSTRUCTION. The order app builds its entry to
+ * `/_order/cart.js` with hashed chunks behind it, precisely because this Worker
+ * has to name the bundle in someone else's page and cannot know a content hash.
+ * The alternative — reading a manifest or scraping the app's index.html — costs
+ * a request on every menu render to avoid one predictable filename.
+ *
+ * The bundle carries its own CSS, so this is the ONLY tag needed. `defer` so it
+ * never blocks the menu from rendering: the menu is what the guest came for, and
+ * a cart that arrives a moment later costs nothing.
+ */
+export function renderOrderScript(ctx) {
+  if (!ctx || !ctx.orderingEnabled) return '';
+  return '<script type="module" src="/_order/cart.js" defer></script>';
+}
+
 export function renderMenuDataIsland(ctx) {
   if (!ctx || !ctx.orderingEnabled) return '';
   const items = [];
