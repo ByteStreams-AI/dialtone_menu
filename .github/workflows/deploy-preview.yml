@@ -66,8 +66,19 @@ jobs:
         run: |
           if ! pnpm wrangler secret list --env preview --format json 2>/dev/null \
                | grep -q 'PUBLIC_MENU_SUPABASE_ANON_KEY'; then
-            echo "::error::PUBLIC_MENU_SUPABASE_ANON_KEY is not set on the preview Worker."
-            echo "Set it once with: npx wrangler secret put PUBLIC_MENU_SUPABASE_ANON_KEY --env preview"
+            echo "::error::PUBLIC_MENU_SUPABASE_ANON_KEY is not set on the preview Worker (or the Worker does not exist yet)."
+            echo ""
+            echo "One-time bootstrap, run locally FROM A CHECKOUT OF main:"
+            echo "  npx wrangler secret put PUBLIC_MENU_SUPABASE_ANON_KEY --env preview"
+            echo ""
+            echo "Answer YES when it offers to create the Worker — that is what brings"
+            echo "dialtone-menu-preview into existence, since this job checks for the"
+            echo "secret before deploying and cannot bootstrap it itself."
+            echo ""
+            echo "It MUST run from a checkout containing [env.preview] in wrangler.toml."
+            echo "From a branch that predates it, wrangler finds no such environment,"
+            echo "falls back to naming the Worker <name>-preview, and silently creates"
+            echo "the wrong one."
             exit 1
           fi
           echo "Preview menu key is present."
