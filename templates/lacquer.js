@@ -8,6 +8,7 @@ import {
   orderItemAttrs,
   renderOrderButton,
   renderMenuDataIsland,
+  renderOrderScript,
   ORDER_STYLES,
 } from './shared.js';
 
@@ -307,6 +308,7 @@ function renderLacquerMenuBody(ctx) {
     '    })();',
     '  </script>',
     renderMenuDataIsland(ctx),
+    renderOrderScript(ctx),
     '</body>',
     '</html>'
   ].filter(Boolean).join('\n');

@@ -72,7 +72,12 @@ for (const [name, tpl] of TEMPLATES) {
   //    that lets ordering be an orthogonal toggle rather than a kind of menu:
   //    a tenant without it must not pay a byte for it.
   const off = render(tpl, false);
-  assert.ok(!/dt-order|dt-menu-data|data-dt-item/.test(off),
+  // `_order` catches the bundle's script tag too — an earlier version of this
+  // matched only `dt-order` and let an unconditional <script src="/_order/…">
+  // through, which a mutation found rather than review. The point of this
+  // assertion is that NOTHING ordering-related ships, so it has to be spelled
+  // broadly enough to mean that.
+  assert.ok(!/dt-order|dt-menu-data|data-dt-item|_order\//.test(off),
     `${name}: ordering markup leaked into a non-ordering menu`);
 
   const on = render(tpl, true);
@@ -96,6 +101,14 @@ for (const [name, tpl] of TEMPLATES) {
   //    including modifier ids, without which a required-modifier item cannot be
   //    ordered at all.
   assert.ok(/id="dt-menu-data"/.test(on), `${name}: missing the menu data island`);
+
+  // 4b. The bundle that reads the island must actually be loaded. The filename
+  //     is stable BY CONSTRUCTION (the app builds its entry to /_order/cart.js)
+  //     because this Worker cannot know a content hash — so a change to that
+  //     build setting silently breaks ordering, and this is what notices.
+  assert.ok(/src="\/_order\/cart\.js"/.test(on), `${name}: cart bundle is never loaded`);
+  assert.ok(/<script[^>]+src="\/_order\/cart\.js"[^>]*\bdefer\b/.test(on),
+    `${name}: cart script must be deferred — the menu is what the guest came for`);
   assert.ok(/"opt-white"/.test(on), `${name}: island must carry modifier option ids`);
 
   // 5. The island must not be able to close its own script tag. Same escaping
