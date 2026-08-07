@@ -84,6 +84,13 @@ async function routeRequest(request, env, url, ctx) {
   const orderResponse = await routeOrderApp(request, env, url);
   if (orderResponse) return orderResponse;
 
+  // Above the branded-host branch for the same reason as the order app: on
+  // `<slug>.m…` every unmatched path renders the menu, so this would answer
+  // with menu HTML instead of the window.
+  if (url.pathname === ORDER_WINDOW_PATH) {
+    return handleOrderWindow(request, env, url);
+  }
+
   // A per-restaurant menu host — `<slug>.m.dialtone.menu` — IS that
   // restaurant's menu for the whole host: `/` and any deep link render the
   // menu; only crawler / asset-support paths resolve to themselves. App hosts
@@ -919,4 +926,112 @@ async function routeOrderApp(request, env, url) {
   if (!isAsset) target.pathname = '/';
 
   return env.ORDER_APP.fetch(new Request(target.toString(), request));
+}
+
+// ── Ordering window (dialtone#1173) ─────────────────────────────────────────
+//
+// "Is this restaurant taking orders right now, when does ordering stop, and
+// when should the page start saying so." One call, answered by
+// `get_order_window_by_slug` — the same predicate `create_web_order` refuses
+// on, so the page and the server cannot disagree about what last call means.
+//
+// THIS WORKER MAKES THE CALL RATHER THAN THE BUNDLE, for one reason that
+// outranks the others: this Worker holds the Supabase URL and key that
+// rendered THIS page, so the answer is guaranteed to come from the database
+// the item ids came from. A bundle with its own build-time credentials would
+// drift the moment the two differ — which they do today, since production
+// serves menus from the staging app project (#979) — and the failure is a
+// silent "restaurant not found", not an error anyone would see. It also keeps
+// the boundary as it already is: the Worker talks to the data, the bundle
+// talks to the Worker.
+//
+// NOT part of the menu payload, deliberately. That response is edge-cached for
+// 300s and a stale open/closed flag is wrong exactly in the last half hour
+// before close, which is the entire point of the issue.
+const ORDER_WINDOW_PATH = '/api/order-window';
+
+async function handleOrderWindow(request, env, url) {
+  if (!isLookupMethod(request.method)) {
+    return jsonNoStore({ error: 'method_not_allowed' }, 405, { allow: 'GET, HEAD' });
+  }
+
+  // The slug comes from the host on a branded menu domain and from the query
+  // on the `/m/<slug>` form (and on the preview Worker, whose workers.dev host
+  // has no slug in it). Host first: it cannot be spoofed by a query param.
+  const slug = extractMenuSlugFromHost(url.hostname)
+    ?? normalizeText(url.searchParams.get('slug') || '', 120).toLowerCase();
+
+  if (!slug || !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(slug)) {
+    return jsonNoStore({ error: 'invalid_slug' }, 400);
+  }
+
+  const supabaseUrl = normalizeText(env.PUBLIC_MENU_SUPABASE_URL || env.SUPABASE_URL || '', 500);
+  const supabaseAnonKey = normalizeText(
+    env.PUBLIC_MENU_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || env.SUPABASE_KEY || '',
+    2000
+  );
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return jsonNoStore({ error: 'unavailable' }, 503);
+  }
+
+  let rpcResponse;
+  try {
+    rpcResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/get_order_window_by_slug`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'apikey': supabaseAnonKey,
+        'authorization': `Bearer ${supabaseAnonKey}`
+      },
+      body: JSON.stringify({ p_slug: slug })
+    });
+  } catch (error) {
+    console.log('Order window RPC network error:', String(error));
+    return jsonNoStore({ error: 'unavailable' }, 502);
+  }
+
+  if (!rpcResponse.ok) {
+    console.log('Order window RPC failed:', rpcResponse.status, await rpcResponse.text());
+    return jsonNoStore({ error: 'unavailable' }, 502);
+  }
+
+  let rows;
+  try {
+    rows = await rpcResponse.json();
+  } catch (error) {
+    console.log('Order window RPC returned unparseable JSON:', String(error));
+    return jsonNoStore({ error: 'unavailable' }, 502);
+  }
+
+  // `returns table` gives an array; an unknown slug gives an empty one.
+  const row = Array.isArray(rows) ? rows[0] : null;
+  if (!row || typeof row !== 'object') {
+    return jsonNoStore({ error: 'unknown_slug' }, 404);
+  }
+
+  // Passed through field by field rather than forwarded whole, so a column
+  // added to the RPC later is a deliberate change here rather than something
+  // that silently starts appearing on a public endpoint.
+  return jsonNoStore({
+    open_now: Boolean(row.open_now),
+    closes_at: row.closes_at ?? null,
+    cutoff_at: row.cutoff_at ?? null,
+    accepting_orders: Boolean(row.accepting_orders),
+    notice_at: row.notice_at ?? null,
+    manual_closure: Boolean(row.manual_closure),
+    closure_message: row.closure_message ?? null
+  }, 200);
+}
+
+/**
+ * Every answer here is about *right now*, so none of it may be cached — not by
+ * the edge, not by the browser. A cached window is the bug this route exists
+ * to avoid.
+ */
+function jsonNoStore(body, status, extraHeaders = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...JSON_HEADERS, 'cache-control': 'no-store', ...extraHeaders }
+  });
 }

@@ -111,6 +111,13 @@ for (const [name, tpl] of TEMPLATES) {
     `${name}: cart script must be deferred — the menu is what the guest came for`);
   assert.ok(/"opt-white"/.test(on), `${name}: island must carry modifier option ids`);
 
+  // 4c. The restaurant's timezone (dialtone#1173). Last call is stated as a
+  //     clock time, and it must be the RESTAURANT's clock — a guest ordering
+  //     from another zone would otherwise be told the wrong deadline, and the
+  //     failure looks like a working page.
+  assert.ok(/"timezone":"America\/Chicago"/.test(on),
+    `${name}: island must carry the restaurant timezone for last-call formatting`);
+
   // 5. The island must not be able to close its own script tag. Same escaping
   //    as the JSON-LD block; a literal </script> in item text would otherwise
   //    inject the remainder as markup.

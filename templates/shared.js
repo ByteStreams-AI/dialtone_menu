@@ -434,7 +434,11 @@ export function renderMenuDataIsland(ctx) {
     }
   }
 
-  const json = JSON.stringify({ slug: ctx.slug, items })
+  // The timezone rides along because last call is spoken as a CLOCK TIME —
+  // "ordering closes at 9:45 PM" — and that has to be the restaurant's clock,
+  // not the guest's. It is stable config, so the 300s cache is harmless here in
+  // a way it is not for the window itself (dialtone#1173).
+  const json = JSON.stringify({ slug: ctx.slug, timezone: ctx.timezone || null, items })
     .replace(/</g, '\\u003c')
     .replace(/>/g, '\\u003e')
     .replace(/&/g, '\\u0026');
