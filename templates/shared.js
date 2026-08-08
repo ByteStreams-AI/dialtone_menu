@@ -321,6 +321,20 @@ export function buildMenuCtx(payload, slug, options = {}) {
     // dialtone#1182 — whether this menu takes orders. The operator toggle,
     // already resolved server-side; the templates only decide how to render it.
     orderingEnabled: Boolean(restaurant.ordering_enabled),
+    // dialtone#1182 Phase 2d — the tenant the checkout submits against. Anon by
+    // slug since 0072 (get_restaurant_branding_by_slug), and never trusted as an
+    // authorisation: create_web_order re-prices through _price_order_items,
+    // which verifies every item belongs to this restaurant. Empty until 0189 is
+    // applied, which is why the island omits the field rather than sending ''.
+    restaurantId: normalizeText(restaurant.id, 64),
+    // The Turnstile SITE key — public by design (it appears in the markup of
+    // every Turnstile-protected page); the secret stays on the Edge Function.
+    // Per-environment, so it comes from the Worker rather than the database.
+    // Absent until Turnstile is configured, and the checkout then renders no
+    // widget — web_create_order is in mock mode in exactly that case, so the
+    // two halves agree instead of the form blocking on a challenge that cannot
+    // be verified.
+    turnstileSiteKey: normalizeText(options.turnstileSiteKey, 200),
     surface: options.surface === 'home' ? 'home' : 'menu',
     canonicalUrl,
     menuUrl,
@@ -438,7 +452,16 @@ export function renderMenuDataIsland(ctx) {
   // "ordering closes at 9:45 PM" — and that has to be the restaurant's clock,
   // not the guest's. It is stable config, so the 300s cache is harmless here in
   // a way it is not for the window itself (dialtone#1173).
-  const json = JSON.stringify({ slug: ctx.slug, timezone: ctx.timezone || null, items })
+  const json = JSON.stringify({
+    slug: ctx.slug,
+    timezone: ctx.timezone || null,
+    // Omitted rather than sent empty when absent (a deployment whose database
+    // predates 0189): the checkout can then say "not configured" instead of
+    // posting a blank tenant and reading back a generic rejection.
+    ...(ctx.restaurantId ? { restaurant_id: ctx.restaurantId } : {}),
+    ...(ctx.turnstileSiteKey ? { turnstile_site_key: ctx.turnstileSiteKey } : {}),
+    items,
+  })
     .replace(/</g, '\\u003c')
     .replace(/>/g, '\\u003e')
     .replace(/&/g, '\\u0026');
