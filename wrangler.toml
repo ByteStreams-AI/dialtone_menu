@@ -44,6 +44,19 @@ SUPABASE_URL = "https://hltmzafywzqajjzjpqva.supabase.co"
 #   (`PGRST202` / function-not-found), indicating environment mismatch.
 PUBLIC_MENU_SUPABASE_URL = "https://mxhyvvgjtqllohpvrwon.supabase.co"
 
+# Cloudflare Turnstile SITE key for the ordering checkout (dialtone#1182 2d).
+# A var, not a secret — the site key is public by design and appears in the
+# markup of every Turnstile-protected page. The matching SECRET key lives on the
+# Supabase Edge Function, which is what verifies the token.
+#
+# DELIBERATELY UNSET until Turnstile is provisioned. With no site key the
+# checkout renders no widget, and `web_create_order` is in mock mode in exactly
+# that case (no TURNSTILE_SECRET_KEY), so the two halves agree rather than the
+# form blocking on a challenge nothing can verify. Set BOTH together, per
+# environment — a site key here without the secret there collects tokens nobody
+# checks, which reads as protection and is not.
+# TURNSTILE_SITE_KEY = "0x4AAA..."
+
 # Optional durable rate limiting storage for /api/contact.
 # If this binding is configured, `worker.js` will prefer KV-backed rate
 # limiting and fall back to in-memory limits if KV is unavailable.

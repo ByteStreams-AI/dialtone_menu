@@ -27,6 +27,7 @@ const TEMPLATES = [
 function payload(orderingEnabled) {
   return {
     restaurant: {
+      id: '11111111-1111-1111-1111-111111111111',
       name: "Sui's Sushi",
       timezone: 'America/Chicago',
       menu_template: 'standard',
@@ -65,7 +66,12 @@ function payload(orderingEnabled) {
   };
 }
 
-const render = (tpl, on) => tpl.render(buildMenuCtx(payload(on), 'suis-sushi'));
+const render = (tpl, on, opts = {}) => {
+  const data = payload(on);
+  // A database that predates 0189 returns a restaurant object with no `id`.
+  if (opts.omitRestaurantId) delete data.restaurant.id;
+  return tpl.render(buildMenuCtx(data, 'suis-sushi'));
+};
 
 for (const [name, tpl] of TEMPLATES) {
   // 1. Ordering OFF leaves the brochure exactly as it was. This is the promise
@@ -117,6 +123,16 @@ for (const [name, tpl] of TEMPLATES) {
   //     failure looks like a working page.
   assert.ok(/"timezone":"America\/Chicago"/.test(on),
     `${name}: island must carry the restaurant timezone for last-call formatting`);
+
+  // 4d. The tenant the checkout submits against (dialtone#1182 2d). Omitted
+  //     rather than blank when the database predates 0189, so the checkout can
+  //     say "not configured" instead of posting an empty tenant and reading
+  //     back a generic rejection.
+  assert.ok(/"restaurant_id":"11111111-1111-1111-1111-111111111111"/.test(on),
+    `${name}: island must carry the restaurant id for checkout`);
+  const noId = render(tpl, true, { omitRestaurantId: true });
+  assert.ok(!/"restaurant_id"/.test(noId),
+    `${name}: island must OMIT restaurant_id rather than send an empty one`);
 
   // 5. The island must not be able to close its own script tag. Same escaping
   //    as the JSON-LD block; a literal </script> in item text would otherwise

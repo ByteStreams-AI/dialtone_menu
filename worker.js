@@ -91,6 +91,10 @@ async function routeRequest(request, env, url, ctx) {
     return handleOrderWindow(request, env, url);
   }
 
+  if (url.pathname === ORDER_SUBMIT_PATH) {
+    return handleOrderSubmit(request, env);
+  }
+
   // A per-restaurant menu host — `<slug>.m.dialtone.menu` — IS that
   // restaurant's menu for the whole host: `/` and any deep link render the
   // menu; only crawler / asset-support paths resolve to themselves. App hosts
@@ -424,6 +428,8 @@ function buildMenuSuccessResponse(payload, slug, url, surfaceHint = 'auto', env 
 
   const ctx = buildMenuCtx(payload, slug, {
     storageBaseUrl: env.PUBLIC_MENU_SUPABASE_URL,
+    // Per-environment and public by design — see the ctx field's comment.
+    turnstileSiteKey: env.TURNSTILE_SITE_KEY,
     surface,
     canonicalUrl: canonicalFor(links, surface, servesHomeAtRoot(probe)),
     menuUrl: links.menuUrl,
@@ -1022,6 +1028,85 @@ async function handleOrderWindow(request, env, url) {
     manual_closure: Boolean(row.manual_closure),
     closure_message: row.closure_message ?? null
   }, 200);
+}
+
+// ── Placing an order (dialtone#1182 Phase 2d) ───────────────────────────────
+//
+// A thin proxy to the `web_create_order` Edge Function. It exists for two
+// reasons, and the second is the one that matters.
+//
+// 1. Same as the window route: this Worker knows which Supabase project
+//    rendered THIS page, so the order lands in the database the item ids came
+//    from. Production serves menus from the staging app project today (#979),
+//    and a bundle holding its own build-time URL would post into the wrong one
+//    the moment those diverge — or serve a stale one for 300s across a cutover,
+//    since the page carrying it is edge-cached.
+//
+// 2. THE CLIENT IP. `web_create_order`'s per-IP throttle reads
+//    `cf-connecting-ip` (then `x-forwarded-for`), and a proxied sub-request
+//    would otherwise arrive carrying this Worker's egress IP — collapsing a
+//    per-guest limit into a single global one that every guest shares and one
+//    attacker exhausts. So the guest's IP is copied on explicitly, and the
+//    incoming headers are DROPPED rather than forwarded: a client that sends
+//    its own `cf-connecting-ip` must not be able to pick its own rate-limit
+//    bucket. Only Cloudflare's value, which the client cannot set, is passed.
+const ORDER_SUBMIT_PATH = '/api/order';
+
+/** Generous for a cart, small enough that this is not a relay. */
+const ORDER_BODY_LIMIT_BYTES = 32 * 1024;
+
+async function handleOrderSubmit(request, env) {
+  if (request.method !== 'POST') {
+    return jsonNoStore({ error: 'method_not_allowed' }, 405, { allow: 'POST' });
+  }
+
+  const supabaseUrl = normalizeText(env.PUBLIC_MENU_SUPABASE_URL || env.SUPABASE_URL || '', 500);
+  const supabaseAnonKey = normalizeText(
+    env.PUBLIC_MENU_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || env.SUPABASE_KEY || '',
+    2000
+  );
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return jsonNoStore({ error: 'unavailable' }, 503);
+  }
+
+  const body = await request.text();
+  if (body.length > ORDER_BODY_LIMIT_BYTES) {
+    return jsonNoStore({ error: 'payload_too_large' }, 413);
+  }
+
+  // Cloudflare sets this and a client cannot forge it. Falling back to the
+  // incoming `cf-connecting-ip` would hand the caller its own rate-limit key.
+  const clientIp = request.headers.get('cf-connecting-ip');
+
+  let upstream;
+  try {
+    upstream = await fetch(`${supabaseUrl}/functions/v1/web_create_order`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'apikey': supabaseAnonKey,
+        'authorization': `Bearer ${supabaseAnonKey}`,
+        ...(clientIp ? { 'cf-connecting-ip': clientIp } : {})
+      },
+      body
+    });
+  } catch (error) {
+    console.log('Order submit network error:', String(error));
+    return jsonNoStore({ error: 'unavailable' }, 502);
+  }
+
+  // Passed through verbatim: the function already answers in the shape the
+  // client needs (`ok` / `rejected` with an ORDER_* code / `rate_limited` /
+  // `challenge_failed`), and re-mapping it here would put the refusal wording
+  // in two places.
+  const text = await upstream.text();
+  return new Response(text, {
+    status: upstream.status,
+    headers: {
+      ...JSON_HEADERS,
+      'cache-control': 'no-store'
+    }
+  });
 }
 
 /**
