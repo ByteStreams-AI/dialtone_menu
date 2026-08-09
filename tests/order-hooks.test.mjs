@@ -70,7 +70,11 @@ const render = (tpl, on, opts = {}) => {
   const data = payload(on);
   // A database that predates 0189 returns a restaurant object with no `id`.
   if (opts.omitRestaurantId) delete data.restaurant.id;
-  return tpl.render(buildMenuCtx(data, 'suis-sushi'));
+  return tpl.render(
+    buildMenuCtx(data, 'suis-sushi', {
+      stripePublishableKey: opts.omitStripeKey ? '' : 'pk_test_island',
+    }),
+  );
 };
 
 for (const [name, tpl] of TEMPLATES) {
@@ -133,6 +137,17 @@ for (const [name, tpl] of TEMPLATES) {
   const noId = render(tpl, true, { omitRestaurantId: true });
   assert.ok(!/"restaurant_id"/.test(noId),
     `${name}: island must OMIT restaurant_id rather than send an empty one`);
+
+  // 4e. Stripe's publishable key (dialtone#1182 2e), on the same omit-when-absent
+  //     rule. With no key the checkout says online payment is not set up and
+  //     points the guest at the phone — an honest, actionable answer — whereas a
+  //     blank one mounts an Element that fails at confirm time, long after the
+  //     guest has typed a card number.
+  assert.ok(/"stripe_publishable_key":"pk_test_island"/.test(on),
+    `${name}: island must carry the Stripe publishable key for inline payment`);
+  const noKey = render(tpl, true, { omitStripeKey: true });
+  assert.ok(!/"stripe_publishable_key"/.test(noKey),
+    `${name}: island must OMIT the Stripe key rather than send an empty one`);
 
   // 5. The island must not be able to close its own script tag. Same escaping
   //    as the JSON-LD block; a literal </script> in item text would otherwise

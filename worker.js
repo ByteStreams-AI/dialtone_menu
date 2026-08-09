@@ -95,6 +95,10 @@ async function routeRequest(request, env, url, ctx) {
     return handleOrderSubmit(request, env);
   }
 
+  if (url.pathname === ORDER_PAYMENT_PATH) {
+    return handleOrderPayment(request, env);
+  }
+
   // A per-restaurant menu host — `<slug>.m.dialtone.menu` — IS that
   // restaurant's menu for the whole host: `/` and any deep link render the
   // menu; only crawler / asset-support paths resolve to themselves. App hosts
@@ -430,6 +434,11 @@ function buildMenuSuccessResponse(payload, slug, url, surfaceHint = 'auto', env 
     storageBaseUrl: env.PUBLIC_MENU_SUPABASE_URL,
     // Per-environment and public by design — see the ctx field's comment.
     turnstileSiteKey: env.TURNSTILE_SITE_KEY,
+    // Stripe's PLATFORM publishable key. Public in the same sense: it appears
+    // in the markup of every Stripe-powered page on the web. The value that
+    // routes a charge to a particular restaurant is the connected account id,
+    // which the checkout gets per-order from the payment call, never from here.
+    stripePublishableKey: env.STRIPE_PUBLISHABLE_KEY,
     surface,
     canonicalUrl: canonicalFor(links, surface, servesHomeAtRoot(probe)),
     menuUrl: links.menuUrl,
@@ -1099,6 +1108,71 @@ async function handleOrderSubmit(request, env) {
   // client needs (`ok` / `rejected` with an ORDER_* code / `rate_limited` /
   // `challenge_failed`), and re-mapping it here would put the refusal wording
   // in two places.
+  const text = await upstream.text();
+  return new Response(text, {
+    status: upstream.status,
+    headers: {
+      ...JSON_HEADERS,
+      'cache-control': 'no-store'
+    }
+  });
+}
+
+const ORDER_PAYMENT_PATH = '/api/order-payment';
+
+/**
+ * Mint the PaymentIntent for an order the guest just placed (dialtone#1182 2e).
+ *
+ * A sibling of `/api/order`, for the first of its two reasons: this Worker knows
+ * which Supabase project rendered THIS page, and production serves menus from
+ * the staging app project today (#979), so a bundle holding its own build-time
+ * URL would ask the wrong database about the order it just created.
+ *
+ * The IP header is NOT forwarded here, and that is the difference from
+ * `/api/order`. This endpoint mints nothing new on a second call — it is
+ * idempotent on the order's PaymentIntent — so there is no per-IP budget to
+ * spend, and passing an address that is not used invites someone to assume it
+ * is. The order-creating call is where the throttle lives.
+ */
+async function handleOrderPayment(request, env) {
+  if (request.method !== 'POST') {
+    return jsonNoStore({ error: 'method_not_allowed' }, 405, { allow: 'POST' });
+  }
+
+  const supabaseUrl = normalizeText(env.PUBLIC_MENU_SUPABASE_URL || env.SUPABASE_URL || '', 500);
+  const supabaseAnonKey = normalizeText(
+    env.PUBLIC_MENU_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || env.SUPABASE_KEY || '',
+    2000
+  );
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return jsonNoStore({ error: 'unavailable' }, 503);
+  }
+
+  // A short code and a tip. Anything larger is not this request.
+  const body = await request.text();
+  if (body.length > 2048) {
+    return jsonNoStore({ error: 'payload_too_large' }, 413);
+  }
+
+  let upstream;
+  try {
+    upstream = await fetch(`${supabaseUrl}/functions/v1/web_create_payment_intent`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'apikey': supabaseAnonKey,
+        'authorization': `Bearer ${supabaseAnonKey}`
+      },
+      body
+    });
+  } catch (error) {
+    console.log('Order payment network error:', String(error));
+    return jsonNoStore({ error: 'unavailable' }, 502);
+  }
+
+  // Verbatim, like its sibling: the function's own vocabulary
+  // (`restaurant_not_connected`, `not_payable`, `tip_locked`) is what the
+  // client reads, and re-mapping it here would put the wording in two places.
   const text = await upstream.text();
   return new Response(text, {
     status: upstream.status,
