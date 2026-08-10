@@ -57,6 +57,25 @@ PUBLIC_MENU_SUPABASE_URL = "https://mxhyvvgjtqllohpvrwon.supabase.co"
 # checks, which reads as protection and is not.
 # TURNSTILE_SITE_KEY = "0x4AAA..."
 
+# Stripe's PLATFORM publishable key, for the menu's inline checkout
+# (dialtone#1182 2e). A var for the same reason as the site key above: a
+# publishable key is public by design and appears in the markup of every
+# Stripe-powered page. The SECRET key stays on the Supabase Edge Functions.
+#
+# What it is NOT is the thing that routes money. A charge reaches a particular
+# restaurant because the PaymentIntent is minted on THEIR connected account, and
+# the checkout gets that account id per-order from `/api/order-payment` — never
+# from a build-time value here. So one key serves every tenant on the host.
+#
+# DELIBERATELY UNSET until the environment is wired, and the two halves agree
+# when it is: with no key the checkout says online payment is not set up on this
+# menu and points the guest at the phone, rather than mounting a Stripe Element
+# that cannot work. Use the pk_test_… key against a staging Supabase and the
+# pk_live_… key against production — a mismatch fails at confirm time, not load.
+#
+# Vars do NOT inherit into [env.preview], so set it in BOTH blocks.
+# STRIPE_PUBLISHABLE_KEY = "pk_test_..."
+
 # Optional durable rate limiting storage for /api/contact.
 # If this binding is configured, `worker.js` will prefer KV-backed rate
 # limiting and fall back to in-memory limits if KV is unavailable.

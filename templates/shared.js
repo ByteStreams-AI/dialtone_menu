@@ -335,6 +335,7 @@ export function buildMenuCtx(payload, slug, options = {}) {
     // two halves agree instead of the form blocking on a challenge that cannot
     // be verified.
     turnstileSiteKey: normalizeText(options.turnstileSiteKey, 200),
+    stripePublishableKey: normalizeText(options.stripePublishableKey, 200),
     surface: options.surface === 'home' ? 'home' : 'menu',
     canonicalUrl,
     menuUrl,
@@ -460,6 +461,12 @@ export function renderMenuDataIsland(ctx) {
     // posting a blank tenant and reading back a generic rejection.
     ...(ctx.restaurantId ? { restaurant_id: ctx.restaurantId } : {}),
     ...(ctx.turnstileSiteKey ? { turnstile_site_key: ctx.turnstileSiteKey } : {}),
+    // Same omit-when-absent rule as the tenant id: with no key the checkout
+    // says payment is not set up on this menu, which is true and actionable,
+    // rather than mounting a Stripe Element that cannot possibly work.
+    ...(ctx.stripePublishableKey
+      ? { stripe_publishable_key: ctx.stripePublishableKey }
+      : {}),
     items,
   })
     .replace(/</g, '\\u003c')
