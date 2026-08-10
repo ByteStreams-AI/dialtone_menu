@@ -13,6 +13,7 @@
 // where a photo beats a logo and nothing on the page changes.)
 import {
   escapeHtml, normalizeText, normalizeCents, formatCurrency, hexToRgba,
+  readableInkOn,
   isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay,
   orderItemAttrs,
   renderOrderButton,
@@ -181,7 +182,9 @@ function renderStandardMenuBody(ctx) {
     fontHref ? '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' : '',
     fontHref ? `  <link rel="stylesheet" href="${escapeHtml(fontHref)}">` : '',
     '  <style>',
-    `    :root { --brand-primary: ${primaryColor}; --brand-secondary: ${secondaryColor}; --brand-soft: ${hexToRgba(primaryColor, 0.08)}; }`,
+    // `--brand`/`--brand-ink`: see the cards template's note — the ordering
+    // tokens are deliberately named apart from this template's own (dialtone#1211).
+    `    :root { --brand-primary: ${primaryColor}; --brand: ${primaryColor}; --brand-ink: ${readableInkOn(primaryColor)}; --brand-secondary: ${secondaryColor}; --brand-soft: ${hexToRgba(primaryColor, 0.08)}; }`,
     `    body { margin: 0; color: #122236; background: radial-gradient(circle at top right, ${hexToRgba(secondaryColor, 0.18)}, transparent 40%), #faf7f2; font-family: ${fontFamily}; }`,
     '    main { max-width: 980px; margin: 0 auto; padding: 24px 20px 56px; }',
     '    .menu-header { display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 18px 20px; border: 1px solid rgba(6, 35, 75, 0.16); border-radius: 16px; background: #ffffff; box-shadow: 0 10px 32px rgba(6, 35, 75, 0.08); }',

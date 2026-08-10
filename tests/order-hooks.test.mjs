@@ -169,4 +169,30 @@ assert.ok(buttons.every(Boolean), 'every template must render the add button');
 assert.equal(new Set(buttons).size, 1,
   'templates have drifted apart on the add affordance — it is meant to be shared');
 
+// 7. The ordering controls are the TENANT'S colour (dialtone#1211).
+//
+//    `--brand` and `--brand-ink` are read by ORDER_STYLES and by the cart
+//    bundle, and were defined by no template for the whole of Phase 2 — so the
+//    `#111` fallback was the colour every tenant got, on every template, and
+//    nothing failed. A fallback that is never exercised looks exactly like one
+//    that is, which is why this asserts the DEFINITION rather than the usage.
+for (const [name, tpl] of TEMPLATES) {
+  const on = render(tpl, true);
+  assert.ok(/--brand:\s*#[0-9A-Fa-f]{6}/.test(on),
+    `${name}: no --brand in :root, so the ordering controls fall back to #111`);
+  assert.ok(/--brand-ink:\s*(#fff|#111)\b/.test(on),
+    `${name}: no --brand-ink, so a pale brand gets white text on it`);
+}
+
+// The ink has to FOLLOW the brand, not merely exist. A fixed value would pass
+// the check above while reintroducing the unreadable pairing it exists to stop.
+{
+  const ink = (primary) =>
+    lacquer
+      .render(buildMenuCtx({ ...payload(true), restaurant: { ...payload(true).restaurant, primary_color: primary } }, 'suis-sushi', {}))
+      .match(/--brand-ink:\s*(#[0-9a-f]{3,6})/)[1];
+  assert.equal(ink('#111827'), '#fff', 'a dark brand takes white ink');
+  assert.equal(ink('#FDE047'), '#111', 'a pale brand takes dark ink');
+}
+
 console.log('order hooks tests passed');

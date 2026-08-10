@@ -4,6 +4,7 @@
 // stays the default the registry falls back to.
 import {
   escapeHtml, normalizeText, normalizeCents, formatCurrency, hexToRgba,
+  readableInkOn,
   isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay,
   orderItemAttrs,
   renderOrderButton,
@@ -259,7 +260,9 @@ function renderLacquerMenuBody(ctx) {
     // red house reads deep-lacquer red, a teal house deep teal — instead of a
     // fixed warm brown that clashed with cool palettes. Alphas over the neutral
     // near-black --hero-ground keep it dark and legible whatever the hue.
-    `    :root { --brand-primary: ${primaryColor}; --brand-secondary: ${secondaryColor}; --brand-soft: ${hexToRgba(primaryColor, 0.08)}; --font-display: ${fontFamily}; --hero-a: ${hexToRgba(primaryColor, 0.72)}; --hero-b: ${hexToRgba(primaryColor, 0.44)}; --hero-c: ${hexToRgba(primaryColor, 0.20)}; --hero-glow: ${hexToRgba(secondaryColor, 0.22)}; }`,
+    // `--brand`/`--brand-ink`: see the cards template's note — the ordering
+    // tokens are deliberately named apart from this template's own (dialtone#1211).
+    `    :root { --brand-primary: ${primaryColor}; --brand: ${primaryColor}; --brand-ink: ${readableInkOn(primaryColor)}; --brand-secondary: ${secondaryColor}; --brand-soft: ${hexToRgba(primaryColor, 0.08)}; --font-display: ${fontFamily}; --hero-a: ${hexToRgba(primaryColor, 0.72)}; --hero-b: ${hexToRgba(primaryColor, 0.44)}; --hero-c: ${hexToRgba(primaryColor, 0.20)}; --hero-glow: ${hexToRgba(secondaryColor, 0.22)}; }`,
     MENU_CSS,
     ctx.orderingEnabled ? ORDER_STYLES : '',
     '  </style>',

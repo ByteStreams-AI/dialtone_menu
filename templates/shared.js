@@ -111,6 +111,34 @@ export function hexToRgba(hex, alpha) {
   const blue = Number.parseInt(hex.slice(5, 7), 16);
   return `rgba(${red}, ${green}, ${blue}, ${normalizedAlpha})`;
 }
+/**
+ * The foreground to put ON a brand fill (dialtone#1211).
+ *
+ * Defining `--brand` makes the ordering controls the tenant's own colour, and a
+ * hardcoded white foreground is only safe for as long as that colour is dark.
+ * An operator who picks a pale brand — yellow, cream, mint — would get white on
+ * it, which is the invisible-call-to-action bug this fix exists to remove,
+ * reintroduced in a different colour.
+ *
+ * WCAG relative luminance, thresholded at the point where white and near-black
+ * give equal contrast, so each side of the line gets the more legible of the
+ * two. Unparseable input returns white, matching the CSS-level fallback.
+ */
+export function readableInkOn(hex) {
+  if (!/^#[0-9A-Fa-f]{6}$/.test(String(hex))) {
+    return '#fff';
+  }
+  const channel = (pair) => {
+    const value = Number.parseInt(pair, 16) / 255;
+    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  };
+  const luminance =
+    0.2126 * channel(hex.slice(1, 3)) +
+    0.7152 * channel(hex.slice(3, 5)) +
+    0.0722 * channel(hex.slice(5, 7));
+  return luminance > 0.179 ? '#111' : '#fff';
+}
+
 export function escapeHtml(value) {
   return String(value)
     .replaceAll('&', '&amp;')
@@ -478,11 +506,18 @@ export function renderMenuDataIsland(ctx) {
 /**
  * Styling for the order affordance — one string, interpolated by every
  * template's <style>, so the three cannot drift apart on the thing that is
- * meant to be template-agnostic. Colours come from the per-tenant brand tokens
- * each template already sets, so it inherits the restaurant's look without
- * knowing anything about the template.
+ * meant to be template-agnostic. Colour comes from `--brand` / `--brand-ink`,
+ * which every template emits in its `:root` from the tenant's primary colour,
+ * so this inherits the restaurant's look without knowing anything about the
+ * template's own variable names — which do NOT agree across the three.
+ *
+ * That indirection is the whole point, and it silently did nothing until
+ * dialtone#1211: `--brand` was named here and defined by no template, so the
+ * `#111` fallback WAS the colour for every tenant on every template. Keep the
+ * fallbacks — they are correct for a page rendered by an older template — but
+ * do not read them as evidence the variable is set.
  */
-export const ORDER_STYLES = `    .dt-order-add{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:600;letter-spacing:.01em;padding:.5rem 1rem;border-radius:999px;background:var(--brand,#111);color:#fff;margin-top:.6rem;}
+export const ORDER_STYLES = `    .dt-order-add{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:600;letter-spacing:.01em;padding:.5rem 1rem;border-radius:999px;background:var(--brand,#111);color:var(--brand-ink,#fff);margin-top:.6rem;}
     .dt-order-add:hover{filter:brightness(1.08);}
     .dt-order-add:focus-visible{outline:2px solid currentColor;outline-offset:2px;}
     .dt-order-note{margin:.6rem 0 0;font-size:.8rem;opacity:.7;}`;
