@@ -289,6 +289,9 @@ SUPABASE_URL = "https://hltmzafywzqajjzjpqva.supabase.co"
 # this environment cheap. Flipping menus to the prod app project is #979 and is
 # a launch gate for a real paying tenant, not a build gate.
 PUBLIC_MENU_SUPABASE_URL = "https://mxhyvvgjtqllohpvrwon.supabase.co"
+# The TEST key, because preview reads the staging app project (above). See the
+# top-level [vars] block for what this key does and does not route.
+STRIPE_PUBLISHABLE_KEY = "pk_test_51TUZtORrmddnOdHkrUR2E2FSE00Z4FD0n5is4aGTeIdfB8hdFcg9UcFn33sEJITrKrEkUWR1RuHcBk13LvceCdAb00g41bVj85"
 
 [[env.preview.kv_namespaces]]
 binding = "RATE_LIMIT_KV"
