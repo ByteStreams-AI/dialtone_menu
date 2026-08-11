@@ -46,7 +46,10 @@ const MENU_CARDS_CSS = `
        leftover space evenly and centre it in the gap. */
     .brandbar__group{display:flex;flex-direction:column;gap:.75rem;flex:0 1 auto;min-width:0;}
     .home-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:700;font-size:.9rem;padding:.55rem 1.1rem;border-radius:999px;border:1px solid var(--gold);color:var(--gold);white-space:nowrap;flex:0 0 auto;}
-    .brandbar__identity{display:flex;align-items:center;gap:.9rem;min-width:0;}
+    /* Grows so the cart can be pushed to its right edge — the identity used to
+       be shrink-to-fit, which would have parked the cart against the tagline. */
+    .brandbar__identity{display:flex;align-items:center;gap:.9rem;min-width:0;flex:1 1 auto;}
+    .brandbar__identity .dt-cart-slot{margin-left:auto;padding-left:1rem;}
     .controls{display:flex;gap:.6rem;}
     /* Definite basis, not a percentage: the group is shrink-to-fit now, so a
        % basis has nothing to resolve against and collapses to the text width. */
@@ -102,18 +105,10 @@ const MENU_CARDS_CSS = `
          eat a phone-width row and squeeze Search to nothing. */
       .select-wrap{flex:1 1 0;}
       .search{flex:1 1 0;}
-      /* The cart takes its own line rather than a share of this one. Measured
-         at 375px: a fourth control here clips "Categories" to "Catego" and
-         "Search" to "Sear" — the two controls that were already splitting the
-         row evenly because it was tight with three. Wrapping costs a row of
-         header height and keeps all four legible, which on the one surface
-         that has to say "you can order here" is the right trade. */
-      .controls{flex-wrap:wrap;}
-      /* A 100% BASIS, not margin-left:auto. The siblings are flex:1 1 0, so
-         they shrink rather than push anything to a new line — flex-wrap alone
-         changed nothing and simply squeezed "Categories" down to "Cat". Only a
-         full-width basis forces the break. */
-      .dt-cart-slot{flex:1 1 100%;justify-content:flex-end;}
+      /* The cart is on the identity line, so this row is back to the three
+         controls it was sized for and needs no wrapping. Measured at 375px: a
+         fourth control here clipped "Categories" to "Catego" and "Search" to
+         "Sear", which is what moved it up a line in the first place. */
     }`;
 function renderCardsItem(item, ordering) {
   const safe = item && typeof item === 'object' ? item : {};
@@ -203,13 +198,20 @@ function renderCardsMenuBody(ctx) {
     : '';
 
   // Brandbar — the identity lockup (mark + tagline) over the controls, with the
-  // app QR held to the right of that whole group.
+  // cart and the app QR held to the right of that whole group.
+  //
+  // The cart sits on the IDENTITY line, not in the controls row below it
+  // (dialtone#1210). It was in the controls row first, which put the one
+  // affordance that has to be found next to a category filter and a search
+  // field — three ways to narrow a menu and one way to buy from it, given equal
+  // billing. It also cost that row width it did not have on a phone.
   const brandbarMarkup = [
     '      <div class="brandbar">',
     '        <div class="brandbar__group">',
     '          <div class="brandbar__identity">',
     `            ${brandMark}`,
     ctx.tagline ? `            <p class="tagline">${escapeHtml(ctx.tagline)}</p>` : '',
+    `            ${renderCartSlot(ctx.orderingEnabled)}`,
     '          </div>',
     '          <div class="controls">',
     ctx.site.mode === 'home_and_menu' && ctx.homeUrl
@@ -217,7 +219,6 @@ function renderCardsMenuBody(ctx) {
       : '',
     '            <div class="select-wrap"><select id="catSelect" aria-label="Jump to category"><option value="" disabled selected>Categories</option>' + options + '</select></div>',
     '            <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg><input id="q" type="search" placeholder="Search" aria-label="Search the menu"></div>',
-    `            ${renderCartSlot(ctx.orderingEnabled)}`,
     '          </div>',
     '        </div>',
     `        ${renderAppQr(ctx.orderingEnabled)}`,
