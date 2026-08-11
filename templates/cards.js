@@ -2,6 +2,7 @@
 // Body + CSS + item/section renderers, extracted verbatim from worker.js.
 import {
   escapeHtml, normalizeText, normalizeCents, formatCurrency, hexToRgba,
+  readableInkOn,
   safeLogoUrl, isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay,
   orderItemAttrs,
   renderOrderButton,
@@ -230,7 +231,11 @@ function renderCardsMenuBody(ctx) {
     ctx.fontHref ? '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' : '',
     ctx.fontHref ? `  <link rel="stylesheet" href="${escapeHtml(ctx.fontHref)}">` : '',
     '  <style>',
-    `    :root { --primary: ${ctx.primaryColor}; --gold: ${ctx.secondaryColor}; --font-display: ${ctx.fontFamily}; --bg:#121110; --bar:rgba(18,17,16,.92); --card:#1c1a18; --ink:#f4efe8; --muted:#a49a8f; --line:rgba(255,255,255,.09); --ph-a:${hexToRgba(ctx.secondaryColor, 0.16)}; --ph-b:${hexToRgba(ctx.primaryColor, 0.55)}; }`,
+    // `--brand`/`--brand-ink` are the TEMPLATE-AGNOSTIC ordering tokens
+    // (dialtone#1211) — the cart bundle and ORDER_STYLES read these and nothing
+    // else, because the three templates' own colour names do not agree. Emit
+    // them wherever ordering can render, or the controls fall back to #111.
+    `    :root { --primary: ${ctx.primaryColor}; --brand: ${ctx.primaryColor}; --brand-ink: ${readableInkOn(ctx.primaryColor)}; --gold: ${ctx.secondaryColor}; --font-display: ${ctx.fontFamily}; --bg:#121110; --bar:rgba(18,17,16,.92); --card:#1c1a18; --ink:#f4efe8; --muted:#a49a8f; --line:rgba(255,255,255,.09); --ph-a:${hexToRgba(ctx.secondaryColor, 0.16)}; --ph-b:${hexToRgba(ctx.primaryColor, 0.55)}; }`,
     MENU_CARDS_CSS,
     ctx.orderingEnabled ? ORDER_STYLES : '',
     '  </style>',
