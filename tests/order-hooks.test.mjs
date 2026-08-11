@@ -195,26 +195,21 @@ for (const [name, tpl] of TEMPLATES) {
   assert.equal(ink('#FDE047'), '#111', 'a pale brand takes dark ink');
 }
 
-// 8. The header cart's mount point, and the QR copy that used to contradict it
-//    (dialtone#1210 / dialtone#1215).
+// 8. The QR pitches the APP, not ordering, once the page can take an order
+//    (dialtone#1215).
 //
-//    Both are per-template placements of one shared decision, which is exactly
-//    the drift this file exists to catch: a fourth template that forgets the
-//    slot ships a menu with no visible way to order, and it would look fine.
+//    One shared decision rendered by three templates, which is the drift this
+//    file exists to catch. Both directions are asserted: the fix is not
+//    "delete the sentence" — on a menu that cannot take orders, telling the
+//    guest to download in order to order is still true.
+//
+//    There is no cart-slot assertion here any more. The cart is fixed to the
+//    viewport (dialtone#1210) and renders itself, so no template has a say in
+//    where it goes and there is no per-template hook left to drift.
 for (const [name, tpl] of TEMPLATES) {
-  const on = render(tpl, true);
-  const off = render(tpl, false);
-
-  assert.ok(/data-dt-cart-slot/.test(on), `${name}: no cart slot in the header`);
-  assert.equal((on.match(/data-dt-cart-slot/g) || []).length, 1,
-    `${name}: more than one cart slot — the control would mount twice`);
-  // Covered by assertion 1 as well, but stated here so a failure names the
-  // cause rather than pointing at a broad "ordering markup leaked" match.
-  assert.ok(!/data-dt-cart-slot/.test(off), `${name}: cart slot shipped to a non-ordering menu`);
-
-  assert.ok(!/Download to order/.test(on),
+  assert.ok(!/Download to order/.test(render(tpl, true)),
     `${name}: the QR still tells the guest to download in order to order`);
-  assert.ok(/Download to order/.test(off),
+  assert.ok(/Download to order/.test(render(tpl, false)),
     `${name}: a non-ordering menu lost the app's ordering pitch, which is still true there`);
 }
 

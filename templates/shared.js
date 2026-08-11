@@ -186,27 +186,6 @@ export function renderAppQr(orderingEnabled = false) {
   );
 }
 
-/**
- * The mount point for the cart control in the template's own header
- * (dialtone#1210).
- *
- * Empty when ordering is off, like every other hook here — a tenant without
- * ordering must not pay a byte for it.
- *
- * The template decides WHERE the control sits; `apps/order` renders WHAT it is,
- * into this element. That split is the same one the rest of this file keeps:
- * the menu is per-template and server-rendered, the cart is one
- * template-agnostic surface. Three templates each rendering their own button
- * would be three implementations of one control, and the count it displays
- * lives in the bundle's state regardless.
- *
- * A page with no slot — one cached before this shipped, or a template added
- * later that forgets it — keeps the floating cart bar and loses nothing.
- */
-export function renderCartSlot(orderingEnabled) {
-  if (!orderingEnabled) return '';
-  return '<div class="dt-cart-slot" data-dt-cart-slot></div>';
-}
 // ---- the ctx normalizer (the seam) ----
 // Verbatim from worker.js buildMenuSuccessResponse lines 430-451: everything
 // computed BEFORE the old cards early-return. Every template render(ctx)
@@ -558,17 +537,4 @@ export function renderMenuDataIsland(ctx) {
 export const ORDER_STYLES = `    .dt-order-add{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:600;letter-spacing:.01em;padding:.5rem 1rem;border-radius:999px;background:var(--brand,#111);color:var(--brand-ink,#fff);margin-top:.6rem;}
     .dt-order-add:hover{filter:brightness(1.08);}
     .dt-order-add:focus-visible{outline:2px solid currentColor;outline-offset:2px;}
-    .dt-order-note{margin:.6rem 0 0;font-size:.8rem;opacity:.7;}
-    /* The header cart's mount point (dialtone#1210). The control itself is
-       rendered and styled by the cart bundle, because it is one surface across
-       all three templates. Zero-width until the bundle fills it, so a page
-       whose script has not loaded yet shows no gap.
-       Deliberately does NOT set flex sizing. This block is injected AFTER the
-       template's own CSS, and media queries add no specificity — so a flex
-       shorthand here silently outranks the template's responsive rules for the
-       slot, on the one property that is purely about placement. It cost a wrong
-       render to find: cards' 560px rule could not move the slot onto its own
-       line because a flex:0 0 auto here was quietly winning.
-       (Backticks would terminate this template literal — see the note in
-       cards.js. Do not quote CSS property names in here.) */
-    .dt-cart-slot{display:flex;align-items:center;}`;
+    .dt-order-note{margin:.6rem 0 0;font-size:.8rem;opacity:.7;}`;

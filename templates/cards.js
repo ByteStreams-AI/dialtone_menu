@@ -6,7 +6,6 @@ import {
   safeLogoUrl, isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay,
   orderItemAttrs,
   renderOrderButton,
-  renderCartSlot,
   renderMenuDataIsland,
   renderOrderScript,
   ORDER_STYLES,
@@ -46,10 +45,7 @@ const MENU_CARDS_CSS = `
        leftover space evenly and centre it in the gap. */
     .brandbar__group{display:flex;flex-direction:column;gap:.75rem;flex:0 1 auto;min-width:0;}
     .home-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:700;font-size:.9rem;padding:.55rem 1.1rem;border-radius:999px;border:1px solid var(--gold);color:var(--gold);white-space:nowrap;flex:0 0 auto;}
-    /* Grows so the cart can be pushed to its right edge — the identity used to
-       be shrink-to-fit, which would have parked the cart against the tagline. */
-    .brandbar__identity{display:flex;align-items:center;gap:.9rem;min-width:0;flex:1 1 auto;}
-    .brandbar__identity .dt-cart-slot{margin-left:auto;padding-left:1rem;}
+    .brandbar__identity{display:flex;align-items:center;gap:.9rem;min-width:0;}
     .controls{display:flex;gap:.6rem;}
     /* Definite basis, not a percentage: the group is shrink-to-fit now, so a
        % basis has nothing to resolve against and collapses to the text width. */
@@ -211,7 +207,6 @@ function renderCardsMenuBody(ctx) {
     '          <div class="brandbar__identity">',
     `            ${brandMark}`,
     ctx.tagline ? `            <p class="tagline">${escapeHtml(ctx.tagline)}</p>` : '',
-    `            ${renderCartSlot(ctx.orderingEnabled)}`,
     '          </div>',
     '          <div class="controls">',
     ctx.site.mode === 'home_and_menu' && ctx.homeUrl
