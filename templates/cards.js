@@ -102,6 +102,18 @@ const MENU_CARDS_CSS = `
          eat a phone-width row and squeeze Search to nothing. */
       .select-wrap{flex:1 1 0;}
       .search{flex:1 1 0;}
+      /* The cart takes its own line rather than a share of this one. Measured
+         at 375px: a fourth control here clips "Categories" to "Catego" and
+         "Search" to "Sear" — the two controls that were already splitting the
+         row evenly because it was tight with three. Wrapping costs a row of
+         header height and keeps all four legible, which on the one surface
+         that has to say "you can order here" is the right trade. */
+      .controls{flex-wrap:wrap;}
+      /* A 100% BASIS, not margin-left:auto. The siblings are flex:1 1 0, so
+         they shrink rather than push anything to a new line — flex-wrap alone
+         changed nothing and simply squeezed "Categories" down to "Cat". Only a
+         full-width basis forces the break. */
+      .dt-cart-slot{flex:1 1 100%;justify-content:flex-end;}
     }`;
 function renderCardsItem(item, ordering) {
   const safe = item && typeof item === 'object' ? item : {};
