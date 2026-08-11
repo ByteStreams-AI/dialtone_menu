@@ -8,6 +8,7 @@ import {
   isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay,
   orderItemAttrs,
   renderOrderButton,
+  renderCartSlot,
   renderMenuDataIsland,
   renderOrderScript,
   ORDER_STYLES,
@@ -205,7 +206,8 @@ function renderLacquerMenuBody(ctx) {
       ? `<a class="home-link" href="${escapeHtml(ctx.homeUrl)}">Home</a>`
       : '';
 
-  const appQrMarkup = renderAppQr();
+  const appQrMarkup = renderAppQr(ctx.orderingEnabled);
+  const cartSlotMarkup = renderCartSlot(ctx.orderingEnabled);
 
   // Hero band — brand mark + tagline + CTA + the app QR, over a lacquer ground
   // (and the operator's hero photo, when set, behind a scrim).
@@ -217,8 +219,11 @@ function renderLacquerMenuBody(ctx) {
     `      ${brandMarkMarkup}`,
     '      <hr class="hero-rule">',
     tagline ? `      <p class="tagline">${escapeHtml(tagline)}</p>` : '',
-    homeCtaMarkup || websiteCtaMarkup
-      ? `      <div class="hero-actions">${homeCtaMarkup}${websiteCtaMarkup}</div>`
+    // The actions row now also carries the cart, so it must render when the
+    // cart alone is present — previously it appeared only alongside a Home or
+    // Website CTA, and a tenant with neither would have had nowhere to put it.
+    homeCtaMarkup || websiteCtaMarkup || cartSlotMarkup
+      ? `      <div class="hero-actions">${homeCtaMarkup}${websiteCtaMarkup}${cartSlotMarkup}</div>`
       : '',
     `      ${appQrMarkup}`,
     '    </div>',

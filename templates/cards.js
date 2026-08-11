@@ -6,6 +6,7 @@ import {
   safeLogoUrl, isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay,
   orderItemAttrs,
   renderOrderButton,
+  renderCartSlot,
   renderMenuDataIsland,
   renderOrderScript,
   ORDER_STYLES,
@@ -101,6 +102,18 @@ const MENU_CARDS_CSS = `
          eat a phone-width row and squeeze Search to nothing. */
       .select-wrap{flex:1 1 0;}
       .search{flex:1 1 0;}
+      /* The cart takes its own line rather than a share of this one. Measured
+         at 375px: a fourth control here clips "Categories" to "Catego" and
+         "Search" to "Sear" — the two controls that were already splitting the
+         row evenly because it was tight with three. Wrapping costs a row of
+         header height and keeps all four legible, which on the one surface
+         that has to say "you can order here" is the right trade. */
+      .controls{flex-wrap:wrap;}
+      /* A 100% BASIS, not margin-left:auto. The siblings are flex:1 1 0, so
+         they shrink rather than push anything to a new line — flex-wrap alone
+         changed nothing and simply squeezed "Categories" down to "Cat". Only a
+         full-width basis forces the break. */
+      .dt-cart-slot{flex:1 1 100%;justify-content:flex-end;}
     }`;
 function renderCardsItem(item, ordering) {
   const safe = item && typeof item === 'object' ? item : {};
@@ -204,9 +217,10 @@ function renderCardsMenuBody(ctx) {
       : '',
     '            <div class="select-wrap"><select id="catSelect" aria-label="Jump to category"><option value="" disabled selected>Categories</option>' + options + '</select></div>',
     '            <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg><input id="q" type="search" placeholder="Search" aria-label="Search the menu"></div>',
+    `            ${renderCartSlot(ctx.orderingEnabled)}`,
     '          </div>',
     '        </div>',
-    `        ${renderAppQr()}`,
+    `        ${renderAppQr(ctx.orderingEnabled)}`,
     '      </div>'
   ].filter(Boolean).join('\n');
 

@@ -195,4 +195,27 @@ for (const [name, tpl] of TEMPLATES) {
   assert.equal(ink('#FDE047'), '#111', 'a pale brand takes dark ink');
 }
 
+// 8. The header cart's mount point, and the QR copy that used to contradict it
+//    (dialtone#1210 / dialtone#1215).
+//
+//    Both are per-template placements of one shared decision, which is exactly
+//    the drift this file exists to catch: a fourth template that forgets the
+//    slot ships a menu with no visible way to order, and it would look fine.
+for (const [name, tpl] of TEMPLATES) {
+  const on = render(tpl, true);
+  const off = render(tpl, false);
+
+  assert.ok(/data-dt-cart-slot/.test(on), `${name}: no cart slot in the header`);
+  assert.equal((on.match(/data-dt-cart-slot/g) || []).length, 1,
+    `${name}: more than one cart slot — the control would mount twice`);
+  // Covered by assertion 1 as well, but stated here so a failure names the
+  // cause rather than pointing at a broad "ordering markup leaked" match.
+  assert.ok(!/data-dt-cart-slot/.test(off), `${name}: cart slot shipped to a non-ordering menu`);
+
+  assert.ok(!/Download to order/.test(on),
+    `${name}: the QR still tells the guest to download in order to order`);
+  assert.ok(/Download to order/.test(off),
+    `${name}: a non-ordering menu lost the app's ordering pitch, which is still true there`);
+}
+
 console.log('order hooks tests passed');
