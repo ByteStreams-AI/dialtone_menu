@@ -6,6 +6,7 @@ import {
   safeLogoUrl, isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay,
   orderItemAttrs,
   renderOrderButton,
+  renderCartSlot,
   renderMenuDataIsland,
   renderOrderScript,
   ORDER_STYLES,
@@ -204,9 +205,10 @@ function renderCardsMenuBody(ctx) {
       : '',
     '            <div class="select-wrap"><select id="catSelect" aria-label="Jump to category"><option value="" disabled selected>Categories</option>' + options + '</select></div>',
     '            <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg><input id="q" type="search" placeholder="Search" aria-label="Search the menu"></div>',
+    `            ${renderCartSlot(ctx.orderingEnabled)}`,
     '          </div>',
     '        </div>',
-    `        ${renderAppQr()}`,
+    `        ${renderAppQr(ctx.orderingEnabled)}`,
     '      </div>'
   ].filter(Boolean).join('\n');
 
