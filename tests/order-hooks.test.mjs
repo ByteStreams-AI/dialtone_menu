@@ -253,4 +253,30 @@ for (const [name, tpl] of TEMPLATES) {
   );
   assert.ok(!('delivery' in legacyJson), 'a pre-0192 payload must degrade to pickup-only');
 }
+
+
+// 10. Ordering needs an environment that can SERVE it (dialtone#1221).
+//
+//     Production renders whatever staging's operators have switched on (#979)
+//     against a Worker with no ORDER_APP binding, so the page advertised Add
+//     buttons, the data island and "Download the app." over a bundle that 503s.
+//     A page must not promise what it cannot do.
+for (const [name, tpl] of TEMPLATES) {
+  const ctx = buildMenuCtx(payload(true), 'suis-sushi', { orderAppBound: false });
+  const html = tpl.render(ctx);
+
+  assert.ok(!/dt-order|dt-menu-data|data-dt-item|_order\//.test(html),
+    `${name}: ordering markup shipped into an environment that cannot serve it`);
+  // The QR reverts too, and that is CORRECT rather than collateral: on a page
+  // that genuinely cannot take an order, "Download to order" is true again.
+  assert.ok(/Download to order/.test(html),
+    `${name}: the app pitch should revert where the page cannot take orders`);
+
+  // Unbound is the ONLY thing being tested — an omitted option must behave
+  // exactly as before, or this guard would silently disable ordering everywhere.
+  const bound = tpl.render(buildMenuCtx(payload(true), 'suis-sushi', {}));
+  assert.ok(/data-dt-add/.test(bound), `${name}: omitting the option must leave ordering ON`);
+  const explicit = tpl.render(buildMenuCtx(payload(true), 'suis-sushi', { orderAppBound: true }));
+  assert.ok(/data-dt-add/.test(explicit), `${name}: a bound environment still orders`);
+}
 console.log('order hooks tests passed');

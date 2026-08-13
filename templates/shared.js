@@ -365,7 +365,24 @@ export function buildMenuCtx(payload, slug, options = {}) {
     // path); templates only render them.
     // dialtone#1182 — whether this menu takes orders. The operator toggle,
     // already resolved server-side; the templates only decide how to render it.
-    orderingEnabled: Boolean(restaurant.ordering_enabled),
+    // Ordering needs BOTH the operator's switch and an environment that can
+    // actually serve the cart (dialtone#1221). `orderAppBound` is false where the
+    // menu Worker has no ORDER_APP binding — production today, deliberately: the
+    // binding names a Worker that must already exist, and the order app has never
+    // been deployed there.
+    //
+    // Without this the page renders Add buttons, the data island, the cart script
+    // tag and "Download the app." over a bundle that 503s. The guest taps Add and
+    // nothing happens. A page must not advertise what it cannot serve, and the
+    // one effective flag flows to every consumer — including renderAppQr, which
+    // correctly reverts to "Download to order." because on such a page that is
+    // once again the truth.
+    //
+    // The default is TRUE when the caller says nothing, so the templates and
+    // every existing test behave exactly as before; only the Worker, which knows
+    // its own bindings, can turn it off.
+    orderingEnabled:
+      Boolean(restaurant.ordering_enabled) && options.orderAppBound !== false,
     // dialtone#1182 Phase 2d — the tenant the checkout submits against. Anon by
     // slug since 0072 (get_restaurant_branding_by_slug), and never trusted as an
     // authorisation: create_web_order re-prices through _price_order_items,
