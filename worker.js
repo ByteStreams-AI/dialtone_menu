@@ -438,8 +438,30 @@ function buildMenuSuccessResponse(payload, slug, url, surfaceHint = 'auto', env 
   const probe = buildMenuCtx(payload, slug, { storageBaseUrl: env.PUBLIC_MENU_SUPABASE_URL });
   const surface = surfaceHint === 'menu' ? 'menu' : servesHomeAtRoot(probe) ? 'home' : 'menu';
 
+  // LOUD, not silent (dialtone#1221). A guard that quietly turns a paid feature
+  // off is the same failure shape it exists to prevent: the realistic bad day is
+  // someone deploying the order Worker to production, mis-naming the binding,
+  // and ordering staying dark with a green deploy and nothing to look at.
+  if (payload && payload.restaurant && payload.restaurant.ordering_enabled && !env.ORDER_APP) {
+    console.log(
+      `[menu] ordering suppressed for ${slug}: the operator has it ON but this environment has no ORDER_APP binding`
+    );
+  }
+
   const ctx = buildMenuCtx(payload, slug, {
     storageBaseUrl: env.PUBLIC_MENU_SUPABASE_URL,
+    // Can this environment actually serve the cart? (dialtone#1221)
+    //
+    // A tenant's ordering switch lives in the database, which production menus
+    // read from the STAGING project (#979) — so prod renders whatever staging's
+    // operators have switched on, against a Worker that has no ORDER_APP binding
+    // and therefore 503s the bundle. The result is a public page advertising
+    // ordering it cannot do.
+    //
+    // Presence, not health: a bound-but-broken Worker still renders an ordering
+    // page, and probing it would cost a subrequest on every render of a page
+    // that is edge-cached precisely to avoid them.
+    orderAppBound: Boolean(env.ORDER_APP),
     // Per-environment and public by design — see the ctx field's comment.
     turnstileSiteKey: env.TURNSTILE_SITE_KEY,
     // Stripe's PLATFORM publishable key. Public in the same sense: it appears
