@@ -95,6 +95,14 @@ async function routeRequest(request, env, url, ctx) {
     return handleOrderSubmit(request, env);
   }
 
+  if (url.pathname === DELIVERY_QUOTE_PATH) {
+    return handleDeliveryQuote(request, env);
+  }
+
+  if (url.pathname === DELIVERY_COVERAGE_PATH) {
+    return handleDeliveryCoverage(request, env);
+  }
+
   if (url.pathname === ORDER_PAYMENT_PATH) {
     return handleOrderPayment(request, env);
   }
@@ -1173,6 +1181,142 @@ async function handleOrderPayment(request, env) {
   // Verbatim, like its sibling: the function's own vocabulary
   // (`restaurant_not_connected`, `not_payable`, `tip_locked`) is what the
   // client reads, and re-mapping it here would put the wording in two places.
+  const text = await upstream.text();
+  return new Response(text, {
+    status: upstream.status,
+    headers: {
+      ...JSON_HEADERS,
+      'cache-control': 'no-store'
+    }
+  });
+}
+
+const DELIVERY_QUOTE_PATH = '/api/delivery-quote';
+
+/**
+ * Price the delivery for an order the guest has just placed (dialtone#1174).
+ *
+ * The SMS page has called `carrier_quote_for_order` on load since carrier
+ * delivery shipped; the inline cart never loads that page, so without this a web
+ * delivery order is charged no delivery fee AND dispatches no driver — the
+ * post-charge accept keys on a `carrier_deliveries` row that would not exist.
+ *
+ * `web_create_payment_intent` refuses to mint against an unpriced delivery
+ * (dialtone#1230), so a failure here stops the sale rather than quietly charging
+ * for a delivery nobody is paid to make. That is deliberate: an operator sent
+ * the SMS link and is watching; nobody is watching an inline order.
+ *
+ * Scoped by `order_id`, which is the same secret the SMS page uses, and the
+ * pickup address and restaurant phone are resolved server-side so a caller
+ * cannot spoof them. The IP header is not forwarded: this call is idempotent —
+ * repeat calls return the existing quote rather than re-quoting DoorDash — so
+ * there is no per-caller budget to spend.
+ */
+async function handleDeliveryQuote(request, env) {
+  if (request.method !== 'POST') {
+    return jsonNoStore({ error: 'method_not_allowed' }, 405, { allow: 'POST' });
+  }
+
+  const supabaseUrl = normalizeText(env.PUBLIC_MENU_SUPABASE_URL || env.SUPABASE_URL || '', 500);
+  const supabaseAnonKey = normalizeText(
+    env.PUBLIC_MENU_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || env.SUPABASE_KEY || '',
+    2000
+  );
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return jsonNoStore({ error: 'unavailable' }, 503);
+  }
+
+  // One order id. Anything larger is not this request.
+  const body = await request.text();
+  if (body.length > 1024) {
+    return jsonNoStore({ error: 'payload_too_large' }, 413);
+  }
+
+  let upstream;
+  try {
+    upstream = await fetch(`${supabaseUrl}/functions/v1/carrier_quote_for_order`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'apikey': supabaseAnonKey,
+        'authorization': `Bearer ${supabaseAnonKey}`
+      },
+      body
+    });
+  } catch (error) {
+    console.log('Delivery quote network error:', String(error));
+    return jsonNoStore({ error: 'unavailable' }, 502);
+  }
+
+  const text = await upstream.text();
+  return new Response(text, {
+    status: upstream.status,
+    headers: {
+      ...JSON_HEADERS,
+      'cache-control': 'no-store'
+    }
+  });
+}
+
+const DELIVERY_COVERAGE_PATH = '/api/delivery-coverage';
+
+/**
+ * "Can you deliver to me?", asked before the guest builds an order
+ * (dialtone#1174).
+ *
+ * A sibling of `/api/order` for the same first reason: this Worker knows which
+ * Supabase project rendered THIS page, and production serves menus from the
+ * staging app project (#979), so a bundle with build-time credentials would ask
+ * the wrong database.
+ *
+ * The IP header IS forwarded, unlike `/api/order-payment`. This endpoint
+ * geocodes a caller-supplied address on every call — a real outbound request —
+ * so it carries its own per-IP throttle (counted apart from the order quota, so
+ * comparing addresses cannot lock a guest out of ordering). A throttle needs the
+ * address it is throttling.
+ */
+async function handleDeliveryCoverage(request, env) {
+  if (request.method !== 'POST') {
+    return jsonNoStore({ error: 'method_not_allowed' }, 405, { allow: 'POST' });
+  }
+
+  const supabaseUrl = normalizeText(env.PUBLIC_MENU_SUPABASE_URL || env.SUPABASE_URL || '', 500);
+  const supabaseAnonKey = normalizeText(
+    env.PUBLIC_MENU_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || env.SUPABASE_KEY || '',
+    2000
+  );
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return jsonNoStore({ error: 'unavailable' }, 503);
+  }
+
+  // A tenant id and one address. Anything larger is not this request.
+  const body = await request.text();
+  if (body.length > 2048) {
+    return jsonNoStore({ error: 'payload_too_large' }, 413);
+  }
+
+  const clientIp = request.headers.get('cf-connecting-ip');
+
+  let upstream;
+  try {
+    upstream = await fetch(`${supabaseUrl}/functions/v1/web_check_delivery_coverage`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'apikey': supabaseAnonKey,
+        'authorization': `Bearer ${supabaseAnonKey}`,
+        ...(clientIp ? { 'cf-connecting-ip': clientIp } : {})
+      },
+      body
+    });
+  } catch (error) {
+    console.log('Delivery coverage network error:', String(error));
+    return jsonNoStore({ error: 'unavailable' }, 502);
+  }
+
+  // Verbatim: `covered`, `out_of_range`, `delivery_unavailable` and the degraded
+  // reasons are the function's vocabulary, and re-mapping it here would put the
+  // wording in two places.
   const text = await upstream.text();
   return new Response(text, {
     status: upstream.status,

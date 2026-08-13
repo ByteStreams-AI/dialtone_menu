@@ -213,4 +213,44 @@ for (const [name, tpl] of TEMPLATES) {
     `${name}: a non-ordering menu lost the app's ordering pitch, which is still true there`);
 }
 
+
+
+// 9. Delivery config reaches the cart (dialtone#1174).
+//
+//    The cart cannot OFFER delivery without knowing the minimum — every rule
+//    was enforced server-side and invisible until submit. Absent config means
+//    pickup-only, which is why the island omits the key rather than sending a
+//    disabled flag: the default is safe by absence.
+{
+  const withDelivery = {
+    ...payload(true),
+    delivery: { enabled: true, minimum_cents: 2000, radius_miles: 5 },
+  };
+  const rendered = standard.render(buildMenuCtx(withDelivery, 'suis-sushi', {}));
+  const island = rendered.slice(rendered.indexOf('id="dt-menu-data"'));
+  const json = JSON.parse(
+    island.slice(island.indexOf('>') + 1, island.indexOf('</script>'))
+      .replace(/\\u003c/g, '<').replace(/\\u003e/g, '>').replace(/\\u0026/g, '&'),
+  );
+  assert.equal(json.delivery.minimum_cents, 2000, 'the minimum must reach the cart');
+  assert.equal(json.delivery.radius_miles, 5, 'the radius must reach the cart');
+
+  // Not offered → the key is absent entirely, not present-and-false.
+  const off = standard.render(buildMenuCtx({ ...payload(true), delivery: { enabled: false } }, 'suis-sushi', {}));
+  const offIsland = off.slice(off.indexOf('id="dt-menu-data"'));
+  const offJson = JSON.parse(
+    offIsland.slice(offIsland.indexOf('>') + 1, offIsland.indexOf('</script>'))
+      .replace(/\\u003c/g, '<').replace(/\\u003e/g, '>').replace(/\\u0026/g, '&'),
+  );
+  assert.ok(!('delivery' in offJson), 'a non-delivering tenant must not advertise delivery');
+
+  // A database that predates 0192 sends no delivery block at all.
+  const legacy = standard.render(buildMenuCtx(payload(true), 'suis-sushi', {}));
+  const legacyIsland = legacy.slice(legacy.indexOf('id="dt-menu-data"'));
+  const legacyJson = JSON.parse(
+    legacyIsland.slice(legacyIsland.indexOf('>') + 1, legacyIsland.indexOf('</script>'))
+      .replace(/\\u003c/g, '<').replace(/\\u003e/g, '>').replace(/\\u0026/g, '&'),
+  );
+  assert.ok(!('delivery' in legacyJson), 'a pre-0192 payload must degrade to pickup-only');
+}
 console.log('order hooks tests passed');
