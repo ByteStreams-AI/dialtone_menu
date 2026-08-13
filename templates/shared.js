@@ -379,6 +379,22 @@ export function buildMenuCtx(payload, slug, options = {}) {
     // widget — web_create_order is in mock mode in exactly that case, so the
     // two halves agree instead of the form blocking on a challenge that cannot
     // be verified.
+    // dialtone#1174 — what the cart needs to OFFER delivery, from the same
+    // location create_web_order will use (0192 primary_location_id). Absent on a
+    // database that predates 0192, and the cart then simply offers pickup: a
+    // menu that showed a delivery option it could not price would be worse than
+    // one that showed none.
+    delivery: (() => {
+      const d = payload && typeof payload.delivery === 'object' && payload.delivery
+        ? payload.delivery
+        : null;
+      if (!d || !d.enabled) return null;
+      return {
+        enabled: true,
+        minimumCents: normalizeCents(d.minimum_cents) || 0,
+        radiusMiles: Number.isFinite(Number(d.radius_miles)) ? Number(d.radius_miles) : null,
+      };
+    })(),
     turnstileSiteKey: normalizeText(options.turnstileSiteKey, 200),
     stripePublishableKey: normalizeText(options.stripePublishableKey, 200),
     surface: options.surface === 'home' ? 'home' : 'menu',
@@ -505,6 +521,16 @@ export function renderMenuDataIsland(ctx) {
     // predates 0189): the checkout can then say "not configured" instead of
     // posting a blank tenant and reading back a generic rejection.
     ...(ctx.restaurantId ? { restaurant_id: ctx.restaurantId } : {}),
+    // Omitted when the tenant does not deliver, so the cart's default is pickup
+    // by absence rather than by a flag it has to remember to check.
+    ...(ctx.delivery
+      ? {
+          delivery: {
+            minimum_cents: ctx.delivery.minimumCents,
+            radius_miles: ctx.delivery.radiusMiles,
+          },
+        }
+      : {}),
     ...(ctx.turnstileSiteKey ? { turnstile_site_key: ctx.turnstileSiteKey } : {}),
     // Same omit-when-absent rule as the tenant id: with no key the checkout
     // says payment is not set up on this menu, which is true and actionable,
