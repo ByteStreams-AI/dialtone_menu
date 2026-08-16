@@ -49,13 +49,26 @@ PUBLIC_MENU_SUPABASE_URL = "https://mxhyvvgjtqllohpvrwon.supabase.co"
 # markup of every Turnstile-protected page. The matching SECRET key lives on the
 # Supabase Edge Function, which is what verifies the token.
 #
-# DELIBERATELY UNSET until Turnstile is provisioned. With no site key the
-# checkout renders no widget, and `web_create_order` is in mock mode in exactly
-# that case (no TURNSTILE_SECRET_KEY), so the two halves agree rather than the
-# form blocking on a challenge nothing can verify. Set BOTH together, per
-# environment — a site key here without the secret there collects tokens nobody
-# checks, which reads as protection and is not.
-# TURNSTILE_SITE_KEY = "0x4AAA..."
+# Provisioned 2026-08-16 (dialtone#1201).
+#
+# ONE widget serves this block AND [env.preview.vars], which is not the "one per
+# environment" the issue first assumed. A sitekey and secret are a matched pair,
+# and both Workers post their orders to the SAME backend — `PUBLIC_MENU_SUPABASE_URL`
+# above is the staging app project in BOTH environments (dialtone#979). Two
+# widgets would mint tokens the other environment's secret cannot verify, and
+# siteverify would return `invalid-input-response` on every real order.
+#
+# Registering `dialtone.menu` covers every tenant at `<slug>.m.dialtone.menu`:
+# Turnstile applies a hostname to all of its subdomains and rejects wildcards,
+# so this stays multi-tenant with no per-slug work. `localhost` is deliberately
+# NOT registered — local and CI run in mock mode (no secret), so adding it would
+# only let a locally served page mint tokens against the production secret.
+#
+# WHEN #979 LANDS this splits in two, and the prod Worker's key must change in
+# the SAME deploy that sets the prod project's secret — otherwise every order is
+# refused. Set BOTH halves together: a site key here without the secret there
+# collects tokens nobody checks, which reads as protection and is not.
+TURNSTILE_SITE_KEY = "0x4AAAAAAERQOWbRPlMLVDLj"
 
 # Stripe's PLATFORM publishable key, for the menu's inline checkout
 # (dialtone#1182 2e). A var for the same reason as the site key above: a
@@ -292,6 +305,13 @@ PUBLIC_MENU_SUPABASE_URL = "https://mxhyvvgjtqllohpvrwon.supabase.co"
 # The TEST key, because preview reads the staging app project (above). See the
 # top-level [vars] block for what this key does and does not route.
 STRIPE_PUBLISHABLE_KEY = "pk_test_51TUZtORrmddnOdHkrUR2E2FSE00Z4FD0n5is4aGTeIdfB8hdFcg9UcFn33sEJITrKrEkUWR1RuHcBk13LvceCdAb00g41bVj85"
+# The SAME widget as the top-level [vars] block, not a preview-specific one:
+# preview posts its orders to the staging app project above, which holds the one
+# secret that can verify these tokens. Vars do NOT inherit, so it is restated
+# here — omit it and preview renders no widget, sends no token, and every order
+# is refused `challenge_failed` once the secret is set. The preview host is
+# registered on the widget for the same reason.
+TURNSTILE_SITE_KEY = "0x4AAAAAAERQOWbRPlMLVDLj"
 
 [[env.preview.kv_namespaces]]
 binding = "RATE_LIMIT_KV"
