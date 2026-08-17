@@ -110,6 +110,40 @@ TURNSTILE_SITE_KEY = "0x4AAAAAAERQOWbRPlMLVDLj"
 # that cannot work. Use the pk_test_… key against a staging Supabase and the
 # pk_live_… key against production — a mismatch fails at confirm time, not load.
 #
+# ── App entry host: app.dialtone.menu/r/<slug> (dialtone_app#57) ────────────
+#
+# The QR target on tables, receipts and the public menu. App installed -> the OS
+# opens it at that restaurant; not installed -> a branded page with the stores.
+# The guest never types a slug.
+#
+# All four are DELIBERATELY UNSET, and each degrades honestly while it is:
+#
+#   APPLE_TEAM_ID        10 chars, developer.apple.com -> Membership details.
+#                        The association file 404s until this is a valid team
+#                        id. That is on purpose — a file served with a wrong id
+#                        verifies against NOTHING and fails silently: links open
+#                        the browser, no error on the device, nothing in a log.
+#                        A 404 is the honest state and iOS refetches later.
+#
+#   ANDROID_CERT_SHA256  Play Console -> Setup -> App signing -> the **App
+#                        signing key** SHA-256, NOT the upload key. Both are on
+#                        that page and look identical. With Play App Signing it
+#                        is Google's certificate that signs what users install,
+#                        so the upload key fails the same silent way.
+#
+#   APP_STORE_URL /      Omitted rather than dead-linked while a listing does
+#   PLAY_STORE_URL       not exist — a button that goes nowhere is worse than a
+#                        button that is absent.
+#
+# The host also needs a proxied DNS record + a Worker Route, same one-time
+# dashboard work as `*.pay` and `*.m` (see developer/production-architecture.md
+# in the dialtone repo).
+#
+APPLE_TEAM_ID = "L33JGV8X8L"
+# ANDROID_CERT_SHA256 = "AB:CD:…:EF"
+# APP_STORE_URL = "https://apps.apple.com/app/id…"
+# PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.bytestreams.dialtoneapp"
+
 # Vars do NOT inherit into [env.preview], so set it in BOTH blocks. This one is
 # the LIVE key because the block above now reads the production app project —
 # the two must move together, and [env.preview] keeps pk_test_… against staging.
