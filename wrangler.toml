@@ -42,7 +42,28 @@ SUPABASE_URL = "https://hltmzafywzqajjzjpqva.supabase.co"
 # - Friendly `404` page when the slug is unknown/inactive.
 # - `503` when the target Supabase project is missing the RPC function
 #   (`PGRST202` / function-not-found), indicating environment mismatch.
-PUBLIC_MENU_SUPABASE_URL = "https://mxhyvvgjtqllohpvrwon.supabase.co"
+#
+# POINTS AT PRODUCTION as of 2026-08-16 (dialtone#979). It read the STAGING app
+# project for months, which was survivable while these hosts served brochure
+# menus: an operator's branding and layout choices simply had no effect in prod.
+# It stopped being survivable when `<slug>.m.dialtone.menu` became the surface
+# every real tenant is served on. A branded host reading staging would take a
+# real customer's order into the wrong database, priced against the wrong menu,
+# where the prod kitchen never sees it.
+#
+# The pairing rules that follow from this, each of which fails silently if broken:
+#   - PUBLIC_MENU_SUPABASE_ANON_KEY (Worker secret) must be PRODUCTION's anon key.
+#     A staging key against this URL is a 401 on every menu — set them together.
+#   - STRIPE_PUBLISHABLE_KEY below must be the pk_live_… key, because a charge is
+#     minted on the connected account this database names. A pk_test_… key here
+#     fails at confirm time, not at load.
+#   - Turnstile needs no change: one widget serves both projects and its secret
+#     is set on each (dialtone#1201), so moving which database the Worker posts
+#     to cannot break siteverify.
+#
+# [env.preview] still reads STAGING and keeps the pk_test_… key — that is the
+# development loop, and the reason this switch does not cost one.
+PUBLIC_MENU_SUPABASE_URL = "https://klzznfagrtormretqsgb.supabase.co"
 
 # Cloudflare Turnstile SITE key for the ordering checkout (dialtone#1182 2d).
 # A var, not a secret — the site key is public by design and appears in the
@@ -64,10 +85,13 @@ PUBLIC_MENU_SUPABASE_URL = "https://mxhyvvgjtqllohpvrwon.supabase.co"
 # NOT registered — local and CI run in mock mode (no secret), so adding it would
 # only let a locally served page mint tokens against the production secret.
 #
-# WHEN #979 LANDS this splits in two, and the prod Worker's key must change in
-# the SAME deploy that sets the prod project's secret — otherwise every order is
-# refused. Set BOTH halves together: a site key here without the secret there
-# collects tokens nobody checks, which reads as protection and is not.
+# #979 LANDED with this change and required NO Turnstile work, which was the
+# point of provisioning it this way: the secret was set on BOTH Supabase
+# projects, so moving which database this Worker posts to cannot orphan a token.
+# Had the widget been per-environment, this switch would have returned
+# `invalid-input-response` on every order. Keep both projects' secrets in step —
+# a site key here without the secret there collects tokens nobody checks, which
+# reads as protection and is not.
 TURNSTILE_SITE_KEY = "0x4AAAAAAERQOWbRPlMLVDLj"
 
 # Stripe's PLATFORM publishable key, for the menu's inline checkout
@@ -86,8 +110,10 @@ TURNSTILE_SITE_KEY = "0x4AAAAAAERQOWbRPlMLVDLj"
 # that cannot work. Use the pk_test_… key against a staging Supabase and the
 # pk_live_… key against production — a mismatch fails at confirm time, not load.
 #
-# Vars do NOT inherit into [env.preview], so set it in BOTH blocks.
-# STRIPE_PUBLISHABLE_KEY = "pk_test_..."
+# Vars do NOT inherit into [env.preview], so set it in BOTH blocks. This one is
+# the LIVE key because the block above now reads the production app project —
+# the two must move together, and [env.preview] keeps pk_test_… against staging.
+STRIPE_PUBLISHABLE_KEY = "pk_live_51TPSsg2KmwBSXLwCNSiNQO7lGGbawvkZRUVLAg7u3TaVeH7q2lCaEBisbziPwDLqtbVdqNSQLsYiPagvVugkYpVa00z3zmCtOB"
 
 # Optional durable rate limiting storage for /api/contact.
 # If this binding is configured, `worker.js` will prefer KV-backed rate
@@ -354,14 +380,21 @@ required = [
 
 # ── Order app service binding (dialtone#1182 Phase 2b) ──────────────────────
 #
-# PREVIEW ONLY, deliberately. A binding names a Worker that must already exist,
-# so adding one for production before `dialtone-order` has been deployed there
-# would fail every production menu deploy — for a route no customer can reach
-# yet. The production binding lands with the surface that actually serves
-# customers (2c/2e), by which point the Worker exists.
+# The cart is a script INJECTED into the page this Worker already rendered, and
+# it is served through this binding. So an unbound environment cannot render
+# ordering AT ALL — `worker.js` returns a 503 naming the binding, and the page
+# comes back with no cart for every tenant, regardless of `web_ordering_enabled`.
+# That is precisely what `*.m.dialtone.menu` did until now: zero `dt-order`
+# markers on both tenants, while preview served 40 for the same restaurant.
 #
-# `worker.js` handles the unbound case explicitly (503 naming the binding)
-# rather than throwing, so production behaves predictably in the meantime.
+# This was preview-only on the stated grounds that a binding names a Worker that
+# must already exist, and `dialtone-order` had not been deployed to production.
+# It has been since 2026-08-15 ("Deploy order (production): success"), so the
+# reason expired before the comment did.
+[[services]]
+binding = "ORDER_APP"
+service = "dialtone-order"
+
 [[env.preview.services]]
 binding = "ORDER_APP"
 service = "dialtone-order-staging"
