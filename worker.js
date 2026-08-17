@@ -84,6 +84,14 @@ async function routeRequest(request, env, url, ctx) {
   const orderResponse = await routeOrderApp(request, env, url);
   if (orderResponse) return orderResponse;
 
+  // The app entry host owns its whole namespace — no menu, no marketing pages.
+  // Above the branded-host branch for the same reason the order routes are: an
+  // unmatched path there renders menu HTML with a 200, which would answer an
+  // association-file request with a web page and silently fail verification.
+  if (url.hostname.toLowerCase() === APP_HOST) {
+    return routeAppHost(request, env, url);
+  }
+
   // Above the branded-host branch for the same reason as the order app: on
   // `<slug>.m…` every unmatched path renders the menu, so this would answer
   // with menu HTML instead of the window.
@@ -209,6 +217,29 @@ function extractMenuSlug(pathname) {
 // The alternative — a Custom Domain per restaurant — caps at 100 per zone and
 // adds a provisioning step to every onboarding.
 const MENU_HOST_SUFFIX = '.m.dialtone.menu';
+
+// ── App entry host (dialtone_app#57) ────────────────────────────────────────
+//
+// `app.dialtone.menu/r/<slug>` is the QR target on tables, receipts and the
+// public menu. It exists because the app resolves a restaurant by SLUG, and
+// without this the guest is asked to TYPE one — the moment we are most likely
+// to lose them.
+//
+// It serves two audiences with one QR, and the guest never sees a slug:
+//   - app installed  -> the OS matches the universal / app link and opens the
+//     app directly at that restaurant. This page is never rendered.
+//   - not installed  -> this page: the restaurant's branding, and the stores.
+//
+// ONE host rather than per-tenant `<slug>.m.dialtone.menu`, because a universal
+// link needs an association file served AND verified per host. One host is one
+// file forever; per-tenant is a new file, and a new way for onboarding to
+// half-fail, for every restaurant. Nobody reads a URL they scanned off a table,
+// and the page itself is still fully branded.
+const APP_HOST = 'app.dialtone.menu';
+const APP_LINK_PREFIX = '/r/';
+const AASA_PATH = '/.well-known/apple-app-site-association';
+const ASSETLINKS_PATH = '/.well-known/assetlinks.json';
+const APP_BUNDLE_ID = 'com.bytestreams.dialtoneapp';
 
 // NOTE: there is no reserved-subdomain list any more. It existed because
 // restaurant slugs shared the namespace with the app hosts, so `admin` or
@@ -580,6 +611,173 @@ async function handleAssetRequest(request, env) {
 
 function isLookupMethod(method) {
   return method === 'GET' || method === 'HEAD';
+}
+
+// ── App entry host (dialtone_app#57) ────────────────────────────────────────
+
+async function routeAppHost(request, env, url) {
+  if (!isLookupMethod(request.method)) {
+    return jsonNoStore({ error: 'method_not_allowed' }, 405, { allow: 'GET, HEAD' });
+  }
+
+  if (url.pathname === AASA_PATH) return appleAppSiteAssociation(env);
+  if (url.pathname === ASSETLINKS_PATH) return androidAssetLinks(env);
+
+  if (url.pathname.startsWith(APP_LINK_PREFIX)) {
+    const slug = normalizeText(url.pathname.slice(APP_LINK_PREFIX.length), 120).toLowerCase();
+    if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(slug)) {
+      return notFoundResponse();
+    }
+    return handleAppLanding(env, slug);
+  }
+
+  return notFoundResponse();
+}
+
+/**
+ * Apple's association file. 404s until APPLE_TEAM_ID is configured, ON PURPOSE:
+ * a file served with a wrong or placeholder team id verifies against nothing and
+ * fails SILENTLY — no error on device, links simply open the browser instead of
+ * the app. A 404 is the honest state, and iOS re-fetches once it exists.
+ *
+ * Served with `content-type: application/json` and NO `.json` extension, which
+ * is what Apple requires.
+ */
+function appleAppSiteAssociation(env) {
+  const teamId = normalizeText(env.APPLE_TEAM_ID || '', 20);
+  if (!/^[A-Z0-9]{10}$/.test(teamId)) return notFoundResponse();
+
+  return new Response(
+    JSON.stringify({
+      applinks: {
+        details: [{ appID: `${teamId}.${APP_BUNDLE_ID}`, paths: [`${APP_LINK_PREFIX}*`] }]
+      }
+    }),
+    { headers: { ...JSON_HEADERS, 'cache-control': 'public, max-age=3600' } }
+  );
+}
+
+/**
+ * Android's equivalent. The fingerprint MUST be the Play **app signing** key,
+ * not the upload key — with Play App Signing it is Google's certificate that
+ * signs what users actually install. The upload key is the common mistake and
+ * fails the same silent way.
+ */
+function androidAssetLinks(env) {
+  const sha256 = normalizeText(env.ANDROID_CERT_SHA256 || '', 200).toUpperCase();
+  if (!/^(?:[A-F0-9]{2}:){31}[A-F0-9]{2}$/.test(sha256)) return notFoundResponse();
+
+  return new Response(
+    JSON.stringify([
+      {
+        relation: ['delegate_permission/common.handle_all_urls'],
+        target: {
+          namespace: 'android_app',
+          package_name: APP_BUNDLE_ID,
+          sha256_cert_fingerprints: [sha256]
+        }
+      }
+    ]),
+    { headers: { ...JSON_HEADERS, 'cache-control': 'public, max-age=3600' } }
+  );
+}
+
+/**
+ * The landing page — seen ONLY by guests without the app installed. Everyone
+ * else is intercepted by the OS before this runs.
+ *
+ * Branding is best-effort: an unknown slug or an unreachable Supabase still
+ * renders a usable page with the store links, because the guest is standing in
+ * the restaurant holding a phone and the store buttons are the entire point.
+ * Failing closed here would strand them.
+ */
+async function handleAppLanding(env, slug) {
+  const info = await fetchBrandingBySlug(env, slug);
+  if (info === 'not_found') return notFoundResponse();
+
+  const name = escapeHtml(info?.display_name || info?.name || 'this restaurant');
+  const tagline = info?.tagline ? escapeHtml(info.tagline) : '';
+  const primary = /^#[0-9a-f]{6}$/i.test(info?.primary_color || '') ? info.primary_color : '#10b981';
+  const logo = info?.logo_url ? escapeHtml(info.logo_url) : '';
+  const appStore = normalizeText(env.APP_STORE_URL || '', 500);
+  const play = normalizeText(env.PLAY_STORE_URL || '', 500);
+  const menuUrl = `https://${slug}${MENU_HOST_SUFFIX}/menu`;
+
+  // Store buttons are omitted rather than dead-linked when a listing does not
+  // exist yet — a button that goes nowhere is worse than one that is absent.
+  const buttons = [
+    appStore ? `<a class="btn" href="${escapeHtml(appStore)}">Download for iPhone</a>` : '',
+    play ? `<a class="btn" href="${escapeHtml(play)}">Download for Android</a>` : ''
+  ].filter(Boolean).join('');
+
+  const body = `<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>${name} · Order and earn points</title>
+<style>
+  :root { --brand: ${primary}; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         background:#fafaf9; color:#1c1917; display:flex; min-height:100vh;
+         align-items:center; justify-content:center; padding:24px; }
+  .card { width:100%; max-width:380px; text-align:center; }
+  img.logo { width:84px; height:84px; border-radius:18px; object-fit:cover; margin-bottom:20px; }
+  h1 { font-size:24px; margin:0 0 6px; }
+  p.tag { margin:0 0 28px; color:#57534e; font-style:italic; }
+  p.lede { margin:0 0 28px; color:#44403c; line-height:1.5; }
+  .btn { display:block; padding:15px 20px; margin-bottom:12px; border-radius:12px;
+         background:var(--brand); color:#fff; text-decoration:none; font-weight:600; }
+  .alt { display:inline-block; margin-top:12px; color:#57534e; font-size:14px; }
+</style>
+</head><body><div class="card">
+${logo ? `<img class="logo" src="${logo}" alt="">` : ''}
+<h1>${name}</h1>
+${tagline ? `<p class="tag">${tagline}</p>` : ''}
+<p class="lede">Order ahead, skip the line, and earn points every time you visit.</p>
+${buttons}
+<a class="alt" href="${escapeHtml(menuUrl)}">Just view the menu</a>
+</div></body></html>`;
+
+  return new Response(body, {
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': `public, s-maxage=${PUBLIC_MENU_CACHE_SECONDS}`
+    }
+  });
+}
+
+/** Returns the branding row, `null` on any failure, or 'not_found' for a real miss. */
+async function fetchBrandingBySlug(env, slug) {
+  const supabaseUrl = normalizeText(env.PUBLIC_MENU_SUPABASE_URL || env.SUPABASE_URL || '', 500);
+  const anonKey = normalizeText(
+    env.PUBLIC_MENU_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || env.SUPABASE_KEY || '',
+    2000
+  );
+  if (!supabaseUrl || !anonKey) return null;
+
+  try {
+    const res = await fetch(`${supabaseUrl}/rest/v1/rpc/get_restaurant_branding_by_slug`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'apikey': anonKey,
+        'authorization': `Bearer ${anonKey}`
+      },
+      body: JSON.stringify({ p_slug: slug })
+    });
+    if (!res.ok) {
+      console.log('App landing branding RPC failed:', res.status);
+      return null;
+    }
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) return 'not_found';
+    return rows[0];
+  } catch (error) {
+    console.log('App landing branding RPC error:', String(error));
+    return null;
+  }
 }
 
 function notFoundResponse() {
