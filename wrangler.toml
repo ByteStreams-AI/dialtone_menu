@@ -236,6 +236,12 @@ run_worker_first = [
   # code looked correct. Same trap `/menu` hit below.
   "/_order/*",
   "/__order-plumbing",
+  # App entry host `app.dialtone.menu/r/<slug>` (dialtone_app#57). Third time
+  # this trap has been paid for: `/.well-known/*` above was already listed, so
+  # the association file worked on the first deploy while `/r/shortys` returned
+  # the MARKETING 404 page — the Worker was never invoked. Two paths of one
+  # feature, one listed and one not, is the most confusing version of this.
+  "/r/*",
   # `/menu` is the stable menu URL on a branded subdomain (#986 Phase 2). It
   # MUST be listed here: with `not_found_handling = "404-page"`, any path that
   # is neither an asset nor on this list is short-circuited to /404.html
@@ -392,6 +398,7 @@ run_worker_first = [
   "/m/*",
   "/_order/*",
   "/__order-plumbing",
+  "/r/*",
   "/menu",
   "/menu/",
   "/api/*"
