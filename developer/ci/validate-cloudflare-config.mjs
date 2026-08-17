@@ -39,7 +39,7 @@ function validateWrangler(content) {
   requireMatch(content, /^CONTACT_EMAIL\s*=\s*"[^"]+"\s*$/m, 'wrangler.toml: CONTACT_EMAIL is required');
   requireMatch(content, /^SITE_NAME\s*=\s*"[^"]+"\s*$/m, 'wrangler.toml: SITE_NAME is required');
   requireMatch(content, /^binding\s*=\s*"ASSETS"\s*$/m, 'wrangler.toml: assets binding must be ASSETS');
-  requireMatch(content, /run_worker_first\s*=\s*\[[\s\S]*"\/api\/\*"[\s\S]*\]/m, 'wrangler.toml: run_worker_first must include /api/*');
+  validateWorkerFirst(content);
   requireMatch(content, /^\[secrets\]$/m, 'wrangler.toml: missing [secrets] block — required for deploy-time enforcement');
   requireMatch(content, /RESEND_API_KEY/, 'wrangler.toml: RESEND_API_KEY not listed under [secrets]');
   requireMatch(content, /SUPABASE_SERVICE_ROLE_KEY/, 'wrangler.toml: SUPABASE_SERVICE_ROLE_KEY not listed under [secrets]');
@@ -59,6 +59,65 @@ function validateWrangler(content) {
       failures.push('wrangler.toml: SUPABASE_URL is not a valid URL');
     }
   }
+}
+
+/**
+ * Every path the Worker routes must appear in EVERY `run_worker_first` block.
+ *
+ * With `not_found_handling = "404-page"`, a path that is neither a static asset
+ * nor on this list is short-circuited to /404.html **without invoking the
+ * Worker**. The code looks correct, the tests pass, and the live URL serves the
+ * marketing 404 page. It has now cost three separate features — `/menu`
+ * (#986), `/_order/*` (#1182), and `/r/*` (dialtone_app#57), the last of which
+ * shipped with `/.well-known/*` listed and `/r/*` not, so the association file
+ * worked on the first deploy while the page it points at 404'd.
+ *
+ * Worker tests cannot catch this: they call `worker.fetch()` directly, which is
+ * below the layer that does the short-circuiting. A config assertion is the
+ * only place it can be caught before a deploy.
+ *
+ * Checking EVERY block also catches the other half of the family: wrangler
+ * environments do not inherit, so a path listed in production and forgotten in
+ * `[env.preview.assets]` fails only in preview.
+ */
+const WORKER_FIRST_REQUIRED = [
+  '/',
+  '/robots.txt',
+  '/sitemap.xml',
+  '/favicon.ico',
+  '/.well-known/*',
+  '/m/*',
+  '/_order/*',
+  '/r/*',
+  '/menu',
+  '/api/*'
+];
+
+function validateWorkerFirst(content) {
+  const blocks = [...content.matchAll(/run_worker_first\s*=\s*\[([\s\S]*?)\]/g)];
+
+  if (blocks.length === 0) {
+    failures.push('wrangler.toml: no run_worker_first block found');
+    return;
+  }
+  // Production + preview. A missing block means an environment silently loses
+  // every Worker route it should be serving.
+  if (blocks.length < 2) {
+    failures.push(
+      `wrangler.toml: expected a run_worker_first block per environment, found ${blocks.length}`
+    );
+  }
+
+  blocks.forEach((block, index) => {
+    const listed = [...block[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+    const missing = WORKER_FIRST_REQUIRED.filter((p) => !listed.includes(p));
+    if (missing.length > 0) {
+      failures.push(
+        `wrangler.toml: run_worker_first block ${index + 1} is missing ${missing.join(', ')} ` +
+          '— those paths would be short-circuited to /404.html without invoking the Worker'
+      );
+    }
+  });
 }
 
 function validateWorker(content) {
