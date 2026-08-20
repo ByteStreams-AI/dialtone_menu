@@ -17,10 +17,14 @@ compatibility_flags = []
 
 # Contact form destination. The Worker's `/api/contact` handler sends
 # validated submissions via Resend's API; messages are delivered here.
-# `hello@bytestreams.ai` is shared across the ByteStreams/DialTone
-# brands as the single monitored inbox.
+# This is the RECIPIENT only — the sender is still `contact@send.bytestreams.ai`
+# on the shared Resend domain (see the RESEND_API_KEY note below). Changing
+# this does not change how mail is sent.
+# `hello@dialtone.menu` is a Google Workspace mailbox on the DialTone domain,
+# so brand mail lands in the brand's own inbox rather than the shared
+# ByteStreams one.
 [vars]
-CONTACT_EMAIL = "hello@bytestreams.ai"
+CONTACT_EMAIL = "hello@dialtone.menu"
 # Identifies this site in the contact-form email From display name and
 # subject prefix (e.g. `DialTone Contact: <submitter name>`), since
 # both DialTone and ByteStreams share one sending domain on Resend
@@ -171,7 +175,7 @@ preview_id = "be9cdfc34c7344d4966b2b6b55a02389"
 # The value is encrypted at rest by Cloudflare and exposed to the
 # Worker at runtime as `env.RESEND_API_KEY`. Never commit the raw key.
 # If the secret is missing, `/api/contact` returns a user-friendly 503
-# directing submitters to email `hello@bytestreams.ai` manually.
+# directing submitters to email `hello@dialtone.menu` manually.
 
 # Required secret (not stored in this file): SUPABASE_KEY
 # The `/api/contact` handler uses this to insert waitlist submissions into
@@ -359,7 +363,7 @@ name = "dialtone-menu-preview"
 workers_dev = true
 
 [env.preview.vars]
-CONTACT_EMAIL = "hello@bytestreams.ai"
+CONTACT_EMAIL = "hello@dialtone.menu"
 SITE_NAME = "DialToneMenu (preview)"
 SUPABASE_URL = "https://hltmzafywzqajjzjpqva.supabase.co"
 # Same project the production Worker reads today — the public menu is served
