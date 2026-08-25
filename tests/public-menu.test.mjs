@@ -606,7 +606,10 @@ async function runServiceStops() {
       state: 'IL',
       postal_code: '60654',
     };
-    payload.hours = [{ day_of_week: 1, open_time: '11:00', close_time: '21:00', is_closed: false }];
+    // 9:45 PM, not 9:00 — samplePayload's categories carry a "Served 7:00 AM-
+    // 11:00 AM" window, so asserting on a common time would match the category
+    // label instead of the hours table and pass for the wrong reason.
+    payload.hours = [{ day_of_week: 1, open_time: '11:30', close_time: '21:45', is_closed: false }];
     return payload;
   };
 
@@ -632,6 +635,10 @@ async function runServiceStops() {
       `${surface}: nor publish it, where a crawler keeps it`);
     assert.doesNotMatch(truck, /"openingHoursSpecification"/,
       `${surface}: weekly hours have not governed a truck since 0206`);
+    // The RENDERED hours table is a HOME-surface element — the menu page has
+    // never shown operating hours — so it is asserted below rather than here.
+    // Checking it on both surfaces passed for the wrong reason: on /menu the
+    // control matched a category's serving-window label, not the hours.
     assert.match(truck, /id="dt-stop"/, `${surface}: the banner container is rendered`);
     assert.match(truck, /api\/order-window/, `${surface}: and asks the uncached window call for the answer`);
     assert.match(truck, /<section class="dt-stop"[^>]*hidden>/,
@@ -642,6 +649,15 @@ async function runServiceStops() {
     assert.match(truck, /"telephone":"\+15551110000"/, `${surface}: the phone is kept`);
     assert.match(truck, /"@type":"Restaurant"/, `${surface}: the business is still identified`);
   }
+
+  // The rendered hours table, not just the structured one. Two separate
+  // suppressions read the same flag, and asserting only the JSON-LD half let a
+  // mutant that keeps the visible table pass clean.
+  const fixedHome = await serve(withStops(false), 'https://main-street.m.dialtone.menu/');
+  const truckHome = await serve(withStops(true), 'https://main-street.m.dialtone.menu/');
+  assert.match(fixedHome, /9:45 PM/, 'control — a fixed venue renders its weekly hours');
+  assert.doesNotMatch(truckHome, /9:45 PM/,
+    'a truck renders none, or the page states two schedules at once');
 
   // Absent key — a database that predates 0211 — behaves as a fixed venue, so
   // every existing tenant renders exactly as it does today.
