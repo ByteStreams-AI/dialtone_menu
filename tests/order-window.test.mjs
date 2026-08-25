@@ -39,6 +39,24 @@ const WINDOW_ROW = {
   notice_at: '2026-08-07T02:15:00.000Z',
   manual_closure: false,
   closure_message: null,
+  // dialtone#1320 — the stop rides this call, not the 300s-cached menu payload,
+  // so the address a customer drives to and whether ordering is open cannot
+  // disagree at a stop transition.
+  current_stop: null,
+  next_stop: null,
+  uses_stops: false,
+};
+
+/** A stop as `get_order_window_by_slug` returns it (jsonb). */
+const STOP = {
+  label: 'Brewery Lot',
+  address_line1: '900 Brew St',
+  address_line2: '',
+  city: 'Nashville',
+  state: 'TN',
+  postal_code: '37206',
+  starts_at: '2026-08-07T16:00:00.000Z',
+  ends_at: '2026-08-07T21:00:00.000Z',
 };
 
 /** Records what the RPC was asked, and answers with `rows`. */
@@ -190,6 +208,77 @@ try {
     );
     assert.doesNotMatch(res.headers.get('content-type'), /text\/html/,
       'the window route must not fall through to the menu renderer');
+  }
+
+  // ── The service stop (dialtone#1320 P4b) ────────────────────────────────
+
+  // The stop is passed through, field by field like everything else here.
+  {
+    stubRpc([{ ...WINDOW_ROW, uses_stops: true, current_stop: STOP, next_stop: null }]);
+    const res = await worker.fetch(
+      new Request('https://suis-sushi.m.dialtone.menu/api/order-window'),
+      makeEnv(),
+      {},
+    );
+    const body = await res.json();
+    assert.equal(body.uses_stops, true);
+    assert.deepEqual(body.current_stop, STOP);
+    assert.equal(body.next_stop, null);
+  }
+
+  // Coordinates are NOT forwarded. The banner navigates by address, and a
+  // truck's precise position is a staff-safety question (dialtone#1332), not
+  // menu furniture. This is the test that keeps a field-by-field pass-through
+  // from quietly becoming a forward-everything.
+  {
+    stubRpc([
+      {
+        ...WINDOW_ROW,
+        uses_stops: true,
+        current_stop: { ...STOP, latitude: 36.18, longitude: -86.74, tax_rate_bps: 925 },
+      },
+    ]);
+    const res = await worker.fetch(
+      new Request('https://suis-sushi.m.dialtone.menu/api/order-window'),
+      makeEnv(),
+      {},
+    );
+    const body = await res.json();
+    assert.equal(body.current_stop.latitude, undefined,
+      'a stop coordinate must not reach a public endpoint');
+    assert.equal(body.current_stop.longitude, undefined);
+    assert.equal(body.current_stop.tax_rate_bps, undefined,
+      'the tax rate is between the order and the server, not menu furniture');
+    assert.equal(body.current_stop.address_line1, '900 Brew St');
+  }
+
+  // A stop with no address answers nothing, so it is dropped rather than
+  // rendered as a heading over an empty box.
+  {
+    stubRpc([{ ...WINDOW_ROW, uses_stops: true, current_stop: { ...STOP, address_line1: '' } }]);
+    const res = await worker.fetch(
+      new Request('https://suis-sushi.m.dialtone.menu/api/order-window'),
+      makeEnv(),
+      {},
+    );
+    assert.equal((await res.json()).current_stop, null);
+  }
+
+  // A database that predates 0210 returns none of the three. The route must
+  // answer with the honest defaults rather than undefined keys, so the banner
+  // renders nothing instead of throwing.
+  {
+    const legacy = { ...WINDOW_ROW };
+    delete legacy.current_stop;
+    delete legacy.next_stop;
+    delete legacy.uses_stops;
+    stubRpc([legacy]);
+    const res = await worker.fetch(
+      new Request('https://suis-sushi.m.dialtone.menu/api/order-window'),
+      makeEnv(),
+      {},
+    );
+    assert.deepEqual(await res.json(), WINDOW_ROW);
   }
 
   console.log('order window tests passed');

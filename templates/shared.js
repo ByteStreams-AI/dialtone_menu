@@ -199,6 +199,23 @@ const DAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Fri
  * disagree with the real ones. Gallery arrives as storage PATHS and the origin
  * is applied here, so no environment is baked into the payload.
  */
+/**
+ * Is this venue governed by SERVICE STOPS (dialtone#1320)?
+ *
+ * From `0211`, on the cached payload, because it is stable venue configuration
+ * rather than an answer about right now — and the page needs it before any
+ * JavaScript runs, so the JSON-LD block and the no-JS render can be right.
+ *
+ * Defaults FALSE on an older database that does not return the key, so every
+ * existing tenant renders exactly as it does today.
+ */
+function venueUsesStops(payload) {
+  const restaurant = payload && typeof payload.restaurant === 'object' && payload.restaurant
+    ? payload.restaurant
+    : {};
+  return restaurant.uses_stops === true;
+}
+
 function buildSite(payload, options) {
   const site = payload.site && typeof payload.site === 'object' ? payload.site : {};
   const contact = payload.contact && typeof payload.contact === 'object' ? payload.contact : {};
@@ -224,6 +241,13 @@ function buildSite(payload, options) {
     [normalizeText(contact.state, 40), normalizeText(contact.postal_code, 20)].filter(Boolean).join(' ')
   ].filter(Boolean);
 
+  // dialtone#1320 — a truck's registered address is a commissary or a home, and
+  // its weekly hours stopped governing anything when `0206` made stops the
+  // authority. Both are dropped rather than shown alongside the stop banner: a
+  // page that states two different pickup points is worse than one that states
+  // none, which is 0120's lesson on a customer-facing surface.
+  const usesStops = venueUsesStops(payload);
+
   return {
     // Anything unrecognized behaves as menu_only — the mode can only ever turn
     // the home page ON deliberately.
@@ -232,9 +256,11 @@ function buildSite(payload, options) {
     storyBody: normalizeText(site.story_body, 5000),
     gallery,
     socials,
+    // The phone is kept: a truck still answers it, and it is the one contact
+    // detail that does not move.
     phone: normalizeText(contact.phone, 40),
-    address: addressParts.join(', '),
-    hours: hours
+    address: usesStops ? '' : addressParts.join(', '),
+    hours: usesStops ? [] : hours
       .filter((h) => h && Number.isInteger(h.day_of_week))
       .map((h) => ({
         label: DAY_LABELS[h.day_of_week] || '',
@@ -264,7 +290,16 @@ const SCHEMA_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Fr
  */
 function buildRestaurantJsonLd(payload, fields) {
   const contact = payload.contact && typeof payload.contact === 'object' ? payload.contact : {};
-  const hours = Array.isArray(payload.hours) ? payload.hours : [];
+  // dialtone#1320 — a stop-governed venue publishes NEITHER, and this is the
+  // surface where getting it wrong lasts longest: a crawler keeps a
+  // `PostalAddress` and re-serves it in rich results long after the truck has
+  // moved on, and `openingHoursSpecification` built from dead weekly hours
+  // tells a search engine the truck is open when it is somewhere else. There is
+  // no correct structured answer for a venue whose address changes daily, so
+  // the honest emission is none — the name, phone, menu link and socials still
+  // go out, which is what identifies the business.
+  const suppressVenue = venueUsesStops(payload);
+  const hours = suppressVenue || !Array.isArray(payload.hours) ? [] : payload.hours;
 
   const address = {};
   const line1 = normalizeText(contact.address_line1, 200);
@@ -300,7 +335,9 @@ function buildRestaurantJsonLd(payload, fields) {
   if (fields.image) data.image = fields.image;
   const phone = normalizeText(contact.phone, 40);
   if (phone) data.telephone = phone;
-  if (Object.keys(address).length) data.address = { '@type': 'PostalAddress', ...address };
+  if (!suppressVenue && Object.keys(address).length) {
+    data.address = { '@type': 'PostalAddress', ...address };
+  }
   const sameAs = (fields.socials || []).map((s) => s.url).filter(Boolean);
   if (sameAs.length) data.sameAs = sameAs;
   if (openingHours.length) data.openingHoursSpecification = openingHours;
@@ -340,6 +377,7 @@ export function buildMenuCtx(payload, slug, options = {}) {
   // instead would mean importing the registry, which imports this file.
   const menuTemplate = normalizeText(restaurant.menu_template, 20);
 
+  const usesStops = venueUsesStops(payload);
   const site = buildSite(payload, options);
   const canonicalUrl = normalizeText(options.canonicalUrl || '', 400);
   const menuUrl = normalizeText(options.menuUrl || '', 400);
@@ -360,6 +398,9 @@ export function buildMenuCtx(payload, slug, options = {}) {
     pageTitle, pageDescription, fontFamily, fontHref, menuTemplate, slug,
     site,
     jsonLd,
+    // dialtone#1320 — whether this venue moves. Drives the stop banner, and is
+    // why `site.address` and `site.hours` above may be empty.
+    usesStops,
     // Which surface this request resolved to, and the URL that should own it in
     // search results. Both are decided by the worker (it knows the host and the
     // path); templates only render them.
@@ -581,3 +622,191 @@ export const ORDER_STYLES = `    .dt-order-add{appearance:none;border:0;cursor:p
     .dt-order-add:hover{filter:brightness(1.08);}
     .dt-order-add:focus-visible{outline:2px solid currentColor;outline-offset:2px;}
     .dt-order-note{margin:.6rem 0 0;font-size:.8rem;opacity:.7;}`;
+
+// ── Service-stop banner (dialtone#1320 P4b) ─────────────────────────────────
+//
+// A food truck moves. Everything else on this page is written for a venue that
+// does not: `site.address` is the address of the oldest active location — a
+// commissary or a home — and `site.hours` is the weekly `operating_hours` that
+// stopped governing anything when `0206` made stops the authority.
+//
+// So a stop-governed venue gets those two removed (see `buildSite` and
+// `buildRestaurantJsonLd`, which drop them on `uses_stops`) and this banner put
+// back in their place, answering the question the page is actually being asked:
+// WHERE DO I PICK THIS UP, AND WHEN.
+//
+// CLIENT-RENDERED, and that is the whole design.
+//
+// This page is edge-cached for 300s. The address a customer drives to is not a
+// thing to be 5 minutes stale about at a stop transition — that is the exact
+// window where a cached answer sends someone to the lot the truck has just
+// left. `0208` put the stop on `get_order_window_by_slug`, which is `no-store`
+// and is the same call the open/closed state comes from, so the banner and the
+// ordering gate physically cannot disagree.
+//
+// The empty container is server-rendered because `uses_stops` DOES ride the
+// cached payload (`0211`): whether a venue moves is stable config. That split —
+// the fact cached, the answer fresh — is what lets the page suppress the wrong
+// address for a crawler while still fetching the right one for a customer.
+//
+// Degrades to nothing. No JavaScript, a failed fetch, an old database with no
+// stop fields: the container stays `hidden` and the page reads as it does
+// today, minus the address that was wrong anyway.
+export function renderStopBanner(ctx) {
+  if (!ctx || !ctx.usesStops) return '';
+  const slug = normalizeText(ctx.slug, 120);
+  if (!slug) return '';
+  const tz = normalizeText(ctx.timezone, 120);
+
+  // Values are attributes, not interpolated into the script body: the slug and
+  // timezone come from the database, and a value that reached JS source could
+  // end a string literal. `escapeHtml` plus attribute context contains both.
+  const container =
+    `<section class="dt-stop" id="dt-stop" data-dt-slug="${escapeHtml(slug)}"` +
+    `${tz ? ` data-dt-tz="${escapeHtml(tz)}"` : ''} aria-live="polite" hidden></section>`;
+
+  return `${container}
+  <script>
+    (function () {
+      var el = document.getElementById('dt-stop');
+      if (!el || !window.fetch) return;
+      var tz = el.dataset.dtTz || undefined;
+
+      function clock(iso) {
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return '';
+        try {
+          return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: tz }).format(d);
+        } catch (e) {
+          return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(d);
+        }
+      }
+
+      // The restaurant's calendar day, not the visitor's. Someone browsing from
+      // another timezone would otherwise be told "Tomorrow" about a stop that is
+      // this afternoon where the truck is.
+      function dayKey(d) {
+        try {
+          return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(d);
+        } catch (e) {
+          return new Intl.DateTimeFormat('en-CA').format(d);
+        }
+      }
+
+      function dayLabel(iso) {
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return '';
+        var now = new Date();
+        if (dayKey(d) === dayKey(now)) return '';
+        var t = new Date(now.getTime() + 86400000);
+        if (dayKey(d) === dayKey(t)) return 'Tomorrow';
+        try {
+          return new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: tz }).format(d);
+        } catch (e) {
+          return new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(d);
+        }
+      }
+
+      function where(stop) {
+        // The label is the operator's own name for the place — "Brewery Lot" —
+        // and the address is how a map app finds it. Both, when both exist:
+        // a label alone cannot be navigated to and an address alone is not what
+        // anyone says out loud.
+        var line = [stop.address_line1, stop.address_line2].filter(Boolean).join(', ');
+        var town = [stop.city, [stop.state, stop.postal_code].filter(Boolean).join(' ')]
+          .filter(Boolean).join(', ');
+        return { label: stop.label || '', address: [line, town].filter(Boolean).join(', ') };
+      }
+
+      function put(heading, stop, when) {
+        var w = where(stop);
+        el.textContent = '';
+        var h = document.createElement('p');
+        h.className = 'dt-stop-heading';
+        h.textContent = heading;
+        el.appendChild(h);
+        if (w.label) {
+          var l = document.createElement('p');
+          l.className = 'dt-stop-place';
+          l.textContent = w.label;
+          el.appendChild(l);
+        }
+        if (w.address) {
+          // A link, not text. On a phone this is the difference between the
+          // banner telling someone where the truck is and getting them there.
+          var a = document.createElement('a');
+          a.className = 'dt-stop-address';
+          a.href = 'https://maps.google.com/?q=' + encodeURIComponent(w.address);
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.textContent = w.address;
+          el.appendChild(a);
+        }
+        if (when) {
+          var t = document.createElement('p');
+          t.className = 'dt-stop-when';
+          t.textContent = when;
+          el.appendChild(t);
+        }
+        el.hidden = false;
+      }
+
+      // An absence, not an announcement. Same words, deliberately quieter paint
+      // than a real stop: a filled brand bar saying "not posted" shouts about
+      // the one thing the operator has not done.
+      function note(text) {
+        el.textContent = '';
+        el.classList.add('dt-stop-quiet');
+        var p = document.createElement('p');
+        p.className = 'dt-stop-heading';
+        p.textContent = text;
+        el.appendChild(p);
+        el.hidden = false;
+      }
+
+      fetch('/api/order-window?slug=' + encodeURIComponent(el.dataset.dtSlug), {
+        cache: 'no-store',
+        headers: { accept: 'application/json' }
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (w) {
+          if (!w) return;
+          if (w.current_stop) {
+            // The operator's ask, near-verbatim: "Pick Up Location: 123 Main
+            // Street / 11 AM – 5 PM". An earlier draft read "Pick up here until
+            // 2:02 PM" above a "10:02 AM – 2:02 PM" line, saying the closing
+            // time twice in two formats.
+            var span = clock(w.current_stop.starts_at) + ' – ' + clock(w.current_stop.ends_at);
+            put('Pick up location', w.current_stop, span);
+            return;
+          }
+          if (w.next_stop) {
+            var day = dayLabel(w.next_stop.starts_at);
+            var range = clock(w.next_stop.starts_at) + ' – ' + clock(w.next_stop.ends_at);
+            put('Next stop', w.next_stop, (day ? day + ', ' : '') + range);
+            return;
+          }
+          // "Stops" is operator language; a customer is looking for where to
+          // collect. Only reachable when the venue uses stops, so this is never
+          // shown on a restaurant with a real address on the page.
+          note('Pickup location not posted yet');
+        })
+        .catch(function () {});
+    })();
+  </script>`;
+}
+
+/**
+ * Banner styling, one string shared by every template for the same reason
+ * ORDER_STYLES is — the three must not drift on something template-agnostic.
+ * Painted in `--brand` / `--brand-ink`, which all three define, so it reads
+ * correctly on Cards' dark ground as well as the two light ones.
+ */
+export const STOP_STYLES = `    .dt-stop{margin:18px 0 22px;padding:14px 16px;border-radius:14px;background:var(--brand,#111);color:var(--brand-ink,#fff);}
+    .dt-stop.dt-stop-quiet{background:transparent;color:inherit;border:1px dashed currentColor;opacity:.72;}
+    .dt-stop[hidden]{display:none;}
+    .dt-stop p{margin:0;}
+    .dt-stop-heading{font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.82;}
+    .dt-stop-place{margin-top:.25rem !important;font-size:1.15rem;font-weight:700;}
+    .dt-stop-address{display:inline-block;margin-top:.2rem;color:inherit;text-decoration:underline;text-underline-offset:2px;}
+    .dt-stop-when{margin-top:.3rem !important;font-weight:600;opacity:.92;}`;

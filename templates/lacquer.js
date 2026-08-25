@@ -11,6 +11,8 @@ import {
   renderMenuDataIsland,
   renderOrderScript,
   ORDER_STYLES,
+  renderStopBanner,
+  STOP_STYLES,
 } from './shared.js';
 
 const MENU_CSS = `
@@ -265,11 +267,13 @@ function renderLacquerMenuBody(ctx) {
     `    :root { --brand-primary: ${primaryColor}; --brand: ${primaryColor}; --brand-ink: ${readableInkOn(primaryColor)}; --brand-secondary: ${secondaryColor}; --brand-soft: ${hexToRgba(primaryColor, 0.08)}; --font-display: ${fontFamily}; --hero-a: ${hexToRgba(primaryColor, 0.72)}; --hero-b: ${hexToRgba(primaryColor, 0.44)}; --hero-c: ${hexToRgba(primaryColor, 0.20)}; --hero-glow: ${hexToRgba(secondaryColor, 0.22)}; }`,
     MENU_CSS,
     ctx.orderingEnabled ? ORDER_STYLES : '',
+    ctx.usesStops ? STOP_STYLES : '',
     '  </style>',
     '</head>',
     '<body>',
     heroMarkup,
     '  <main>',
+    renderStopBanner(ctx),
     `    <section class="categories" data-restaurant-timezone="${escapeHtml(timezone)}">${categoryHtml}</section>`,
     '  </main>',
     footerMarkup,
@@ -477,6 +481,7 @@ function renderLacquerHomeBody(ctx) {
     '    </div>',
     '  </header>',
     '  <main>',
+    renderStopBanner(ctx),
     storyMarkup,
     galleryMarkup,
     hoursMarkup || findUsMarkup ? `  <div class="home-panels">${hoursMarkup}${findUsMarkup}</div>` : '',
