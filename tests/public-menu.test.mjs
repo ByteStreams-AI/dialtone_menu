@@ -576,11 +576,106 @@ async function runDiscoverability() {
   console.log('discoverability (JSON-LD + per-restaurant sitemap) tests passed');
 }
 
+/**
+ * A venue governed by SERVICE STOPS (dialtone#1320 P4b).
+ *
+ * A food truck moves, and every other location signal on this page is written
+ * for a venue that does not: `contact` is the address of the oldest active
+ * location — a commissary or a home — and `hours` is the weekly
+ * `operating_hours` that stopped governing anything when `0206` made stops the
+ * authority.
+ *
+ * The suppression is SERVER-side and the answer is CLIENT-side, and that split
+ * is the design rather than an accident. `uses_stops` rides the 300s-cached
+ * payload because whether a venue moves is stable config; the stop itself rides
+ * the `no-store` window call because the address someone drives to must not be
+ * five minutes stale at a transition.
+ *
+ * The JSON-LD half is the one worth being loudest about: a crawler keeps a
+ * `PostalAddress` and re-serves it long after the truck has moved on.
+ */
+async function runServiceStops() {
+  const withStops = (on) => {
+    const payload = samplePayload();
+    payload.restaurant.uses_stops = on;
+    payload.site = { mode: 'home_and_menu', story_headline: '', story_body: '', gallery: [] };
+    payload.contact = {
+      phone: '+15551110000',
+      address_line1: '12 Commissary Rd',
+      city: 'Chicago',
+      state: 'IL',
+      postal_code: '60654',
+    };
+    // 9:45 PM, not 9:00 — samplePayload's categories carry a "Served 7:00 AM-
+    // 11:00 AM" window, so asserting on a common time would match the category
+    // label instead of the hours table and pass for the wrong reason.
+    payload.hours = [{ day_of_week: 1, open_time: '11:30', close_time: '21:45', is_closed: false }];
+    return payload;
+  };
+
+  const serve = async (payload, requestUrl) => {
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } });
+    return (await worker.fetch(new Request(requestUrl), makeEnv())).text();
+  };
+
+  for (const surface of ['/menu', '/']) {
+    // A restaurant that does not move is untouched. This is the control: every
+    // assertion below only means something if this one holds.
+    const fixed = await serve(withStops(false), `https://main-street.m.dialtone.menu${surface}`);
+    assert.match(fixed, /12 Commissary Rd/, `${surface}: a fixed venue still shows its address`);
+    assert.match(fixed, /"@type":"PostalAddress"/, `${surface}: and publishes it`);
+    assert.match(fixed, /"openingHoursSpecification"/, `${surface}: and its opening hours`);
+    assert.doesNotMatch(fixed, /id="dt-stop"/, `${surface}: with no stop banner`);
+
+    const truck = await serve(withStops(true), `https://main-street.m.dialtone.menu${surface}`);
+    assert.doesNotMatch(truck, /12 Commissary Rd/,
+      `${surface}: a truck must not show its registered address as a pickup point`);
+    assert.doesNotMatch(truck, /"@type":"PostalAddress"/,
+      `${surface}: nor publish it, where a crawler keeps it`);
+    assert.doesNotMatch(truck, /"openingHoursSpecification"/,
+      `${surface}: weekly hours have not governed a truck since 0206`);
+    // The RENDERED hours table is a HOME-surface element — the menu page has
+    // never shown operating hours — so it is asserted below rather than here.
+    // Checking it on both surfaces passed for the wrong reason: on /menu the
+    // control matched a category's serving-window label, not the hours.
+    assert.match(truck, /id="dt-stop"/, `${surface}: the banner container is rendered`);
+    assert.match(truck, /api\/order-window/, `${surface}: and asks the uncached window call for the answer`);
+    assert.match(truck, /<section class="dt-stop"[^>]*hidden>/,
+      `${surface}: starting hidden, so no-JS degrades to nothing rather than an empty box`);
+
+    // The phone survives. It is the one contact detail that does not move, and
+    // dropping it would leave a truck with no way to be reached at all.
+    assert.match(truck, /"telephone":"\+15551110000"/, `${surface}: the phone is kept`);
+    assert.match(truck, /"@type":"Restaurant"/, `${surface}: the business is still identified`);
+  }
+
+  // The rendered hours table, not just the structured one. Two separate
+  // suppressions read the same flag, and asserting only the JSON-LD half let a
+  // mutant that keeps the visible table pass clean.
+  const fixedHome = await serve(withStops(false), 'https://main-street.m.dialtone.menu/');
+  const truckHome = await serve(withStops(true), 'https://main-street.m.dialtone.menu/');
+  assert.match(fixedHome, /9:45 PM/, 'control — a fixed venue renders its weekly hours');
+  assert.doesNotMatch(truckHome, /9:45 PM/,
+    'a truck renders none, or the page states two schedules at once');
+
+  // Absent key — a database that predates 0211 — behaves as a fixed venue, so
+  // every existing tenant renders exactly as it does today.
+  const legacy = withStops(false);
+  delete legacy.restaurant.uses_stops;
+  const rendered = await serve(legacy, 'https://main-street.m.dialtone.menu/menu');
+  assert.match(rendered, /12 Commissary Rd/, 'an older payload renders unchanged');
+  assert.doesNotMatch(rendered, /id="dt-stop"/, 'and grows no banner');
+
+  console.log('service stop tests passed');
+}
+
 run()
   .then(runHostRouting)
   .then(runTemplateSelection)
   .then(runSiteSurfaces)
   .then(runDiscoverability)
+  .then(runServiceStops)
   .catch((error) => {
     console.error(error);
     process.exitCode = 1;

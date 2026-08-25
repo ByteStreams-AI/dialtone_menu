@@ -9,6 +9,8 @@ import {
   renderMenuDataIsland,
   renderOrderScript,
   ORDER_STYLES,
+  renderStopBanner,
+  STOP_STYLES,
 } from './shared.js';
 
 const MENU_CARDS_CSS = `
@@ -248,6 +250,7 @@ function renderCardsMenuBody(ctx) {
     `    :root { --primary: ${ctx.primaryColor}; --brand: ${ctx.primaryColor}; --brand-ink: ${readableInkOn(ctx.primaryColor)}; --gold: ${ctx.secondaryColor}; --font-display: ${ctx.fontFamily}; --bg:#121110; --bar:rgba(18,17,16,.92); --card:#1c1a18; --ink:#f4efe8; --muted:#a49a8f; --line:rgba(255,255,255,.09); --ph-a:${hexToRgba(ctx.secondaryColor, 0.16)}; --ph-b:${hexToRgba(ctx.primaryColor, 0.55)}; }`,
     MENU_CARDS_CSS,
     ctx.orderingEnabled ? ORDER_STYLES : '',
+    ctx.usesStops ? STOP_STYLES : '',
     '  </style>',
     '</head>',
     '<body>',
@@ -256,6 +259,7 @@ function renderCardsMenuBody(ctx) {
     '    <div class="content">',
     brandbarMarkup,
     '      <main>',
+    renderStopBanner(ctx),
     `        ${sections || '<p class="empty" style="display:block">No menu items are currently available.</p>'}`,
     '        <p class="empty" id="empty">No items match your search.</p>',
     '      </main>',
@@ -410,6 +414,7 @@ function renderCardsHomeBody(ctx) {
     `    <a class="menu-cta" href="${escapeHtml(menuUrl || '/menu')}">View the menu</a>`,
     '  </div>',
     '  <main>',
+    renderStopBanner(ctx),
     storyMarkup,
     galleryMarkup,
     hoursMarkup || findUsMarkup ? `  <div class="panels">${hoursMarkup}${findUsMarkup}</div>` : '',

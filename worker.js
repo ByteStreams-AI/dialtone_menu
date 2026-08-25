@@ -1193,6 +1193,29 @@ async function routeOrderApp(request, env, url) {
 // before close, which is the entire point of the issue.
 const ORDER_WINDOW_PATH = '/api/order-window';
 
+/**
+ * One service stop, reduced to what a customer needs to find it (dialtone#1320).
+ *
+ * Returns null for anything that is not an object OR that carries no address
+ * line — a stop with no address cannot answer the question the banner exists to
+ * answer, and rendering a heading over an empty box is worse than rendering
+ * nothing.
+ */
+function normalizeStop(value) {
+  if (!value || typeof value !== 'object') return null;
+  const stop = {
+    label: normalizeText(value.label, 120),
+    address_line1: normalizeText(value.address_line1, 200),
+    address_line2: normalizeText(value.address_line2, 200),
+    city: normalizeText(value.city, 120),
+    state: normalizeText(value.state, 40),
+    postal_code: normalizeText(value.postal_code, 20),
+    starts_at: typeof value.starts_at === 'string' ? value.starts_at : null,
+    ends_at: typeof value.ends_at === 'string' ? value.ends_at : null
+  };
+  return stop.address_line1 ? stop : null;
+}
+
 async function handleOrderWindow(request, env, url) {
   if (!isLookupMethod(request.method)) {
     return jsonNoStore({ error: 'method_not_allowed' }, 405, { allow: 'GET, HEAD' });
@@ -1263,7 +1286,25 @@ async function handleOrderWindow(request, env, url) {
     accepting_orders: Boolean(row.accepting_orders),
     notice_at: row.notice_at ?? null,
     manual_closure: Boolean(row.manual_closure),
-    closure_message: row.closure_message ?? null
+    closure_message: row.closure_message ?? null,
+    // dialtone#1320 — where the food is, on the SAME uncached call as whether
+    // it is being sold. That is the point of putting the stop here rather than
+    // in the 300s-cached menu payload: at a stop transition the two cannot
+    // disagree, so the page can never send someone to the lot the truck has
+    // just left while ordering already reflects the new one.
+    //
+    // Normalised rather than forwarded, like everything else here: this is a
+    // public endpoint and the RPC returns the stop as jsonb, so an operator
+    // field added later reaches customers only when someone decides it should.
+    // Coordinates are deliberately NOT among them — the banner navigates by
+    // address, and a truck's precise position is a staff-safety question
+    // (dialtone#1332), not menu furniture.
+    current_stop: normalizeStop(row.current_stop),
+    next_stop: normalizeStop(row.next_stop),
+    // Whether the venue is governed by stops AT ALL — true even between stops
+    // and under a manual closure, when both of the above are null. Absent on a
+    // database that predates 0210, and the banner then renders nothing.
+    uses_stops: row.uses_stops === true
   }, 200);
 }
 

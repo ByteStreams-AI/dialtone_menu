@@ -20,6 +20,8 @@ import {
   renderMenuDataIsland,
   renderOrderScript,
   ORDER_STYLES,
+  renderStopBanner,
+  STOP_STYLES,
 } from './shared.js';
 
 function renderMenuCategory(category, timezone, ordering) {
@@ -227,6 +229,7 @@ function renderStandardMenuBody(ctx) {
     '      .category-header { flex-direction: column; }',
     '    }',
     ctx.orderingEnabled ? ORDER_STYLES : '',
+    ctx.usesStops ? STOP_STYLES : '',
     '  </style>',
     '</head>',
     '<body>',
@@ -235,6 +238,7 @@ function renderStandardMenuBody(ctx) {
     `      <div class="brand-block">${logoMarkup}${tagline ? `<p class="tagline">${escapeHtml(tagline)}</p>` : ''}</div>`,
     `      <div class="header-aside">${homeCtaMarkup}${websiteCtaMarkup}${renderAppQr(ctx.orderingEnabled)}</div>`,
     '    </header>',
+    renderStopBanner(ctx),
     `    <section class="categories" data-restaurant-timezone="${escapeHtml(timezone)}">${categoryHtml}</section>`,
     '  </main>',
     '  <script>',
@@ -430,6 +434,7 @@ function renderStandardHomeBody(ctx) {
     ctx.heroImageUrl
       ? `    <div class="hero" style="background-image: url('${escapeHtml(ctx.heroImageUrl)}')"></div>`
       : '',
+    renderStopBanner(ctx),
     storyMarkup,
     galleryMarkup,
     hoursMarkup || contactMarkup ? `    <div class="info-grid">${hoursMarkup}${contactMarkup}</div>` : '',
