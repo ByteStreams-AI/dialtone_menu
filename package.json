@@ -7,13 +7,14 @@
   "scripts": {
     "dev:wrangler": "wrangler dev",
     "validate:deploy": "node developer/ci/validate-cloudflare-config.mjs",
-    "test": "node tests/robots.test.mjs && node tests/public-menu.test.mjs && node tests/order-app.test.mjs && node tests/order-hooks.test.mjs && node tests/order-window.test.mjs && node tests/order-submit.test.mjs && node tests/order-payment.test.mjs && node tests/app-host.test.mjs",
+    "test": "node tests/robots.test.mjs && node tests/public-menu.test.mjs && node tests/order-app.test.mjs && node tests/order-hooks.test.mjs && node tests/order-window.test.mjs && node tests/order-submit.test.mjs && node tests/order-payment.test.mjs && node tests/app-host.test.mjs && node tests/stop-banner.test.mjs",
     "deploy": "wrangler deploy",
     "deploy:preview": "wrangler deploy --env preview",
     "test:robots": "node tests/robots.test.mjs",
     "test:menu": "node tests/public-menu.test.mjs",
     "test:order": "node tests/order-app.test.mjs",
-    "test:hooks": "node tests/order-hooks.test.mjs && node tests/order-window.test.mjs && node tests/order-submit.test.mjs && node tests/order-payment.test.mjs && node tests/app-host.test.mjs"
+    "test:hooks": "node tests/order-hooks.test.mjs && node tests/order-window.test.mjs && node tests/order-submit.test.mjs && node tests/order-payment.test.mjs && node tests/app-host.test.mjs",
+    "test:stop": "node tests/stop-banner.test.mjs"
   },
   "devDependencies": {
     "wrangler": "4.85.0"

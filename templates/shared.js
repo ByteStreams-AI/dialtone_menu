@@ -718,11 +718,15 @@ export function renderStopBanner(ctx) {
         return { label: stop.label || '', address: [line, town].filter(Boolean).join(', ') };
       }
 
-      function put(heading, stop, when) {
+      // Appends one stop block. Split out of put() so the absence branch can
+      // render the NEXT stop under its heading without clearing it (#1427);
+      // extraClass marks that second block so CSS can space it apart.
+      // NOTE: no backticks anywhere in here — this whole script is emitted
+      // from inside a template literal, so one in a COMMENT ends the string.
+      function append(heading, stop, when, extraClass) {
         var w = where(stop);
-        el.textContent = '';
         var h = document.createElement('p');
-        h.className = 'dt-stop-heading';
+        h.className = 'dt-stop-heading' + (extraClass ? ' ' + extraClass : '');
         h.textContent = heading;
         el.appendChild(h);
         if (w.label) {
@@ -748,19 +752,31 @@ export function renderStopBanner(ctx) {
           t.textContent = when;
           el.appendChild(t);
         }
+      }
+
+      function put(heading, stop, when) {
+        el.textContent = '';
+        el.classList.remove('dt-stop-quiet');
+        append(heading, stop, when);
         el.hidden = false;
       }
 
-      // An absence, not an announcement. Same words, deliberately quieter paint
-      // than a real stop: a filled brand bar saying "not posted" shouts about
-      // the one thing the operator has not done.
-      function note(text) {
+      // An absence, not an announcement. Deliberately quieter paint than a
+      // real stop: a filled brand bar saying "no stops" shouts about the one
+      // thing the operator has not done.
+      //
+      // The next stop, when there is one, renders BELOW the absence rather
+      // than instead of it (operator, #1427). "Next stop — Tomorrow, 11 AM"
+      // on its own is ambiguous about right now, and a customer deciding
+      // whether to set off needs the absence stated before the consolation.
+      function note(text, next, when) {
         el.textContent = '';
         el.classList.add('dt-stop-quiet');
         var p = document.createElement('p');
         p.className = 'dt-stop-heading';
         p.textContent = text;
         el.appendChild(p);
+        if (next) append('Next stop', next, when, 'dt-stop-next');
         el.hidden = false;
       }
 
@@ -776,20 +792,24 @@ export function renderStopBanner(ctx) {
             // Street / 11 AM – 5 PM". An earlier draft read "Pick up here until
             // 2:02 PM" above a "10:02 AM – 2:02 PM" line, saying the closing
             // time twice in two formats.
+            //
+            // "Service window" is the trade's own name for that range (#1427),
+            // and it is worth naming here because this is the one the customer
+            // is inside: it says the time is when you can COLLECT, not when the
+            // truck happens to be parked.
             var span = clock(w.current_stop.starts_at) + ' – ' + clock(w.current_stop.ends_at);
-            put('Pick up location', w.current_stop, span);
+            put('Pick up location', w.current_stop, 'Service window ' + span);
             return;
           }
+          // No current stop. The truck is not out, and that is the fact the
+          // customer needs first — with the next one under it when it exists.
+          var nextWhen = '';
           if (w.next_stop) {
             var day = dayLabel(w.next_stop.starts_at);
             var range = clock(w.next_stop.starts_at) + ' – ' + clock(w.next_stop.ends_at);
-            put('Next stop', w.next_stop, (day ? day + ', ' : '') + range);
-            return;
+            nextWhen = (day ? day + ', ' : '') + range;
           }
-          // "Stops" is operator language; a customer is looking for where to
-          // collect. Only reachable when the venue uses stops, so this is never
-          // shown on a restaurant with a real address on the page.
-          note('Pickup location not posted yet');
+          note('There are no stops currently', w.next_stop, nextWhen);
         })
         .catch(function () {});
     })();
@@ -809,4 +829,5 @@ export const STOP_STYLES = `    .dt-stop{margin:18px 0 22px;padding:14px 16px;bo
     .dt-stop-heading{font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.82;}
     .dt-stop-place{margin-top:.25rem !important;font-size:1.15rem;font-weight:700;}
     .dt-stop-address{display:inline-block;margin-top:.2rem;color:inherit;text-decoration:underline;text-underline-offset:2px;}
-    .dt-stop-when{margin-top:.3rem !important;font-weight:600;opacity:.92;}`;
+    .dt-stop-when{margin-top:.3rem !important;font-weight:600;opacity:.92;}
+    .dt-stop-next{margin-top:.85rem !important;}`;
