@@ -48,6 +48,26 @@ There are **two** deploy targets, and only one of them is the live site.
 
 ---
 
+## Pricing page ↔ entitlements (dialtone#862)
+
+`public/pricing.html` and `packages/shared/src/entitlements.ts` in the **dialtone** repo are two halves of one decision. The page is what a restaurant buys; `TIER_FEATURES` is what they actually get. **Change one, change the other in the same session** — drift here is not a docs problem, it is selling something the product does not deliver, or withholding something the tier already includes.
+
+Both failure directions have happened:
+
+- **Sold but not built.** "SSO & advanced role-based admin" sat under Enterprise while `sso_rbac` gated nothing at all — no SAML config, no custom-role model, every RLS policy on the three hardcoded roles. Removed rather than reworded, because plainer wording would only have made an undeliverable claim clearer.
+- **Built but not sold.** The page named web ordering nowhere — zero matches for "web order", "online order", "order online" — while Food Truck had included it since dialtone#1453. A tier was selling a channel the page did not admit to.
+- **Sold at the wrong tier.** "Fire/Hold + Coursing workflows" was listed Enterprise-only, but `hold_fire` had been available at Single Location since it shipped.
+
+Rules that follow:
+
+1. **The tiers are Pilot · Food Truck · Single Location · Multi-Location · Enterprise.** Pilot is an internal trial and deliberately does NOT appear on the page.
+2. **The page is cumulative** — each tier opens with `Everything in <previous>`. A feature therefore needs naming once, at its lowest tier, and it carries. That mirrors `TIER_FEATURES`, whose sets are built by spreading the tier below, so a line added in two places is a bug in one of them.
+3. **"Available as add ons" means a per-restaurant entitlement override**, not a tier. Anything under that heading must exist as a `FeatureKey`, or it is unenforceable — a sales concept with nothing behind it.
+4. **Write for a restaurant owner.** No acronyms they would have to look up. If a plain-English rewrite makes the claim sound thin, that is the claim being thin, not the wording.
+5. **The transaction fee is flat 1.5%** and matches `restaurants.platform_fee_bps` (default 150). It is per-restaurant in the schema, not per-tier, so a tier-specific rate on this page needs a schema conversation first.
+
+Several things the page sells still have **no entitlement key** and are therefore ungated: Branded Website, Branded App, Kiosk, Analytics, Server POS, Expo display, dine-in optionality, order velocity. Adding one is real work in the dialtone repo, not a line here.
+
 ## SEO Standards & Instructions
 
 ### Target Keywords (as of 2026-05-21)
