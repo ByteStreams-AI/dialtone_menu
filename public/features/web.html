@@ -37,47 +37,68 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/site.css" />
   <style>
-    /* Image placeholders. Swap each block for a real image once the
-       screenshot exists — see the HTML comment above each one. */
-    .media-placeholder {
-      display: grid;
-      place-content: center;
-      gap: 10px;
-      text-align: center;
-      min-height: 300px;
-      padding: 32px;
-      background:
-        repeating-linear-gradient(
-          45deg,
-          rgba(6,35,75,0.028) 0 12px,
-          rgba(6,35,75,0.055) 12px 24px
-        );
-      border: 1px dashed rgba(6,35,75,0.22);
-      border-radius: 16px;
-      color: var(--muted);
+    /* Manual slideshow, ported from features/admin.html so the two pages
+       share one interaction. */
+    .manual-slideshow {
+      position: relative;
+      width: 100%;
     }
-    .media-placeholder .ph-label {
-      font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-      font-size: 0.7rem;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--gold);
+
+    .manual-slideshow img {
+      width: 100%;
+      display: block;
+      border-radius: 12px;
     }
-    .media-placeholder .ph-title {
-      font-size: 1.05rem;
+
+    .manual-slideshow .slide-link {
+      display: block;
+      cursor: zoom-in;
+    }
+
+    .manual-slideshow button {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 999px;
+      cursor: pointer;
+      background: rgba(15, 20, 42, 0.72);
+      color: #ffffff;
+      font-size: 1.2rem;
+      font-weight: 700;
+      line-height: 1;
+      z-index: 2;
+    }
+
+    .manual-slideshow button:hover {
+      background: rgba(17, 85, 204, 0.78);
+    }
+
+    .manual-slideshow button:focus-visible {
+      outline: 2px solid #E8A020;
+      outline-offset: 2px;
+    }
+
+    .manual-slideshow .prev {
+      left: 10px;
+    }
+
+    .manual-slideshow .next {
+      right: 10px;
+    }
+
+    .manual-slideshow .counter {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(15, 20, 42, 0.72);
+      color: #ffffff;
+      font-size: 0.8rem;
       font-weight: 600;
-      color: var(--navy);
-    }
-    .media-placeholder .ph-note { font-size: 0.85rem; margin: 0; }
-    .feature-hero-media .media-placeholder { min-height: 340px; }
-    /* The placeholder draws its own border; drop the wrapper's card chrome
-       so the two do not stack into a double frame. */
-    .feature-row-media.is-placeholder,
-    .feature-hero-media.is-placeholder {
-      border: none;
-      box-shadow: none;
-      background: none;
-      overflow: visible;
     }
   </style>
 </head>
@@ -122,21 +143,10 @@
           <li>Nothing to install: it opens in the guest's browser</li>
         </ul>
       </div>
-      <!-- PLACEHOLDER — replace with a screenshot of a branded restaurant home page.
-           Suggested: /images/web-home.jpg, then allow it in public/.assetsignore
-           (that file blocks images/* except an explicit allowlist).
-           Markup to swap in:
-           <div class="feature-hero-media">
-             <a href="/images/web-home.jpg" target="_blank" rel="noopener" title="Click to view full image">
-               <img src="/images/web-home.jpg" alt="A restaurant's branded DialTone ordering website home page" />
-             </a>
-           </div> -->
-      <div class="feature-hero-media is-placeholder">
-        <div class="media-placeholder">
-          <span class="ph-label">Image placeholder</span>
-          <span class="ph-title">Home page</span>
-          <p class="ph-note">Branded hero, hours, and the live menu as a guest first sees it.</p>
-        </div>
+      <div class="feature-hero-media">
+        <a href="/images/ordering-home.jpg" target="_blank" rel="noopener" title="Click to view full image">
+          <img src="/images/ordering-home.jpg" alt="A restaurant's branded DialTone ordering website home page" />
+        </a>
       </div>
     </div>
   </header>
@@ -153,48 +163,15 @@
           <li>Paid orders drop straight onto the kitchen display</li>
         </ul>
       </div>
-      <!-- PLACEHOLDER — replace with a screenshot of the online ordering flow
-           (cart or checkout). Suggested: /images/web-ordering.jpg, then allow it
-           in public/.assetsignore.
-           Markup to swap in:
-           <div class="feature-row-media">
-             <a href="/images/web-ordering.jpg" target="_blank" rel="noopener" title="Click to view full image">
-               <img src="/images/web-ordering.jpg" alt="Online ordering cart and checkout on a DialTone restaurant website" />
-             </a>
-           </div> -->
-      <div class="feature-row-media is-placeholder">
-        <div class="media-placeholder">
-          <span class="ph-label">Image placeholder</span>
-          <span class="ph-title">Online ordering</span>
-          <p class="ph-note">Cart, modifiers, and checkout on the way to a paid ticket.</p>
-        </div>
+      <div class="feature-row-media">
+        <a href="/images/ordering-cart.jpg" target="_blank" rel="noopener" title="Click to view full image">
+          <img src="/images/ordering-cart.jpg" alt="Online ordering cart and checkout on a DialTone restaurant website" />
+        </a>
       </div>
     </div>
   </section>
 
   <section class="feature-row reverse">
-    <div class="container">
-      <div>
-        <h2>Built to be found.</h2>
-        <p>The site publishes structured restaurant data — your name, address, hours, phone, and a link to the menu — in the format search engines read, and it ships its own sitemap. It is a real web presence that can rank, not a page hidden behind an app download.</p>
-        <ul class="feature-list">
-          <li>Structured data for name, address, hours, and phone</li>
-          <li>Its own sitemap, so the menu is crawlable</li>
-          <li>Fast, mobile-first pages served from the edge</li>
-          <li>Links cleanly from your social profiles and Google listing</li>
-        </ul>
-      </div>
-      <div class="feature-row-media is-placeholder">
-        <div class="media-placeholder">
-          <span class="ph-label">Image placeholder</span>
-          <span class="ph-title">Search result</span>
-          <p class="ph-note">How the restaurant surfaces when a guest looks it up.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="feature-row">
     <div class="container">
       <div>
         <h2>Themed to your restaurant.</h2>
@@ -206,11 +183,20 @@
           <li>Category jump and search on longer menus</li>
         </ul>
       </div>
-      <div class="feature-row-media is-placeholder">
-        <div class="media-placeholder">
-          <span class="ph-label">Image placeholder</span>
-          <span class="ph-title">Layout options</span>
-          <p class="ph-note">The same menu in two of the built-in layouts.</p>
+      <div class="feature-row-media">
+        <div class="manual-slideshow" id="layoutSlideshow" aria-label="Ordering website layout options">
+          <a id="layoutSlideLink" class="slide-link" href="/images/ordering-admin1.jpg" target="_blank" rel="noopener noreferrer" aria-label="Open current layout screenshot in a new tab">
+            <img
+              id="layoutSlideImage"
+              src="/images/ordering-admin1.jpg"
+              alt="DialTone ordering website layout option 1"
+              loading="lazy"
+              decoding="async"
+            />
+          </a>
+          <button class="prev" type="button" aria-label="Previous layout screenshot">&#8592;</button>
+          <button class="next" type="button" aria-label="Next layout screenshot">&#8594;</button>
+          <span class="counter" id="layoutSlideCounter">1 / 3</span>
         </div>
       </div>
     </div>
@@ -235,5 +221,71 @@
     </div>
     <div class="footer-copy">© 2026 DialTone · Built in Nashville, TN · Operated by ByteStreams LLC (Tennessee)</div>
   </footer>
+  <script>
+    (() => {
+      function initSlideshow({ slideshowId, imageId, linkId, counterId, slides, altPrefix }) {
+        const slideshow = document.getElementById(slideshowId);
+        const image = document.getElementById(imageId);
+        const link = document.getElementById(linkId);
+        const counter = document.getElementById(counterId);
+        if (!slideshow || !image || !link || !counter || !Array.isArray(slides) || slides.length === 0) {
+          return;
+        }
+
+        const prevButton = slideshow.querySelector('.prev');
+        const nextButton = slideshow.querySelector('.next');
+        if (!prevButton || !nextButton) {
+          return;
+        }
+
+        let currentIndex = 0;
+
+        function renderSlide(index) {
+          image.src = slides[index];
+          link.href = slides[index];
+          image.alt = `${altPrefix} ${index + 1}`;
+          counter.textContent = `${index + 1} / ${slides.length}`;
+        }
+
+        function showPrevious() {
+          currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+          renderSlide(currentIndex);
+        }
+
+        function showNext() {
+          currentIndex = (currentIndex + 1) % slides.length;
+          renderSlide(currentIndex);
+        }
+
+        prevButton.addEventListener('click', showPrevious);
+        nextButton.addEventListener('click', showNext);
+
+        slideshow.addEventListener('keydown', (event) => {
+          if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            showPrevious();
+          } else if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            showNext();
+          }
+        });
+
+        renderSlide(currentIndex);
+      }
+
+      initSlideshow({
+        slideshowId: 'layoutSlideshow',
+        imageId: 'layoutSlideImage',
+        linkId: 'layoutSlideLink',
+        counterId: 'layoutSlideCounter',
+        slides: [
+          '/images/ordering-admin1.jpg',
+          '/images/ordering-admin2.jpg',
+          '/images/ordering-admin3.jpg'
+        ],
+        altPrefix: 'DialTone ordering website layout option'
+      });
+    })();
+  </script>
 </body>
 </html>
