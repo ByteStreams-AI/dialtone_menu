@@ -349,15 +349,117 @@ function buildRestaurantJsonLd(payload, fields) {
   return `<script type="application/ld+json">${json}</script>`;
 }
 
+/**
+ * Wall-clock time in the restaurant's zone, as `HH:MM`, or null (dialtone#862
+ * follow-up).
+ *
+ * `'en-GB'` with `hourCycle: 'h23'` rather than `hour12: false`: the latter
+ * renders midnight as `24` in some implementations, which would sort after
+ * every window and silently close the late-night menu at exactly the hour it
+ * matters.
+ *
+ * An absent zone means UTC, matching `menu_item_within_serving_window`'s
+ * `coalesce(v_tz, 'UTC')`. A zone string `Intl` rejects returns null, and the
+ * caller treats that as "serving" — see below.
+ */
+export function restaurantClockNow(timezone, now = new Date()) {
+  const tz = normalizeText(timezone, 120) || 'UTC';
+  try {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+      timeZone: tz
+    }).formatToParts(now);
+    const hour = parts.find((part) => part.type === 'hour');
+    const minute = parts.find((part) => part.type === 'minute');
+    if (!hour || !minute) return null;
+    return `${hour.value}:${minute.value}`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Is this category being served right now?
+ *
+ * A DELIBERATE RESTATEMENT of `menu_item_within_serving_window` (migration
+ * 0087), which a Worker cannot call. The server is still the authority and
+ * refuses an out-of-window line at order creation; this exists so a guest is
+ * not shown a breakfast item at 8pm, builds a cart, and is refused at
+ * checkout.
+ *
+ * Because it is a copy, it matches the SQL branch for branch — including the
+ * one that reads backwards:
+ *
+ *   start or end unset   -> serving       (no window means always)
+ *   end === start        -> NOT serving   (a zero-length window is never)
+ *   end > start          -> now in [start, end)
+ *   end < start          -> crosses midnight: now >= start OR now < end
+ *
+ * `end === start` is the trap. "Always" is the intuitive reading and it is
+ * the opposite of what the database does, so a guest could add an item the
+ * server would then refuse — the exact failure this function removes.
+ *
+ * FAILS OPEN on an unusable clock. Hiding a restaurant's whole menu because a
+ * timezone string was malformed is far worse than showing an item that cannot
+ * be ordered, which the server refuses anyway.
+ */
+export function withinServingWindow(startTime, endTime, nowClock) {
+  const start = normalizeText(startTime, 5);
+  const end = normalizeText(endTime, 5);
+  if (!start || !end) return true;
+  if (!nowClock) return true;
+  if (end === start) return false;
+  if (end > start) return nowClock >= start && nowClock < end;
+  return nowClock >= start || nowClock < end;
+}
+
 export function buildMenuCtx(payload, slug, options = {}) {
   const restaurant = payload.restaurant && typeof payload.restaurant === 'object' ? payload.restaurant : {};
-  const categories = Array.isArray(payload.categories) ? payload.categories : [];
+  const allCategories = Array.isArray(payload.categories) ? payload.categories : [];
 
   const restaurantName = normalizeText(restaurant.name, 160) || 'Restaurant';
   const displayName = normalizeText(restaurant.display_name, 160);
   const wordmark = displayName || restaurantName;
   const tagline = normalizeText(restaurant.tagline, 240);
   const timezone = normalizeText(restaurant.timezone, 120);
+
+  // Whether this page can actually take an order — the operator's switch AND
+  // an environment bound to serve the cart. Computed here rather than read off
+  // the ctx below because the serving-window filter needs it first.
+  const orderingEnabled = Boolean(restaurant.ordering_enabled) && options.orderAppBound !== false;
+
+  // Time-gated categories are DROPPED outside their window — but ONLY on a menu
+  // that takes orders.
+  //
+  // The two surfaces want opposite things from the same payload. A BROCHURE
+  // menu should show breakfast at 8pm with its "Served 7:00 AM-11:00 AM" label,
+  // because that label is how a browsing customer learns to come back in the
+  // morning; hiding the category would make the label visible only during the
+  // window it describes, which is when it is least needed. An ORDERING menu
+  // should not show it at all, because everything on it is an invitation to
+  // add something, and the server refuses an out-of-window line at order
+  // creation — so the guest would build a cart and be turned away at checkout.
+  //
+  // Evaluated once here rather than in each template: there are three, and
+  // three copies of a clock rule would drift.
+  //
+  // The page is edge-cached, so a boundary can be up to PUBLIC_MENU_CACHE
+  // seconds stale. That is the same trade `get_order_window_by_slug` was split
+  // out to avoid for open/closed, and it is tolerable here because the server
+  // still refuses the order — the worst case is a narrow window in which a
+  // guest can add something, rather than all day.
+  const nowClock = orderingEnabled ? restaurantClockNow(timezone, options.now) : null;
+  const categories = orderingEnabled
+    ? allCategories.filter((category) =>
+        withinServingWindow(
+          category && category.serving_start_time,
+          category && category.serving_end_time,
+          nowClock
+        )
+      )
+    : allCategories;
   const websiteUrl = safeLogoUrl(restaurant.website_url || '');
   const logoUrl = safeLogoUrl(restaurant.logo_url || '');
   const heroImageUrl = safeLogoUrl(restaurant.hero_image_url || '');
@@ -422,8 +524,7 @@ export function buildMenuCtx(payload, slug, options = {}) {
     // The default is TRUE when the caller says nothing, so the templates and
     // every existing test behave exactly as before; only the Worker, which knows
     // its own bindings, can turn it off.
-    orderingEnabled:
-      Boolean(restaurant.ordering_enabled) && options.orderAppBound !== false,
+    orderingEnabled,
     // dialtone#1182 Phase 2d — the tenant the checkout submits against. Anon by
     // slug since 0072 (get_restaurant_branding_by_slug), and never trusted as an
     // authorisation: create_web_order re-prices through _price_order_items,
