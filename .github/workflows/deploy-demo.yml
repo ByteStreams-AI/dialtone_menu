@@ -1,0 +1,126 @@
+name: Deploy demo
+
+# The branded SALES surface — `<slug>.demo.dialtone.menu` (dialtone#1476).
+#
+# WHY THIS EXISTS SEPARATELY FROM deploy-preview.yml.
+# Preview deploys ANY BRANCH to one Worker, which is right for a development
+# loop and wrong for a surface a prospect is looking at: a colleague's WIP push
+# would replace a live demo mid-call. This tracks `main` only.
+#
+# WHY IT EXISTS AT ALL: `[env.demo]` landed in #103 with no deploy path. The
+# Worker can be brought into existence by `wrangler secret put --env demo`, and
+# a Route can be pointed at it, and it will serve NOTHING — because no workflow
+# ever pushed code to it. Config, DNS, cert and route can all be correct while
+# the Worker is empty, which is the exact shape of failure this repo keeps
+# meeting (#1011, #1005).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Last-write-wins on a single Worker; cancel an in-flight run rather than
+# racing two commits onto it.
+concurrency:
+  group: deploy-demo
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy demo
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate Cloudflare and Supabase deploy config
+        run: pnpm run validate:deploy
+
+      - name: Run worker tests
+        run: pnpm test
+
+      # Same narrow requirement as preview: only the menu key. RESEND_API_KEY
+      # and SUPABASE_KEY drive /api/contact, and a demo environment has no
+      # business sending email or writing waitlist rows.
+      - name: Verify the demo Worker has its menu key
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if ! pnpm wrangler secret list --env demo --format json 2>/dev/null \
+               | grep -q 'PUBLIC_MENU_SUPABASE_ANON_KEY'; then
+            echo "::error::PUBLIC_MENU_SUPABASE_ANON_KEY is not set on the demo Worker (or the Worker does not exist yet)."
+            echo ""
+            echo "One-time bootstrap, run locally FROM A CHECKOUT OF main:"
+            echo "  npx wrangler secret put PUBLIC_MENU_SUPABASE_ANON_KEY --env demo"
+            echo ""
+            echo "Answer YES when it offers to create the Worker — that is what brings"
+            echo "dialtone-menu-demo into existence, since this job checks for the"
+            echo "secret before deploying and cannot bootstrap it itself."
+            echo ""
+            echo "The VALUE is the STAGING project's anon key: [env.demo] points"
+            echo "PUBLIC_MENU_SUPABASE_URL at mxhyvvgjtqllohpvrwon, and a key that does"
+            echo "not match its URL is a 401 on every menu."
+            exit 1
+          fi
+          echo "Demo menu key is present."
+
+      - name: Deploy to the demo Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm wrangler deploy --env demo
+
+      # A green deploy is NOT proof the new code is live — that cost a day of
+      # branded menus serving the marketing page while every deploy showed green
+      # (2026-07-24). Verify by CONTENT.
+      #
+      # Unlike preview, this environment CAN exercise host routing: it is served
+      # on a real branded wildcard, so `extractMenuSlugFromHost` is under test
+      # here in a way it is nowhere else in CI.
+      #
+      # Skipped, not failed, until the Route exists — the cert, the proxied
+      # `*.demo` DNS record and the Route are manual one-time steps, and a red
+      # build for "the operator has not finished the dashboard work" teaches
+      # people to ignore red builds.
+      - name: Verify the demo host serves a menu
+        run: |
+          HOST="suis-sushi.demo.dialtone.menu"
+          if ! curl -fsS --max-time 10 -o /dev/null "https://$HOST/" 2>/dev/null; then
+            echo "::notice::$HOST is not reachable yet — cert / DNS / Route are one-time manual steps (see wrangler.toml [env.demo]). Deploy itself succeeded."
+            exit 0
+          fi
+          for i in 1 2 3 4 5 6; do
+            body=$(curl -fsS --max-time 15 "https://$HOST/menu?cb=$(date +%s%N)" || true)
+            if printf '%s' "$body" | grep -q 'Menu | DialTone'; then
+              echo "✓ demo host is serving the menu (attempt $i)"
+              # A demo host must never be indexed (dialtone#1476). Asserted on
+              # the live host, not just in unit tests, because robots is exactly
+              # the kind of thing that is correct in code and wrong in routing.
+              robots=$(curl -fsS --max-time 10 "https://$HOST/robots.txt" || true)
+              if ! printf '%s' "$robots" | grep -q 'Disallow: /'; then
+                echo "::error::$HOST/robots.txt does not disallow crawling. A demo tenant carries a real prospect's name and menu — it must not be indexed."
+                exit 1
+              fi
+              echo "✓ demo host disallows crawling"
+              exit 0
+            fi
+            echo "attempt $i: not the menu yet (propagating), retrying in 10s…"
+            sleep 10
+          done
+          echo "::error::Demo Worker deployed but $HOST is not serving the menu. Check PUBLIC_MENU_SUPABASE_ANON_KEY matches the STAGING project, and that the Route is *.demo.dialtone.menu/* on zone dialtone.menu."
+          exit 1

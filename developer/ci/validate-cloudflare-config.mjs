@@ -100,11 +100,17 @@ function validateWorkerFirst(content) {
     failures.push('wrangler.toml: no run_worker_first block found');
     return;
   }
-  // Production + preview. A missing block means an environment silently loses
-  // every Worker route it should be serving.
-  if (blocks.length < 2) {
+  // One block per assets-serving environment — production, preview, demo, and
+  // whatever comes next. DERIVED rather than hardcoded: this check read
+  // `< 2` while three environments existed, so deleting the demo block would
+  // have left two and passed. A missing block means an environment silently
+  // loses every Worker route it should be serving, which is the trap that has
+  // now bitten three times.
+  const assetBlocks = [...content.matchAll(/^\[(?:env\.[a-z0-9_-]+\.)?assets\]/gm)].length;
+  if (blocks.length < assetBlocks) {
     failures.push(
-      `wrangler.toml: expected a run_worker_first block per environment, found ${blocks.length}`
+      `wrangler.toml: found ${assetBlocks} [assets] blocks but only ${blocks.length} run_worker_first blocks ` +
+        '— an environment without one short-circuits every Worker route to /404.html'
     );
   }
 
