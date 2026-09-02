@@ -218,6 +218,40 @@ function extractMenuSlug(pathname) {
 // adds a provisioning step to every onboarding.
 const MENU_HOST_SUFFIX = '.m.dialtone.menu';
 
+/**
+ * The DEMO host suffix (dialtone#1476). `<slug>.demo.dialtone.menu`, served by
+ * the `dialtone-menu-demo` Worker, which reads the STAGING app database with a
+ * `pk_test_…` key — so a prospect sees their own branded URL and a working
+ * order flow that moves no real money.
+ *
+ * Second-level for the same reason `.m.` and `.pay.` are: a first-level
+ * `*.dialtone.menu` route matched EVERY app host and served them the marketing
+ * site in production (#1011). One level deeper cannot overlap a one-label host.
+ */
+const DEMO_HOST_SUFFIX = '.demo.dialtone.menu';
+
+/**
+ * Every host shape that carries a slug in its first label.
+ *
+ * DERIVED FROM THE REQUEST, not from `env`, and that is deliberate. A Worker
+ * answers on whatever host reached it, so parsing belongs to the hostname
+ * rather than to which deployment is running — the alternative was threading
+ * `env` through five call sites or caching it in mutable module state, and
+ * both are worse than reading the thing in front of us.
+ */
+const BRANDED_HOST_SUFFIXES = [MENU_HOST_SUFFIX, DEMO_HOST_SUFFIX];
+
+/** Which branded suffix this host uses, or null when it is not a branded host. */
+function brandedSuffixFor(hostname) {
+  const host = String(hostname || '').toLowerCase();
+  return BRANDED_HOST_SUFFIXES.find((suffix) => host.endsWith(suffix)) ?? null;
+}
+
+/** True on a demo host. Demo pages must never be indexed — see handleRobots. */
+function isDemoHost(hostname) {
+  return brandedSuffixFor(hostname) === DEMO_HOST_SUFFIX;
+}
+
 // ── App entry host (dialtone_app#57) ────────────────────────────────────────
 //
 // `app.dialtone.menu/r/<slug>` is the QR target on tables, receipts and the
@@ -254,10 +288,11 @@ const APP_BUNDLE_ID = 'com.bytestreams.dialtoneapp';
 // an unprovisioned subdomain resolves to the friendly menu-not-found page.
 function extractMenuSlugFromHost(hostname) {
   const host = String(hostname || '').toLowerCase();
-  if (!host.endsWith(MENU_HOST_SUFFIX)) {
+  const suffix = brandedSuffixFor(host);
+  if (!suffix) {
     return null;
   }
-  const label = host.slice(0, -MENU_HOST_SUFFIX.length);
+  const label = host.slice(0, -suffix.length);
   if (!label || label.includes('.')) {
     return null;
   }
@@ -523,7 +558,7 @@ function buildMenuSuccessResponse(payload, slug, url, surfaceHint = 'auto', env 
 function buildSurfaceLinks(url, slug) {
   const onBrandedHost = extractMenuSlugFromHost(url.hostname) !== null;
   const origin = `${url.protocol}//${url.host}`;
-  const branded = brandedOrigin(slug);
+  const branded = brandedOrigin(slug, brandedSuffixFor(url.hostname) ?? MENU_HOST_SUFFIX);
   return onBrandedHost
     ? { homeUrl: `${origin}/`, menuUrl: `${origin}/menu`, pathForm: false, branded }
     : {
@@ -543,10 +578,10 @@ function buildSurfaceLinks(url, slug) {
  * Slugs are constrained upstream, but a canonical pointing at an unresolvable
  * host is worse than no canonical at all, so this refuses rather than guesses.
  */
-function brandedOrigin(slug) {
+function brandedOrigin(slug, suffix = MENU_HOST_SUFFIX) {
   const label = String(slug || '').toLowerCase();
   if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label)) return null;
-  return `https://${label}${MENU_HOST_SUFFIX}`;
+  return `https://${label}${suffix}`;
 }
 
 /**
@@ -791,6 +826,23 @@ function notFoundResponse() {
 
 function handleRobots(url) {
   const host = url.hostname.toLowerCase();
+
+  // A DEMO host is never indexed (dialtone#1476).
+  //
+  // Demo tenants carry a real prospect's name, menu and hero image against the
+  // STAGING database. Indexed, they would compete in search with the actual
+  // restaurant — and with our own prod tenants — while showing prices and hours
+  // nobody is honouring. #986 P3 gave every branded host a per-restaurant
+  // sitemap and robots, and this is the one host shape that must opt out of it.
+  //
+  // Disallow-all rather than a noindex meta: the sitemap below would otherwise
+  // still invite a crawl, and robots is the cheaper, earlier signal.
+  if (isDemoHost(host)) {
+    return new Response(['User-agent: *', 'Disallow: /', ''].join('\n'), {
+      headers: { 'content-type': 'text/plain; charset=utf-8' }
+    });
+  }
+
   const isByteStreamsHost = host === 'bytestreams.ai' || host === 'www.bytestreams.ai';
   // A branded menu host points at its OWN per-restaurant sitemap (/, /menu), not
   // the marketing one — so search discovers that restaurant's two surfaces (#986 P3).

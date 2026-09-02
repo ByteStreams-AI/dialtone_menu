@@ -443,3 +443,108 @@ service = "dialtone-order"
 [[env.preview.services]]
 binding = "ORDER_APP"
 service = "dialtone-order-staging"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DEMO — the branded sales surface (dialtone#1476)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# `<slug>.demo.dialtone.menu`, reading the STAGING app project with a
+# `pk_test_…` key. A prospect sees their own branded URL, their own menu, and a
+# working order flow that moves no real money.
+#
+# WHY A SEPARATE WORKER RATHER THAN REUSING `preview`.
+# `deploy-preview.yml` deploys ANY BRANCH to `dialtone-menu-preview`. Point a
+# demo host at it and a developer pushing a WIP branch silently replaces what a
+# prospect is looking at, mid-demo. (What is live on preview at the time of
+# writing is `feat/1320-stop-banner` from 2026-08-25.) This Worker deploys from
+# `main` only, so nobody's branch can overwrite a demo.
+#
+# WHY `.demo.` IS A SECOND-LEVEL WILDCARD.
+# A first-level `*.dialtone.menu` route matched EVERY app host — admin,
+# kitchen, beverage, expo and every `-staging` variant served the marketing
+# site in production (#1011). One level deeper cannot overlap a one-label host,
+# which is why `.m.` and `.pay.` have always been safe.
+#
+# ONE-TIME ACTIVATION, in this order — all three are required together:
+#   1. TLS: an ACM advanced certificate for `*.demo.dialtone.menu`. Universal
+#      SSL covers ONE level only, so without it every demo host fails the
+#      handshake before routing is ever consulted. Scope the cert to the demo
+#      wildcard alone — adding `*.dialtone.menu` would put the production app
+#      hosts' TLS in this certificate's blast radius for no benefit.
+#   2. DNS: a PROXIED (orange-cloud) `AAAA *.demo -> 100::` record in the
+#      dialtone.menu zone. Proxied is mandatory — a Route only matches traffic
+#      that already reached Cloudflare's edge.
+#   3. Route: this Worker -> Settings -> Domains & Routes -> Route pattern
+#      `*.demo.dialtone.menu/*`, zone `dialtone.menu`.
+#
+# Bootstrap (once, from a checkout of `main` CONTAINING this block — from an
+# older branch wrangler finds no such environment, falls back to naming the
+# Worker `<name>-demo`, and silently creates the wrong one):
+#   npx wrangler secret put PUBLIC_MENU_SUPABASE_ANON_KEY --env demo
+# Answer YES when it offers to create the Worker.
+[env.demo]
+name = "dialtone-menu-demo"
+# No workers.dev address: the branded host is the only way in. A second,
+# unbranded URL for a sales surface is a way to show a prospect the wrong thing.
+workers_dev = false
+
+[env.demo.vars]
+CONTACT_EMAIL = "hello@dialtone.menu"
+SITE_NAME = "DialToneMenu (demo)"
+SUPABASE_URL = "https://hltmzafywzqajjzjpqva.supabase.co"
+# STAGING app project — the whole point. Demo tenants live here, and the
+# `pk_test_…` key below must match this database (see the top-level [vars]
+# block for why that pairing fails at confirm time rather than at load).
+PUBLIC_MENU_SUPABASE_URL = "https://mxhyvvgjtqllohpvrwon.supabase.co"
+STRIPE_PUBLISHABLE_KEY = "pk_test_51TUZtORrmddnOdHkrUR2E2FSE00Z4FD0n5is4aGTeIdfB8hdFcg9UcFn33sEJITrKrEkUWR1RuHcBk13LvceCdAb00g41bVj85"
+# The SAME widget as every other environment. Vars do NOT inherit, so it is
+# restated here — omit it and demo pages render no widget, send no token, and
+# every order is refused `challenge_failed`. Registering `dialtone.menu` on the
+# widget covers every subdomain at any depth, so `.demo.` needs no Turnstile
+# change at all (dialtone#1201).
+TURNSTILE_SITE_KEY = "0x4AAAAAAERQOWbRPlMLVDLj"
+
+[[env.demo.kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+# Preview's namespace, deliberately shared: demo traffic is a handful of orders
+# and must not be able to evict PRODUCTION rate-limit entries.
+id = "be9cdfc34c7344d4966b2b6b55a02389"
+
+[env.demo.assets]
+directory = "./public/"
+binding = "ASSETS"
+not_found_handling = "404-page"
+# EVERY worker-routed prefix must appear here. This has bitten three times —
+# most recently `/.well-known/*` was listed while `/r/*` was not, so the
+# association file served correctly on the first deploy while the page it
+# points at returned the marketing 404.
+run_worker_first = [
+  "/",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/favicon.ico",
+  "/.well-known/*",
+  "/m/*",
+  "/_order/*",
+  "/__order-plumbing",
+  "/r/*",
+  "/menu",
+  "/menu/",
+  "/api/*"
+]
+
+[env.demo.observability.logs]
+enabled = true
+invocation_logs = true
+
+# Only the menu key, same reasoning as preview: RESEND_API_KEY and SUPABASE_KEY
+# drive `/api/contact`, and a demo environment has no business sending email or
+# writing waitlist rows. Without them that route returns 503, which is correct.
+[env.demo.secrets]
+required = [
+  "PUBLIC_MENU_SUPABASE_ANON_KEY"
+]
+
+[[env.demo.services]]
+binding = "ORDER_APP"
+service = "dialtone-order-staging"
