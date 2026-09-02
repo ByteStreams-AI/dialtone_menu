@@ -282,6 +282,7 @@ async function runHostRouting() {
     'https://suis-sushi.pay.dialtone.menu/',
     'https://main-street.dialtone.menu/',
     'https://m.dialtone.menu/',
+    'https://demo.dialtone.menu/',
     'https://example.com/'
   ]) {
     let rpcCalled = false;
@@ -292,6 +293,20 @@ async function runHostRouting() {
     const resp = await worker.fetch(new Request(host), makeEnv());
     assert.equal(rpcCalled, false, `${host} must not trigger a menu lookup`);
     assert.equal(await resp.text(), 'asset fallback', `${host} should serve the marketing site, not a menu`);
+  }
+
+  // dialtone#1476 — `<slug>.demo.dialtone.menu` resolves a slug exactly like
+  // `<slug>.m.dialtone.menu`. Both are second-level wildcards; the demo Worker
+  // just reads the staging database. Parsing is driven by the REQUEST HOST, not
+  // by which deployment is running, so either host resolves on either Worker.
+  {
+    let lookedUp = null;
+    globalThis.fetch = async (input, init) => {
+      lookedUp = JSON.parse(init?.body || '{}');
+      return new Response('null', { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    await worker.fetch(new Request('https://main-street.demo.dialtone.menu/'), makeEnv());
+    assert.equal(lookedUp?.p_slug, 'main-street', 'a demo host resolves its slug');
   }
 
   // Crawler paths still resolve on a menu subdomain (they don't render the menu).

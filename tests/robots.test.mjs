@@ -16,6 +16,25 @@ async function getRobots(hostname) {
 }
 
 async function run() {
+  // dialtone#1476 — a DEMO host must never be indexed. Demo tenants carry a
+  // real prospect's name, menu and hero against the STAGING database, so an
+  // indexed demo competes in search with the actual restaurant while showing
+  // prices nobody is honouring.
+  const demoResponse = await getRobots('shortys.demo.dialtone.menu');
+  const demoText = await demoResponse.text();
+  assert.equal(demoResponse.status, 200);
+  assert.match(demoText, /^User-agent: \*\nDisallow: \/$/m);
+  // No sitemap line: it would invite exactly the crawl the disallow refuses.
+  assert.ok(!demoText.includes('Sitemap:'), 'a demo host must advertise no sitemap');
+  assert.ok(!demoText.includes('Allow: /'), 'a demo host must not allow crawling');
+
+  // And the PROD branded host is unchanged — it still points at its own
+  // per-restaurant sitemap (#986 P3).
+  const brandedResponse = await getRobots('shortys.m.dialtone.menu');
+  const brandedText = await brandedResponse.text();
+  assert.ok(brandedText.includes('Sitemap: https://shortys.m.dialtone.menu/sitemap.xml'));
+  assert.ok(brandedText.includes('Allow: /'), 'the prod branded host still allows crawling');
+
   const dialtoneResponse = await getRobots('dialtone.menu');
   const dialtoneText = await dialtoneResponse.text();
 
