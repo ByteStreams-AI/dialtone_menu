@@ -105,6 +105,21 @@ try {
     stubMenu(false);
     const res = await worker.fetch(page(), makeEnv(), { waitUntil() {} });
     assert.equal(res.status, 404, 'catering off ⇒ no page');
+    const html = await res.text();
+    // The right noun AND the right brand. "Menu not found" on a /catering URL
+    // tells the reader the wrong thing; an unbranded DialTone page puts OUR
+    // chrome on a restaurant's own host in front of their customer.
+    assert.match(html, /not taking catering enquiries/);
+    assert.ok(!html.includes('Menu not found'), 'names catering, not the menu');
+    assert.match(html, /Sui&#39;s Sushi|Sui's Sushi/, 'wears the restaurant, not DialTone');
+    // Not a dead end: someone arriving from a bookmark is a customer in the
+    // doorway, and the menu is one link away.
+    assert.match(html, /View the menu/);
+    assert.match(html, /noindex/, 'a temporary state must not rank');
+    // NOT edge-cached. This refusal is a toggle the operator may have flipped
+    // seconds ago; caching it for five minutes produces "I turned it on and
+    // nothing happened", which reads as the feature being broken.
+    assert.equal(res.headers.get('cache-control'), 'no-store');
   }
 
   // 2b. THE PATH FORM. The branded hosts no longer reach staging (#979), so

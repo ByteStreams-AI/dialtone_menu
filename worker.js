@@ -1,7 +1,7 @@
 // Template layer (Option A, #914): shared ctx normalizer + helpers, and the
 // registry that dispatches menu_template -> a template module (lacquer default).
 import { renderMenu, renderHome, renderCatering, servesHomeAtRoot } from './templates/index.js';
-import { buildMenuCtx, escapeHtml, normalizeText } from './templates/shared.js';
+import { buildMenuCtx, escapeHtml, normalizeText, readableInkOn, sanitizeHexColor } from './templates/shared.js';
 
 const JSON_HEADERS = {
   'content-type': 'application/json; charset=utf-8'
@@ -500,6 +500,68 @@ async function buildPublicMenuResponse(env, slug, url, surfaceHint = 'auto') {
   return buildMenuSuccessResponse(payload, slug, url, surfaceHint, env);
 }
 
+/**
+ * "We don't do catering" — as the RESTAURANT, not as DialTone.
+ *
+ * The generic menu-404 is right where a slug resolves to nothing: there is no
+ * brand to render, because we never found the restaurant. Here we DID find it,
+ * so falling back to an unbranded DialTone page puts our chrome on a
+ * restaurant's own host in front of their customer — the failure the whole
+ * branded-site design exists to avoid.
+ *
+ * It is also a dead end, which is the more useful thing to fix. Someone who
+ * clicked "Catering" from a bookmark or an old post is a customer standing in
+ * the doorway; sending them to the menu costs one link.
+ *
+ * `no-store`, unlike the menu 404. A bad slug is effectively permanent; this
+ * is a TOGGLE the operator may have flipped seconds ago, and edge-caching it
+ * for five minutes produces "I turned it on and nothing happened", which reads
+ * as the feature being broken.
+ */
+function buildCateringUnavailableResponse(ctx, menuUrl) {
+  const brand = sanitizeHexColor(ctx.primaryColor, '#06234B');
+  const body = [
+    '<!doctype html>',
+    '<html lang="en">',
+    '<head>',
+    '  <meta charset="utf-8">',
+    '  <meta name="viewport" content="width=device-width, initial-scale=1">',
+    `  <title>Catering &middot; ${escapeHtml(ctx.wordmark)}</title>`,
+    // Not a page to index: it is a temporary state of one restaurant's site,
+    // and ranking for it would send searchers to a dead end.
+    '  <meta name="robots" content="noindex,follow">',
+    ctx.fontHref ? `  <link rel="stylesheet" href="${escapeHtml(ctx.fontHref)}">` : '',
+    '  <style>',
+    `    body { margin: 0; font-family: ${ctx.fontFamily}; background: #fafaf9; color: #1c1917; }`,
+    '    main { max-width: 32rem; margin: 0 auto; padding: 4rem 1.5rem; text-align: center; }',
+    '    img { height: 48px; width: auto; margin-bottom: 1.5rem; }',
+    '    .name { font-weight: 700; font-size: 1.05rem; margin-bottom: 1.5rem; }',
+    '    h1 { font-size: 1.5rem; margin: 0 0 .6rem; }',
+    '    p { margin: 0 0 2rem; color: #57534e; }',
+    `    a { display: inline-block; padding: .75rem 1.5rem; border-radius: .6rem; background: ${escapeHtml(brand)}; color: ${escapeHtml(readableInkOn(brand))}; text-decoration: none; font-weight: 600; }`,
+    '  </style>',
+    '</head>',
+    '<body>',
+    '  <main>',
+    ctx.logoUrl
+      ? `    <img src="${escapeHtml(ctx.logoUrl)}" alt="${escapeHtml(ctx.wordmark)}">`
+      : `    <div class="name">${escapeHtml(ctx.wordmark)}</div>`,
+    '    <h1>We&rsquo;re not taking catering enquiries right now</h1>',
+    '    <p>Give us a call if you&rsquo;re planning something &mdash; we may still be able to help.</p>',
+    `    <a href="${escapeHtml(menuUrl || '/menu')}">View the menu</a>`,
+    '  </main>',
+    '</body>',
+    '</html>'
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return new Response(body, {
+    status: 404,
+    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }
+  });
+}
+
 function buildMenuNotFoundResponse() {
   const body = [
     '<!doctype html>',
@@ -554,7 +616,7 @@ function buildMenuSuccessResponse(payload, slug, url, surfaceHint = 'auto', env 
   // typed URL or a stale link — and answering it would advertise a service
   // nobody can honour.
   if (surface === 'catering' && !probe.cateringEnabled) {
-    return buildMenuNotFoundResponse();
+    return buildCateringUnavailableResponse(probe, links.menuUrl);
   }
 
   // LOUD, not silent (dialtone#1221). A guard that quietly turns a paid feature
