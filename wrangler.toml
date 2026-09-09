@@ -255,6 +255,8 @@ run_worker_first = [
   # does the short-circuiting.
   "/menu",
   "/menu/",
+  "/catering",
+  "/catering/",
   "/api/*"
 ]
 
@@ -405,6 +407,8 @@ run_worker_first = [
   "/r/*",
   "/menu",
   "/menu/",
+  "/catering",
+  "/catering/",
   "/api/*"
 ]
 
@@ -530,6 +534,8 @@ run_worker_first = [
   "/r/*",
   "/menu",
   "/menu/",
+  "/catering",
+  "/catering/",
   "/api/*"
 ]
 

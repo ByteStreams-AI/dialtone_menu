@@ -31,7 +31,7 @@ function extractWranglerVar(content, key) {
   return match ? match[1] : '';
 }
 
-function validateWrangler(content) {
+function validateWrangler(content, workerSource) {
   requireMatch(content, /^name\s*=\s*"[a-z0-9-]+"\s*$/m, 'wrangler.toml: missing valid worker name');
   requireMatch(content, /^main\s*=\s*"worker\.js"\s*$/m, 'wrangler.toml: main must point to worker.js');
   requireMatch(content, /^\[vars\]$/m, 'wrangler.toml: missing [vars] block');
@@ -39,7 +39,7 @@ function validateWrangler(content) {
   requireMatch(content, /^CONTACT_EMAIL\s*=\s*"[^"]+"\s*$/m, 'wrangler.toml: CONTACT_EMAIL is required');
   requireMatch(content, /^SITE_NAME\s*=\s*"[^"]+"\s*$/m, 'wrangler.toml: SITE_NAME is required');
   requireMatch(content, /^binding\s*=\s*"ASSETS"\s*$/m, 'wrangler.toml: assets binding must be ASSETS');
-  validateWorkerFirst(content);
+  validateWorkerFirst(content, workerSource);
   requireMatch(content, /^\[secrets\]$/m, 'wrangler.toml: missing [secrets] block — required for deploy-time enforcement');
   requireMatch(content, /RESEND_API_KEY/, 'wrangler.toml: RESEND_API_KEY not listed under [secrets]');
   requireMatch(content, /SUPABASE_SERVICE_ROLE_KEY/, 'wrangler.toml: SUPABASE_SERVICE_ROLE_KEY not listed under [secrets]');
@@ -90,10 +90,61 @@ const WORKER_FIRST_REQUIRED = [
   '/_order/*',
   '/r/*',
   '/menu',
+  '/catering',
   '/api/*'
 ];
 
-function validateWorkerFirst(content) {
+/**
+ * Paths the Worker dispatches on that do NOT need listing, each with the reason.
+ *
+ * The derivation below reads every path literal out of worker.js. Most must be
+ * worker-first; these are the exceptions, and an exception has to be written
+ * down rather than inferred — a silent one is how the list drifted in the first
+ * place.
+ *
+ * They are all static pages: the Worker's handler and Cloudflare's asset
+ * handler serve the SAME file, so short-circuiting changes nothing a visitor
+ * sees. Anything that computes a response does not belong here.
+ */
+const WORKER_FIRST_EXEMPT = new Map([
+  ['/features', 'static page — the asset handler serves the same file'],
+  ['/features/', 'static page — the asset handler serves the same file'],
+  ['/app/privacy', 'static page — the asset handler serves the same file'],
+  ['/app/privacy/', 'static page — the asset handler serves the same file'],
+  ['/app/delete-account', 'static page — the asset handler serves the same file'],
+  ['/app/delete-account/', 'static page — the asset handler serves the same file']
+]);
+
+/** True when `listed` covers `path`, exactly or by a trailing-glob prefix. */
+function coveredBy(listed, path) {
+  return listed.some((entry) =>
+    entry.endsWith('/*') ? path.startsWith(entry.slice(0, -1)) : entry === path
+  );
+}
+
+/**
+ * DERIVE what must be listed, rather than trusting someone to remember.
+ *
+ * WORKER_FIRST_REQUIRED above is a floor: it pins the paths that have already
+ * caused an incident. But it cannot notice a NEW route — which is exactly how
+ * `/catering` shipped unreachable while this validator passed, the fourth time
+ * this family has bitten. The check that generalises reads the routes out of
+ * worker.js and asserts each one is either listed or explicitly exempt.
+ */
+function derivedWorkerFirstPaths(workerSource) {
+  const paths = new Set();
+  for (const m of workerSource.matchAll(/url\.pathname\s*===\s*'([^']+)'/g)) {
+    paths.add(m[1]);
+  }
+  // The `/api/...` handlers are reached through constants, not a literal
+  // comparison, so the same trap would hide there too.
+  for (const m of workerSource.matchAll(/^const [A-Z_]*PATH[A-Z_]*\s*=\s*'([^']+)';/gm)) {
+    paths.add(m[1]);
+  }
+  return [...paths].filter((p) => !WORKER_FIRST_EXEMPT.has(p)).sort();
+}
+
+function validateWorkerFirst(content, workerSource) {
   const blocks = [...content.matchAll(/run_worker_first\s*=\s*\[([\s\S]*?)\]/g)];
 
   if (blocks.length === 0) {
@@ -114,6 +165,8 @@ function validateWorkerFirst(content) {
     );
   }
 
+  const derived = workerSource ? derivedWorkerFirstPaths(workerSource) : [];
+
   blocks.forEach((block, index) => {
     const listed = [...block[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
     const missing = WORKER_FIRST_REQUIRED.filter((p) => !listed.includes(p));
@@ -121,6 +174,16 @@ function validateWorkerFirst(content) {
       failures.push(
         `wrangler.toml: run_worker_first block ${index + 1} is missing ${missing.join(', ')} ` +
           '— those paths would be short-circuited to /404.html without invoking the Worker'
+      );
+    }
+
+    // The generalising half: a route added to worker.js and forgotten here.
+    const uncovered = derived.filter((p) => !coveredBy(listed, p));
+    if (uncovered.length > 0) {
+      failures.push(
+        `wrangler.toml: run_worker_first block ${index + 1} does not cover ${uncovered.join(', ')} ` +
+          '— worker.js dispatches on those paths, so they must be worker-first or listed in ' +
+          'WORKER_FIRST_EXEMPT with a reason'
       );
     }
   });
@@ -144,7 +207,7 @@ const wrangler = readFile(wranglerPath);
 const worker = readFile(workerPath);
 const workflow = readFile(workflowPath);
 
-validateWrangler(wrangler);
+validateWrangler(wrangler, worker);
 validateWorker(worker);
 validateWorkflow(workflow);
 
