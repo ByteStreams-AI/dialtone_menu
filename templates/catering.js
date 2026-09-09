@@ -40,6 +40,7 @@ function renderField(field, eventType) {
   const attrs = [
     `type="${escapeHtml(field.type)}"`,
     field.inputmode ? `inputmode="${escapeHtml(field.inputmode)}"` : '',
+    field.placeholder ? `placeholder="${escapeHtml(field.placeholder)}"` : '',
     field.autocomplete ? `autocomplete="${escapeHtml(field.autocomplete)}"` : '',
     field.min !== undefined ? `min="${Number(field.min)}"` : '',
     field.max !== undefined ? `max="${Number(field.max)}"` : '',
