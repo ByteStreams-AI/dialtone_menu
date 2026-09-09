@@ -211,6 +211,29 @@ try {
     assert.equal(prettyWhen('nonsense'), 'nonsense');
   }
 
+  // 2g. ONE FIELD PER THING BEING ASKED FOR.
+  //
+  //     "What's the event?" carried the helper "Name, and a website if it has
+  //     one" over a single text box — so the visitor had to invent a format,
+  //     and a browser autofilled `http://` into it, which read as the field
+  //     being for the URL. Two labelled inputs, and the website is optional.
+  {
+    stubMenu(true);
+    const res = await worker.fetch(page(), makeEnv(), { waitUntil() {} });
+    const html = await res.text();
+    const branch = html.slice(html.indexOf('data-branch="public_event"'));
+    const screen = branch.slice(0, branch.indexOf('</fieldset>'));
+
+    assert.ok(!screen.includes('a website if it has one'), 'no two-in-one helper');
+    assert.match(screen, /name="event_name"[^>]*required/, 'the name is still required');
+    assert.match(screen, /name="extras\.website"/, 'the website is its own field');
+    assert.ok(!/name="extras\.website"[^>]*required/.test(screen), 'and it is optional');
+    // Labels appear only on multi-field screens, so their presence is also the
+    // check that this became one.
+    assert.match(screen, /Event name/);
+    assert.match(screen, /Website \(optional\)/);
+  }
+
   // 3. The enquiry reaches the Edge Function unchanged, and the answer comes
   //    back verbatim — the refusal wording lives in one place.
   {

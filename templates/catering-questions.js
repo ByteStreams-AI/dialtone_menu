@@ -105,7 +105,24 @@ export const QUESTIONS = {
     CONTACT('')
   ],
   public_event: [
-    one('event_name', { prompt: "What's the event?", helper: 'Name, and a website if it has one.', field: TEXT }),
+    // TWO fields, one thought — the same rule as the contact screen. Asking
+    // for "name, and a website if it has one" in a single box makes the
+    // visitor decide the format, and a browser will helpfully autofill a URL
+    // into what it reads as a text field.
+    {
+      key: 'event_name',
+      prompt: "What's the event?",
+      fields: [
+        { name: 'event_name', label: 'Event name', type: 'text', required: true },
+        {
+          name: 'extras.website',
+          label: 'Website (optional)',
+          type: 'url',
+          inputmode: 'url',
+          placeholder: 'https://'
+        }
+      ]
+    },
     one('event_at', { prompt: 'What date would we be serving?', field: WHEN }),
     one('extras.serving_hours', { prompt: 'What hours?', helper: 'e.g. 11am to 8pm.', field: { type: 'text' } }),
     // The core column, asking a different question.
