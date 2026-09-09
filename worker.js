@@ -1,6 +1,6 @@
 // Template layer (Option A, #914): shared ctx normalizer + helpers, and the
 // registry that dispatches menu_template -> a template module (lacquer default).
-import { renderMenu, renderHome, servesHomeAtRoot } from './templates/index.js';
+import { renderMenu, renderHome, renderCatering, servesHomeAtRoot } from './templates/index.js';
 import { buildMenuCtx, escapeHtml, normalizeText } from './templates/shared.js';
 
 const JSON_HEADERS = {
@@ -99,6 +99,9 @@ async function routeRequest(request, env, url, ctx) {
     return handleOrderWindow(request, env, url);
   }
 
+  if (url.pathname === CATERING_SUBMIT_PATH) {
+    return handleCateringSubmit(request, env);
+  }
   if (url.pathname === ORDER_SUBMIT_PATH) {
     return handleOrderSubmit(request, env);
   }
@@ -136,6 +139,11 @@ async function routeRequest(request, env, url, ctx) {
     if (url.pathname === '/sitemap.xml') {
       return handleMenuSitemap(url);
     }
+    // Catering (dialtone#1553). An explicit branch because every UNMATCHED path
+    // on this host renders the menu — /catering would otherwise serve food.
+    if (url.pathname === '/catering' || url.pathname === '/catering/') {
+      return handlePublicMenuPage(request, env, url, hostSlug, ctx, 'catering');
+    }
     // `/menu` is the STABLE menu URL — the one QR codes and printed cards
     // point at — so it renders the menu regardless of site_mode. Every other
     // path on the host takes whatever the mode says the root is (#986).
@@ -155,6 +163,11 @@ async function routeRequest(request, env, url, ctx) {
   }
   if (url.pathname === '/app/privacy' || url.pathname === '/app/privacy/') {
     return serveStaticPage(request, env, '/privacy.html');
+  }
+
+  const cateringSlug = extractCateringSlug(url.pathname);
+  if (cateringSlug !== null) {
+    return handlePublicMenuPage(request, env, url, cateringSlug, ctx, 'catering');
   }
 
   const menuSlug = extractMenuSlug(url.pathname);
@@ -191,6 +204,31 @@ async function routeRequest(request, env, url, ctx) {
 
 function extractMenuSlug(pathname) {
   const match = pathname.match(/^\/m\/([^/]+)\/?$/);
+  if (!match) {
+    return null;
+  }
+
+  try {
+    const decoded = decodeURIComponent(match[1]).trim();
+    return decoded || '';
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * `/m/<slug>/catering` — the path form of the catering page (dialtone#1553).
+ *
+ * A SIBLING of extractMenuSlug rather than a widening of it: `/m/<slug>` must
+ * keep meaning the menu exactly, because every QR code minted so far points at
+ * it and its own comment says the meaning must never change.
+ *
+ * It exists because the branded hosts no longer reach staging (#979) — the
+ * preview Worker's path form is the ONLY staging web surface, so without this
+ * the page could not be seen anywhere before production.
+ */
+function extractCateringSlug(pathname) {
+  const match = pathname.match(/^\/m\/([^/]+)\/catering\/?$/);
   if (!match) {
     return null;
   }
@@ -502,7 +540,22 @@ function buildMenuSuccessResponse(payload, slug, url, surfaceHint = 'auto', env 
   // Decide the surface BEFORE building ctx, so templates receive a canonical
   // that matches what they are about to render.
   const probe = buildMenuCtx(payload, slug, { storageBaseUrl: env.PUBLIC_MENU_SUPABASE_URL });
-  const surface = surfaceHint === 'menu' ? 'menu' : servesHomeAtRoot(probe) ? 'home' : 'menu';
+  const surface =
+    surfaceHint === 'catering'
+      ? 'catering'
+      : surfaceHint === 'menu'
+        ? 'menu'
+        : servesHomeAtRoot(probe)
+          ? 'home'
+          : 'menu';
+
+  // Fail CLOSED: a restaurant that has not switched catering on has no such
+  // page. The button is not rendered either, so this is only reachable by a
+  // typed URL or a stale link — and answering it would advertise a service
+  // nobody can honour.
+  if (surface === 'catering' && !probe.cateringEnabled) {
+    return buildMenuNotFoundResponse();
+  }
 
   // LOUD, not silent (dialtone#1221). A guard that quietly turns a paid feature
   // off is the same failure shape it exists to prevent: the realistic bad day is
@@ -541,7 +594,10 @@ function buildMenuSuccessResponse(payload, slug, url, surfaceHint = 'auto', env 
     homeUrl: links.homeUrl
   });
 
-  return new Response(surface === 'home' ? renderHome(ctx) : renderMenu(ctx), {
+  const html =
+    surface === 'catering' ? renderCatering(ctx) : surface === 'home' ? renderHome(ctx) : renderMenu(ctx);
+
+  return new Response(html, {
     status: 200,
     headers: {
       'content-type': 'text/html; charset=utf-8',
@@ -1380,6 +1436,77 @@ async function handleOrderWindow(request, env, url) {
 //    incoming headers are DROPPED rather than forwarded: a client that sends
 //    its own `cf-connecting-ip` must not be able to pick its own rate-limit
 //    bucket. Only Cloudflare's value, which the client cannot set, is passed.
+const CATERING_SUBMIT_PATH = '/api/catering';
+
+/** An enquiry is prose, not a cart: generous for a description, small enough
+ *  that this is not a relay. */
+const CATERING_BODY_LIMIT_BYTES = 16 * 1024;
+
+/**
+ * A thin proxy to the `web_create_catering_request` Edge Function
+ * (dialtone#1553). A sibling of `/api/order`, and it exists for the same two
+ * reasons — the second being the one that matters.
+ *
+ * 1. This Worker knows which Supabase project rendered THIS page, so the
+ *    enquiry lands in the database whose restaurant_id the page carries.
+ *
+ * 2. THE CLIENT IP. The endpoint's per-IP limit reads `cf-connecting-ip`, and a
+ *    proxied sub-request would otherwise arrive carrying this Worker's egress
+ *    IP — collapsing a per-guest limit into one global bucket that every guest
+ *    shares and one submitter exhausts. So Cloudflare's value is copied on
+ *    explicitly and the INCOMING headers are dropped: a client that sends its
+ *    own `cf-connecting-ip` must not get to pick its own rate-limit bucket.
+ */
+async function handleCateringSubmit(request, env) {
+  if (request.method !== 'POST') {
+    return jsonNoStore({ error: 'method_not_allowed' }, 405, { allow: 'POST' });
+  }
+
+  const supabaseUrl = normalizeText(env.PUBLIC_MENU_SUPABASE_URL || env.SUPABASE_URL || '', 500);
+  const supabaseAnonKey = normalizeText(
+    env.PUBLIC_MENU_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || env.SUPABASE_KEY || '',
+    2000
+  );
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return jsonNoStore({ error: 'unavailable' }, 503);
+  }
+
+  const body = await request.text();
+  if (body.length > CATERING_BODY_LIMIT_BYTES) {
+    return jsonNoStore({ error: 'payload_too_large' }, 413);
+  }
+
+  // Cloudflare sets this and a client cannot forge it. Falling back to the
+  // incoming header would hand the caller its own rate-limit key.
+  const clientIp = request.headers.get('cf-connecting-ip');
+
+  let upstream;
+  try {
+    upstream = await fetch(`${supabaseUrl}/functions/v1/web_create_catering_request`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'apikey': supabaseAnonKey,
+        'authorization': `Bearer ${supabaseAnonKey}`,
+        ...(clientIp ? { 'cf-connecting-ip': clientIp } : {})
+      },
+      body
+    });
+  } catch (error) {
+    console.log('Catering submit network error:', String(error));
+    return jsonNoStore({ error: 'unavailable' }, 502);
+  }
+
+  // Verbatim: `rate_limited`, `challenge_failed`, `catering_disabled` and
+  // `contact_required` are the function's vocabulary, and the page keys its
+  // messages off them. Re-mapping here would put the wording in two places.
+  const text = await upstream.text();
+  return new Response(text, {
+    status: upstream.status,
+    headers: { ...JSON_HEADERS, 'cache-control': 'no-store' }
+  });
+}
+
 const ORDER_SUBMIT_PATH = '/api/order';
 
 /** Generous for a cart, small enough that this is not a relay. */

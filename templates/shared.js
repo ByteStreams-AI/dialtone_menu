@@ -478,6 +478,11 @@ export function buildMenuCtx(payload, slug, options = {}) {
   // registry line was not enough to ship one (dialtone#984). Validating here
   // instead would mean importing the registry, which imports this file.
   const menuTemplate = normalizeText(restaurant.menu_template, 20);
+  // dialtone#1553 — the catering pair. Unlike ordering, there is no binding to
+  // check: a catering enquiry is a database insert through an Edge Function
+  // this Worker already reaches, with no second Worker in the path.
+  const cateringEnabled = Boolean(restaurant.catering_enabled);
+  const cateringTemplate = normalizeText(restaurant.catering_template, 20) || 'guided';
 
   const usesStops = venueUsesStops(payload);
   const site = buildSite(payload, options);
@@ -525,6 +530,8 @@ export function buildMenuCtx(payload, slug, options = {}) {
     // every existing test behave exactly as before; only the Worker, which knows
     // its own bindings, can turn it off.
     orderingEnabled,
+    cateringEnabled,
+    cateringTemplate,
     // dialtone#1182 Phase 2d — the tenant the checkout submits against. Anon by
     // slug since 0072 (get_restaurant_branding_by_slug), and never trusted as an
     // authorisation: create_web_order re-prices through _price_order_items,
