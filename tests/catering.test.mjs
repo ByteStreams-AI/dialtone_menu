@@ -15,7 +15,7 @@
  */
 import assert from 'node:assert/strict';
 
-import worker from '../worker.js';
+import worker, { menuCacheKeyUrl } from '../worker.js';
 
 const originalFetch = globalThis.fetch;
 
@@ -151,6 +151,20 @@ try {
     assert.match(await res.text(), /<!-- catering -->/);
   }
 
+  // 2e. A THIRD SURFACE NEEDS A THIRD CACHE KEY.
+  //
+  //     This is the one no worker.fetch() test can see: there is no edge cache
+  //     in front of it, so the collision exists only in production. `/catering`
+  //     fell into the same `else` as `auto` and shared the ROOT's entry, so a
+  //     branded host served its cached HOME page at /catering — and on the
+  //     other ordering would have served catering at the root.
+  {
+    const u = new URL('https://suis-sushi.m.dialtone.menu/catering');
+    const keys = ['menu', 'auto', 'catering'].map((hint) => menuCacheKeyUrl(u, 'suis-sushi', hint));
+    assert.equal(new Set(keys).size, 3, 'menu, root and catering need distinct cache entries');
+    assert.match(keys[2], /__catering$/);
+  }
+
   // 3. The enquiry reaches the Edge Function unchanged, and the answer comes
   //    back verbatim — the refusal wording lives in one place.
   {
@@ -207,7 +221,7 @@ try {
     assert.equal(res.status, 405);
   }
 
-  console.log('catering.test.mjs — 11 checks passed');
+  console.log('catering.test.mjs — 12 checks passed');
 } finally {
   globalThis.fetch = originalFetch;
 }
