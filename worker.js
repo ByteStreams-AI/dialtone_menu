@@ -165,6 +165,11 @@ async function routeRequest(request, env, url, ctx) {
     return serveStaticPage(request, env, '/privacy.html');
   }
 
+  const cateringSlug = extractCateringSlug(url.pathname);
+  if (cateringSlug !== null) {
+    return handlePublicMenuPage(request, env, url, cateringSlug, ctx, 'catering');
+  }
+
   const menuSlug = extractMenuSlug(url.pathname);
   if (menuSlug !== null) {
     // The legacy path form is what every QR code minted so far points at, and
@@ -199,6 +204,31 @@ async function routeRequest(request, env, url, ctx) {
 
 function extractMenuSlug(pathname) {
   const match = pathname.match(/^\/m\/([^/]+)\/?$/);
+  if (!match) {
+    return null;
+  }
+
+  try {
+    const decoded = decodeURIComponent(match[1]).trim();
+    return decoded || '';
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * `/m/<slug>/catering` — the path form of the catering page (dialtone#1553).
+ *
+ * A SIBLING of extractMenuSlug rather than a widening of it: `/m/<slug>` must
+ * keep meaning the menu exactly, because every QR code minted so far points at
+ * it and its own comment says the meaning must never change.
+ *
+ * It exists because the branded hosts no longer reach staging (#979) — the
+ * preview Worker's path form is the ONLY staging web surface, so without this
+ * the page could not be seen anywhere before production.
+ */
+function extractCateringSlug(pathname) {
+  const match = pathname.match(/^\/m\/([^/]+)\/catering\/?$/);
   if (!match) {
     return null;
   }

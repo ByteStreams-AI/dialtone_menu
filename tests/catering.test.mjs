@@ -107,6 +107,35 @@ try {
     assert.equal(res.status, 404, 'catering off ⇒ no page');
   }
 
+  // 2b. THE PATH FORM. The branded hosts no longer reach staging (#979), so
+  //     the preview Worker's /m/<slug> form is the only place this page can be
+  //     seen before production — without it, it ships unviewed.
+  {
+    stubMenu(true);
+    const res = await worker.fetch(
+      new Request('https://dialtone.menu/m/suis-sushi/catering'),
+      makeEnv(),
+      { waitUntil() {} },
+    );
+    assert.equal(res.status, 200);
+    assert.match(await res.text(), /<!-- catering -->/);
+  }
+
+  // 2c. `/m/<slug>` still means THE MENU exactly. Every QR minted so far points
+  //     at it, and widening its pattern rather than adding a sibling would have
+  //     changed what those codes resolve to.
+  {
+    stubMenu(true);
+    const res = await worker.fetch(
+      new Request('https://dialtone.menu/m/suis-sushi'),
+      makeEnv(),
+      { waitUntil() {} },
+    );
+    const html = await res.text();
+    assert.equal(res.status, 200);
+    assert.ok(!html.includes('<!-- catering -->'), '/m/<slug> is the menu, not catering');
+  }
+
   // 3. The enquiry reaches the Edge Function unchanged, and the answer comes
   //    back verbatim — the refusal wording lives in one place.
   {
@@ -163,7 +192,7 @@ try {
     assert.equal(res.status, 405);
   }
 
-  console.log('catering.test.mjs — 8 checks passed');
+  console.log('catering.test.mjs — 10 checks passed');
 } finally {
   globalThis.fetch = originalFetch;
 }
