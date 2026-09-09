@@ -136,6 +136,21 @@ try {
     assert.ok(!html.includes('<!-- catering -->'), '/m/<slug> is the menu, not catering');
   }
 
+  // 2d. THE DEMO HOST. `<slug>.demo.dialtone.menu` carries a slug in its first
+  //     label like `.m.` does, so it resolves through the same branch — a
+  //     prospect sees catering on their own branded demo URL, against staging
+  //     data and test keys.
+  {
+    stubMenu(true);
+    const res = await worker.fetch(
+      new Request('https://suis-sushi.demo.dialtone.menu/catering'),
+      makeEnv(),
+      { waitUntil() {} },
+    );
+    assert.equal(res.status, 200);
+    assert.match(await res.text(), /<!-- catering -->/);
+  }
+
   // 3. The enquiry reaches the Edge Function unchanged, and the answer comes
   //    back verbatim — the refusal wording lives in one place.
   {
@@ -192,7 +207,7 @@ try {
     assert.equal(res.status, 405);
   }
 
-  console.log('catering.test.mjs — 10 checks passed');
+  console.log('catering.test.mjs — 11 checks passed');
 } finally {
   globalThis.fetch = originalFetch;
 }
