@@ -239,8 +239,48 @@ function cateringScript() {
     return Array.prototype.slice.call(screen.querySelectorAll('input, textarea'));
   }
 
+  // The summary is the conversion moment, so it reads like a proposal rather
+  // than a form dump. A raw "2027-03-13T11:00" and a raw "served" are the
+  // machine's words, and seeing them at the last step makes the whole thing
+  // feel like paperwork.
+  function pretty(field) {
+    var v = field.value.trim();
+    if (!v) return '';
+    if (field.type === 'datetime-local') return prettyWhen(v);
+    // A choice stores its VALUE; the chip beside it holds the words the
+    // visitor actually read.
+    var chip = field.parentNode && field.parentNode.querySelector
+      ? field.parentNode.querySelector('.chip[aria-pressed="true"]')
+      : null;
+    if (chip) return chip.textContent.trim();
+    return v;
+  }
+
+  // Formatted from the PARTS, never through Date parsing with a timezone. The
+  // value is a wall time at the restaurant, and re-interpreting it in the
+  // visitor's zone would show them back a different hour than they typed.
+  function prettyWhen(value) {
+    // DOUBLE-escaped on purpose: this whole script is a template literal, where
+    // a single backslash before d is an unrecognised escape that collapses to a
+    // bare d. The emitted regex was /^(d{4})-(d{2}).../ and matched nothing, so
+    // the date silently rendered raw. Anything backslashed inside
+    // cateringScript() needs this, which is why the test evaluates what is
+    // EMITTED rather than what is written here.
+    var m = value.match(/^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2})/);
+    if (!m) return value;
+    var day = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    if (isNaN(day.getTime())) return value;
+    var date = day.toLocaleDateString(undefined, {
+      weekday: 'short', day: 'numeric', month: 'long', year: 'numeric'
+    });
+    var h = Number(m[4]);
+    var suffix = h >= 12 ? 'pm' : 'am';
+    var h12 = h % 12 === 0 ? 12 : h % 12;
+    return date + ' at ' + h12 + ':' + m[5] + suffix;
+  }
+
   function valueOf(screen) {
-    return fieldsOf(screen).map(function (f) { return f.value.trim(); }).filter(Boolean).join(' · ');
+    return fieldsOf(screen).map(pretty).filter(Boolean).join(' · ');
   }
 
   function validate(screen) {

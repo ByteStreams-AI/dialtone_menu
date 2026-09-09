@@ -165,6 +165,37 @@ try {
     assert.match(keys[2], /__catering$/);
   }
 
+  // 2f. THE EMITTED SCRIPT, EVALUATED — not the source that produced it.
+  //
+  //     The flow's script is built inside a TEMPLATE LITERAL, where a single
+  //     backslash before `d` is an unrecognised escape that collapses to a bare
+  //     `d`. The date regex shipped as /^(d{4})-(d{2}).../, matched nothing,
+  //     and the summary showed a raw "2027-03-13T11:00" to the person deciding
+  //     whether to send. Reading templates/catering.js shows a correct regex;
+  //     only the OUTPUT is wrong, so only the output can be asserted.
+  {
+    stubMenu(true);
+    const res = await worker.fetch(page(), makeEnv(), { waitUntil() {} });
+    const html = await res.text();
+
+    const script = html.slice(html.lastIndexOf('<script>') + 8, html.lastIndexOf('</script>'));
+    // Parses at all: a bad escape can be a syntax error, which kills the whole
+    // flow and degrades to the plain form — working, but silently not this.
+    assert.doesNotThrow(() => new Function(script), 'the emitted script parses');
+
+    const from = script.indexOf('function prettyWhen');
+    assert.ok(from > -1, 'the date formatter is in the page');
+    const body = script.slice(from, script.indexOf('\n  }', from) + 4);
+    const prettyWhen = new Function('return (' + body.replace('function prettyWhen', 'function') + ')')();
+
+    assert.match(prettyWhen('2027-03-13T11:00'), /March 13, 2027 at 11:00am/);
+    assert.match(prettyWhen('2027-03-13T00:30'), /12:30am/, 'midnight is 12, not 0');
+    assert.match(prettyWhen('2027-03-13T12:05'), /12:05pm/, 'noon is 12pm, not 0pm');
+    // Formatted from the PARTS: the value is a wall time at the restaurant, and
+    // Date-parsing it would show the visitor a different hour than they typed.
+    assert.equal(prettyWhen('nonsense'), 'nonsense');
+  }
+
   // 3. The enquiry reaches the Edge Function unchanged, and the answer comes
   //    back verbatim — the refusal wording lives in one place.
   {
@@ -221,7 +252,7 @@ try {
     assert.equal(res.status, 405);
   }
 
-  console.log('catering.test.mjs — 12 checks passed');
+  console.log('catering.test.mjs — 13 checks passed');
 } finally {
   globalThis.fetch = originalFetch;
 }
