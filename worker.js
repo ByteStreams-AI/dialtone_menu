@@ -384,14 +384,21 @@ async function handlePublicMenuPage(request, env, url, slug, ctx, surfaceHint = 
   return response;
 }
 
-function menuCacheKeyUrl(url, slug, surfaceHint = 'auto') {
+export function menuCacheKeyUrl(url, slug, surfaceHint = 'auto') {
   const cacheUrl = new URL(url.toString());
   // The root and /menu are DIFFERENT pages once a home page exists, so they
   // need different cache entries — one key per slug would have served whichever
   // surface rendered first to both URLs (#986). Keyed on the hint rather than
   // the resolved surface because the key is needed before the payload is
   // fetched, and the hint is what actually distinguishes the two URLs.
-  const suffix = surfaceHint === 'menu' ? '' : '/__root';
+  //
+  // A THIRD surface needs a THIRD key. `/catering` fell into the `else` with
+  // `auto` and shared the root's entry, so a branded host served its cached
+  // HOME page at /catering — and would have poisoned the root with the
+  // catering page on the other ordering. Tests could not see it: there is no
+  // edge cache in front of `worker.fetch()`, so this only exists in production.
+  const suffix =
+    surfaceHint === 'menu' ? '' : surfaceHint === 'catering' ? '/__catering' : '/__root';
   cacheUrl.pathname = `/m/${encodeURIComponent(slug)}${suffix}`;
   cacheUrl.search = '';
   return cacheUrl.toString();
