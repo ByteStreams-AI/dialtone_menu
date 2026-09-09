@@ -20,6 +20,8 @@ import {
   renderMenuDataIsland,
   renderOrderScript,
   ORDER_STYLES,
+  CATERING_LINK_STYLES,
+  renderCateringLink,
   renderStopBanner,
   STOP_STYLES,
 } from './shared.js';
@@ -400,6 +402,7 @@ function renderStandardHomeBody(ctx) {
     '    .brand-logo { max-height: 64px; max-width: min(40vw, 200px); width: auto; object-fit: contain; }',
     '    .brand-wordmark { font-size: clamp(1.6rem, 3vw, 2.1rem); font-weight: 700; color: var(--brand-primary); }',
     '    .tagline { margin: 4px 0 0; color: #4f5e73; font-weight: 700; }',
+    CATERING_LINK_STYLES,
     '    .menu-cta { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; background: var(--brand-primary); color: #fff; border-radius: 999px; padding: 12px 22px; font-weight: 700; white-space: nowrap; }',
     '    .hero { border-radius: 16px; overflow: hidden; height: min(56.25vw, 46vh, 480px); background: #000 center/cover no-repeat; }',
     '    .card { background: #fff; border: 1px solid rgba(6, 35, 75, 0.12); border-radius: 14px; padding: 20px; }',
@@ -429,7 +432,7 @@ function renderStandardHomeBody(ctx) {
       tagline ? `<p class="tagline">${escapeHtml(tagline)}</p>` : ''
     }</div>`,
     // Always present, even on an otherwise empty home page.
-    `      <a class="menu-cta" href="${escapeHtml(menuUrl || '/menu')}">View the menu</a>`,
+    `      <div class="header-actions">${renderCateringLink(ctx)}<a class="menu-cta" href="${escapeHtml(menuUrl || '/menu')}">View the menu</a></div>`,
     '    </header>',
     ctx.heroImageUrl
       ? `    <div class="hero" style="background-image: url('${escapeHtml(ctx.heroImageUrl)}')"></div>`

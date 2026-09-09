@@ -769,9 +769,15 @@ export function renderStopBanner(ctx) {
   // Values are attributes, not interpolated into the script body: the slug and
   // timezone come from the database, and a value that reached JS source could
   // end a string literal. `escapeHtml` plus attribute context contains both.
+  // dialtone#1553 — catering is the ONE thing worth offering when there is no
+  // stop. The banner is the only place the page admits it cannot sell food
+  // right now, and a truck is between stops most of the time; today that
+  // moment ends the visit. Passed as an ATTRIBUTE for the same reason the slug
+  // is: a value reaching JS source could end a string literal.
+  const catering = ctx.cateringEnabled ? ' data-dt-catering="1"' : '';
   const container =
     `<section class="dt-stop" id="dt-stop" data-dt-slug="${escapeHtml(slug)}"` +
-    `${tz ? ` data-dt-tz="${escapeHtml(tz)}"` : ''} aria-live="polite" hidden></section>`;
+    `${tz ? ` data-dt-tz="${escapeHtml(tz)}"` : ''}${catering} aria-live="polite" hidden></section>`;
 
   return `${container}
   <script>
@@ -885,6 +891,15 @@ export function renderStopBanner(ctx) {
         p.textContent = text;
         el.appendChild(p);
         if (next) append('Next stop', next, when, 'dt-stop-next');
+        // Only here. Over a LIVE stop the page has food to sell and this would
+        // compete with it; between stops it is the only thing left to offer.
+        if (el.dataset.dtCatering) {
+          var c = document.createElement('a');
+          c.className = 'dt-stop-catering';
+          c.href = '/catering';
+          c.textContent = 'Planning an event? We cater \u2192';
+          el.appendChild(c);
+        }
         el.hidden = false;
       }
 
@@ -925,6 +940,29 @@ export function renderStopBanner(ctx) {
 }
 
 /**
+ * The catering link that sits beside a home page's "View the menu" button
+ * (dialtone#1553).
+ *
+ * A SECONDARY link, never a second button. The menu is what most visitors came
+ * for, and two equal-weight calls to action make a person choose before they
+ * have read anything.
+ *
+ * On the HOME page only. The menu's job is to sell lunch to someone hungry, and
+ * a header link there competes with ordering — different surfaces, different
+ * jobs. Empty when the operator has not switched catering on, so a restaurant
+ * that does not cater never advertises it.
+ */
+export function renderCateringLink(ctx, className = 'catering-link') {
+  if (!ctx || !ctx.cateringEnabled) return '';
+  return `<a class="${escapeHtml(className)}" href="/catering">Catering &amp; events</a>`;
+}
+
+/** Styling for the link above, shared so the three templates cannot drift. */
+export const CATERING_LINK_STYLES =
+  '    .catering-link { display: inline-flex; align-items: center; text-decoration: none; font-weight: 600; opacity: .85; }' +
+  '\n    .catering-link:hover { opacity: 1; text-decoration: underline; }';
+
+/**
  * Banner styling, one string shared by every template for the same reason
  * ORDER_STYLES is — the three must not drift on something template-agnostic.
  * Painted in `--brand` / `--brand-ink`, which all three define, so it reads
@@ -933,6 +971,7 @@ export function renderStopBanner(ctx) {
 export const STOP_STYLES = `    .dt-stop{margin:18px 0 22px;padding:14px 16px;border-radius:14px;background:var(--brand,#111);color:var(--brand-ink,#fff);}
     .dt-stop.dt-stop-quiet{background:transparent;color:inherit;border:1px dashed currentColor;opacity:.72;}
     .dt-stop[hidden]{display:none;}
+    .dt-stop-catering{display:inline-block;margin-top:10px;font-weight:600;text-decoration:underline;color:inherit;}
     .dt-stop p{margin:0;}
     .dt-stop-heading{font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.82;}
     .dt-stop-place{margin-top:.25rem !important;font-size:1.15rem;font-weight:700;}

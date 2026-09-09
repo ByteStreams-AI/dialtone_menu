@@ -11,6 +11,8 @@ import {
   renderMenuDataIsland,
   renderOrderScript,
   ORDER_STYLES,
+  CATERING_LINK_STYLES,
+  renderCateringLink,
   renderStopBanner,
   STOP_STYLES,
 } from './shared.js';
@@ -446,6 +448,7 @@ function renderLacquerHomeBody(ctx) {
     '    .hero-rule { width: 3rem; height: 2px; border: 0; margin: 0.3rem 0 0; background: var(--brand-secondary); }',
     '    .tagline { margin: 0.1rem 0 0; color: rgba(251, 243, 230, 0.82); font-size: clamp(1rem, 2.4vw, 1.15rem); font-style: italic; font-family: var(--font-display); }',
     '    .hero-actions { margin-top: 1.5rem; display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }',
+    CATERING_LINK_STYLES,
     '    .menu-cta { display: inline-flex; align-items: center; text-decoration: none; font-weight: 700; font-size: 1rem; padding: 0.8rem 1.6rem; border-radius: 999px; background: var(--brand-secondary); color: #241206; }',
     '    main { max-width: var(--maxw); margin: 0 auto; padding: clamp(2rem, 6vh, 3.5rem) 1.5rem 4rem; display: grid; gap: clamp(2rem, 6vh, 3rem); }',
     '    .home-story { text-align: center; }',
@@ -477,7 +480,7 @@ function renderLacquerHomeBody(ctx) {
     '      <hr class="hero-rule">',
     tagline ? `      <p class="tagline">${escapeHtml(tagline)}</p>` : '',
     // Always present: the emptiest home page is still a route to the menu.
-    `      <div class="hero-actions"><a class="menu-cta" href="${escapeHtml(menuUrl || '/menu')}">View the menu</a></div>`,
+    `      <div class="hero-actions"><a class="menu-cta" href="${escapeHtml(menuUrl || '/menu')}">View the menu</a>${renderCateringLink(ctx)}</div>`,
     '    </div>',
     '  </header>',
     '  <main>',

@@ -9,6 +9,8 @@ import {
   renderMenuDataIsland,
   renderOrderScript,
   ORDER_STYLES,
+  CATERING_LINK_STYLES,
+  renderCateringLink,
   renderStopBanner,
   STOP_STYLES,
 } from './shared.js';
@@ -382,6 +384,7 @@ function renderCardsHomeBody(ctx) {
     '    .brand-logo{width:88px;height:88px;object-fit:contain;border-radius:16px;background:rgba(255,255,255,.92);padding:8px;box-shadow:0 4px 16px rgba(0,0,0,.4);flex:0 0 auto;}',
     '    .brand-wordmark{font-family:var(--font-display);font-weight:800;font-size:clamp(1.5rem,4vw,2rem);line-height:1.1;margin:0;color:var(--gold);}',
     '    .tagline{margin:.2rem 0 0;color:#ece3d7;}',
+    CATERING_LINK_STYLES,
     '    .menu-cta{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:800;padding:.85rem 1.6rem;border-radius:999px;background:var(--primary);color:#fff;white-space:nowrap;}',
     '    main{max-width:1120px;margin:0 auto;padding:1rem 1rem 3rem;display:grid;gap:1.5rem;}',
     '    .story{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.6rem;}',
@@ -411,7 +414,7 @@ function renderCardsHomeBody(ctx) {
     logoUrl
       ? `    <img class="brand-logo" src="${escapeHtml(logoUrl)}" alt="${escapeHtml(wordmark)} logo"><div><h1 class="brand-wordmark">${escapeHtml(wordmark)}</h1>${tagline ? `<p class="tagline">${escapeHtml(tagline)}</p>` : ''}</div>`
       : `    <div><h1 class="brand-wordmark">${escapeHtml(wordmark)}</h1>${tagline ? `<p class="tagline">${escapeHtml(tagline)}</p>` : ''}</div>`,
-    `    <a class="menu-cta" href="${escapeHtml(menuUrl || '/menu')}">View the menu</a>`,
+    `    <div class="header-actions">${renderCateringLink(ctx)}<a class="menu-cta" href="${escapeHtml(menuUrl || '/menu')}">View the menu</a></div>`,
     '  </div>',
     '  <main>',
     renderStopBanner(ctx),
