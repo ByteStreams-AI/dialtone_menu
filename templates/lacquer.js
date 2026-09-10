@@ -13,6 +13,7 @@ import {
   ORDER_STYLES,
   CATERING_LINK_STYLES,
   renderCateringLink,
+  QR_CONSENT_STYLES,
   renderStopBanner,
   STOP_STYLES,
 } from './shared.js';
@@ -209,7 +210,7 @@ function renderLacquerMenuBody(ctx) {
       ? `<a class="home-link" href="${escapeHtml(ctx.homeUrl)}">Home</a>`
       : '';
 
-  const appQrMarkup = renderAppQr(ctx.orderingEnabled);
+  const appQrMarkup = renderAppQr(ctx.orderingEnabled, ctx.wordmark);
 
   // Hero band — brand mark + tagline + CTA + the app QR, over a lacquer ground
   // (and the operator's hero photo, when set, behind a scrim).
@@ -270,6 +271,7 @@ function renderLacquerMenuBody(ctx) {
     MENU_CSS,
     ctx.orderingEnabled ? ORDER_STYLES : '',
     ctx.usesStops ? STOP_STYLES : '',
+    QR_CONSENT_STYLES,
     '  </style>',
     '</head>',
     '<body>',
