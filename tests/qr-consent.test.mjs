@@ -33,30 +33,39 @@ for (const template of ['standard', 'cards', 'lacquer']) {
   const html = renderMenu({ ...ctxFor(template), menuUrl: '/menu' });
 
   // 1. Present on every template, naming the restaurant rather than the slug.
-  assert.match(html, /Rewards includes SMS from Shorty&#39;s|Rewards includes SMS from Shorty's/,
+  assert.match(html, /SMS loyalty from Shorty&#39;s|SMS loyalty from Shorty's/,
     `${template} names the restaurant`);
   assert.ok(!html.includes('from shortys.'), `${template} does not print the slug`);
   assert.match(html, /\.app-qr-consent/, `${template} carries the shared styles`);
 
-  // 2. THE FULL OPT-IN TEXT MUST NOT BE HERE.
+  // 2. THE REGISTERED TEXT, VERBATIM (operator, 2026-09-10).
   //
-  //    It opens "By providing your name and phone number and clicking
-  //    'Submit,'" — and beside a QR there is no form and no Submit. Printing
-  //    it would describe an action the customer is not taking, which is
-  //    inaccurate rather than merely redundant. The full disclosure belongs at
-  //    the point consent is actually given.
-  assert.ok(!html.includes("clicking 'Submit'"), `${template} claims no Submit`);
+  //    This is the wording filed with Telnyx, so it is the authority: a live
+  //    CTA that differs from the registered one is a misdeclared campaign,
+  //    which is a worse finding than any wording question.
+  //
+  //    A shortened, medium-adapted version was proposed and rejected. Matching
+  //    the declaration is what carriers check.
+  assert.ok(html.includes("clicking &#39;Submit,&#39;") || html.includes("clicking 'Submit,'"),
+    `${template} carries the registered opening`);
+  assert.ok(html.includes('Reply STOP to opt out'), `${template} carries STOP`);
+  assert.ok(html.includes('Reply HELP for help'), `${template} carries HELP`);
 
-  // 3. And no opt-out instruction: nobody here has opted IN to anything, so
-  //    "Reply STOP" implies an enrolment that has not happened.
-  assert.ok(!html.includes('Reply STOP'), `${template} does not imply enrolment`);
+  // 3. The version marker is the DRIFT TRIPWIRE. This text is duplicated from
+  //    packages/shared in the dialtone repo — a cross-repo package cannot be
+  //    imported — so the marker is how a divergence becomes visible.
+  //    dialtone#1583 moves the text into the menu payload so there is one
+  //    source instead of two.
+  assert.match(html, /data-consent-version="2026-09-10\.v1"/,
+    `${template} stamps the version it rendered`);
 
   // 4. The clauses that ARE true of a program someone is deciding whether to
   //    join.
   for (const clause of [
     'Message frequency may vary',
-    'message and data rates may apply',
+    'Standard Message and Data Rates may apply',
     'Consent is not a condition of purchase',
+    'will not be sold or shared with third parties',
     'dialtone.menu/privacy',
   ]) {
     assert.ok(html.includes(clause), `${template} carries "${clause}"`);
@@ -72,7 +81,11 @@ for (const template of ['standard', 'cards', 'lacquer']) {
     { orderAppBound: true },
   );
   const html = renderMenu({ ...ctx, menuUrl: '/menu' });
-  assert.match(html, /Rewards includes SMS from/, 'still names a sender');
+  // Never an empty sender. buildMenuCtx's wordmark fallback supplies whatever
+  // the rest of the page is calling this restaurant, so the disclosure agrees
+  // with the heading above it rather than inventing a second name.
+  assert.ok(!html.includes('SMS loyalty from .'), 'never an empty sender');
+  assert.match(html, /SMS loyalty from \S+/, 'always names a sender');
 }
 
 console.log('qr-consent.test.mjs — 5 checks passed');
