@@ -11,6 +11,7 @@ import {
   ORDER_STYLES,
   CATERING_LINK_STYLES,
   renderCateringLink,
+  QR_CONSENT_STYLES,
   renderStopBanner,
   STOP_STYLES,
 } from './shared.js';
@@ -220,7 +221,7 @@ function renderCardsMenuBody(ctx) {
     '            <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg><input id="q" type="search" placeholder="Search" aria-label="Search the menu"></div>',
     '          </div>',
     '        </div>',
-    `        ${renderAppQr(ctx.orderingEnabled)}`,
+    `        ${renderAppQr(ctx.orderingEnabled, ctx.wordmark)}`,
     '      </div>'
   ].filter(Boolean).join('\n');
 
@@ -253,6 +254,7 @@ function renderCardsMenuBody(ctx) {
     MENU_CARDS_CSS,
     ctx.orderingEnabled ? ORDER_STYLES : '',
     ctx.usesStops ? STOP_STYLES : '',
+    QR_CONSENT_STYLES,
     '  </style>',
     '</head>',
     '<body>',

@@ -175,14 +175,42 @@ export const APP_QR_SVG =
  *
  * The aria-label carries the same claim and moves with the caption.
  */
-export function renderAppQr(orderingEnabled = false) {
+export function renderAppQr(orderingEnabled = false, restaurantName = '') {
   const [caption, label] = orderingEnabled
     ? ['Earn points! Download the app.', 'Earn points — download the app']
     : ['Earn points! Download to order.', 'Earn points — download the app to order'];
   return (
     `<a class="app-qr" href="https://dialtone.menu" target="_blank" rel="noopener noreferrer" aria-label="${label}">` +
     `<span class="app-qr-code">${APP_QR_SVG}</span>` +
-    `<span class="app-qr-caption">${caption}</span></a>`
+    `<span class="app-qr-caption">${caption}</span></a>` +
+    renderQrConsentNote(restaurantName)
+  );
+}
+
+/**
+ * The 10DLC notice beside the QR (dialtone#1581).
+ *
+ * DELIBERATELY NOT the full opt-in disclosure. That text opens "By providing
+ * your name and phone number and clicking 'Submit,'" — and beside a QR code
+ * there is no form and no Submit. Printing it here would describe an action
+ * the customer is not taking, which is inaccurate rather than merely
+ * redundant.
+ *
+ * This is the QR's honest job: tell someone what the rewards program INVOLVES
+ * before they scan. The full disclosure appears in the app, at the moment
+ * consent is actually given, where every clause of it is true.
+ *
+ * Deliberately no "Reply STOP" either: nobody here has opted in to anything,
+ * so an opt-out instruction is noise at best and implies an enrolment that has
+ * not happened.
+ */
+function renderQrConsentNote(restaurantName) {
+  const name = normalizeText(restaurantName, 120) || 'this restaurant';
+  return (
+    `<p class="app-qr-consent">Rewards includes SMS from ${escapeHtml(name)}. ` +
+    `Message frequency may vary; message and data rates may apply. ` +
+    `Consent is not a condition of purchase. ` +
+    `<a href="https://dialtone.menu/privacy" target="_blank" rel="noopener noreferrer">Privacy policy</a>.</p>`
   );
 }
 
@@ -687,6 +715,12 @@ export function renderMenuDataIsland(ctx) {
     // predates 0189): the checkout can then say "not configured" instead of
     // posting a blank tenant and reading back a generic rejection.
     ...(ctx.restaurantId ? { restaurant_id: ctx.restaurantId } : {}),
+    // dialtone#1581 — names the sender in the SMS loyalty consent disclosure
+    // the checkout shows beside the opt-in. The DISPLAY name, never the slug:
+    // a customer joining Shorty's must read "Shorty's", and a slug in front of
+    // a customer reads as a leaked internal id. Without this the disclosure
+    // falls back to "this restaurant", which is lawful and worse.
+    ...(ctx.wordmark ? { restaurant_name: ctx.wordmark } : {}),
     // Omitted when the tenant does not deliver, so the cart's default is pickup
     // by absence rather than by a flag it has to remember to check.
     ...(ctx.delivery
@@ -968,6 +1002,11 @@ export const CATERING_LINK_STYLES =
  * Painted in `--brand` / `--brand-ink`, which all three define, so it reads
  * correctly on Cards' dark ground as well as the two light ones.
  */
+/** The QR consent note's styling, shared so the three templates cannot drift. */
+export const QR_CONSENT_STYLES =
+  '    .app-qr-consent{margin:.5rem 0 0;font-size:.62rem;line-height:1.45;opacity:.75;max-width:22rem;}' +
+  '\n    .app-qr-consent a{color:inherit;text-decoration:underline;}';
+
 export const STOP_STYLES = `    .dt-stop{margin:18px 0 22px;padding:14px 16px;border-radius:14px;background:var(--brand,#111);color:var(--brand-ink,#fff);}
     .dt-stop.dt-stop-quiet{background:transparent;color:inherit;border:1px dashed currentColor;opacity:.72;}
     .dt-stop[hidden]{display:none;}
