@@ -215,17 +215,30 @@ const LOYALTY_CONSENT_VERSION = '2026-09-10.v1';
 
 function renderQrConsentNote(restaurantName) {
   const name = normalizeText(restaurantName, 120) || 'this restaurant';
+  // COLLAPSIBLE, not a link to a popup (operator, 2026-09-10). `<details>`
+  // keeps the full registered wording ON THE PAGE and in the source — a
+  // carrier or crawler reviewing the CTA finds it whether or not anyone opened
+  // it — and needs no JavaScript. A popup moves the disclosure off the page,
+  // which is the version closest to hiding it.
+  //
+  // The summary is not a bare label: it carries the two clauses checked first,
+  // so something meaningful stays visible without anyone tapping. It is
+  // deliberately NOT called "Privacy policy" — that is a different document,
+  // already linked inside, and a tap that promises one and delivers the other
+  // is worse than no label.
   return (
-    `<p class="app-qr-consent" data-consent-version="${escapeHtml(LOYALTY_CONSENT_VERSION)}">` +
-    `By providing your name and phone number and clicking 'Submit,' you agree to receive ` +
+    `<details class="app-qr-consent" data-consent-version="${escapeHtml(LOYALTY_CONSENT_VERSION)}">` +
+    `<summary>Rewards SMS terms &middot; Msg &amp; data rates may apply &middot; Reply STOP to opt out</summary>` +
+    `<p>By providing your name and phone number and clicking 'Submit,' you agree to receive ` +
     `SMS loyalty from ${escapeHtml(name)}. Message frequency may vary. Standard Message and ` +
     `Data Rates may apply. Reply STOP to opt out. Reply HELP for help. Consent is not a ` +
     `condition of purchase. Your mobile information will not be sold or shared with third ` +
     `parties for promotional or marketing purposes. Visit ` +
     `<a href="https://dialtone.menu/privacy" target="_blank" rel="noopener noreferrer">https://dialtone.menu/privacy</a> ` +
-    `to view our privacy policy.</p>`
+    `to view our privacy policy.</p></details>`
   );
 }
+
 
 
 // ---- the ctx normalizer (the seam) ----
@@ -1019,6 +1032,8 @@ export const CATERING_LINK_STYLES =
 /** The QR consent note's styling, shared so the three templates cannot drift. */
 export const QR_CONSENT_STYLES =
   '    .app-qr-consent{margin:.5rem 0 0;font-size:.62rem;line-height:1.45;opacity:.75;max-width:22rem;}' +
+  '\n    .app-qr-consent > summary{cursor:pointer;list-style:revert;}' +
+  '\n    .app-qr-consent > p{margin:.4rem 0 0;}' +
   '\n    .app-qr-consent a{color:inherit;text-decoration:underline;}';
 
 export const STOP_STYLES = `    .dt-stop{margin:18px 0 22px;padding:14px 16px;border-radius:14px;background:var(--brand,#111);color:var(--brand-ink,#fff);}

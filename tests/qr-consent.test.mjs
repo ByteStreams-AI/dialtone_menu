@@ -59,6 +59,26 @@ for (const template of ['standard', 'cards', 'lacquer']) {
   assert.match(html, /data-consent-version="2026-09-10\.v1"/,
     `${template} stamps the version it rendered`);
 
+  // 3b. COLLAPSIBLE, and the full text is IN THE SOURCE either way.
+  //
+  //     `<details>` rather than a link to a popup: a carrier or crawler
+  //     reviewing the CTA finds the registered wording whether or not anyone
+  //     opened it, and it needs no JavaScript. A popup would move the
+  //     disclosure off the page, which is the version closest to hiding it.
+  assert.match(html, /<details class="app-qr-consent"/, `${template} is collapsible`);
+  assert.match(html, /<summary>Rewards SMS terms/, `${template} summarises rather than labels`);
+
+  //     The summary is not a bare label — the two clauses checked first stay
+  //     visible without a tap.
+  const summary = html.slice(html.indexOf('<summary>'), html.indexOf('</summary>'));
+  assert.ok(summary.includes('rates may apply'), `${template} shows rates unopened`);
+  assert.ok(summary.includes('Reply STOP'), `${template} shows STOP unopened`);
+
+  //     And it is NOT called "Privacy policy": that is a different document,
+  //     already linked inside, and a tap that promises one and delivers the
+  //     other is worse than no label at all.
+  assert.ok(!/<summary>[^<]*[Pp]rivacy policy/.test(html), `${template} does not mislabel`);
+
   // 4. The clauses that ARE true of a program someone is deciding whether to
   //    join.
   for (const clause of [
