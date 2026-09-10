@@ -188,31 +188,45 @@ export function renderAppQr(orderingEnabled = false, restaurantName = '') {
 }
 
 /**
- * The 10DLC notice beside the QR (dialtone#1581).
+ * The 10DLC SMS loyalty disclosure, beside the app QR (dialtone#1581).
  *
- * DELIBERATELY NOT the full opt-in disclosure. That text opens "By providing
- * your name and phone number and clicking 'Submit,'" — and beside a QR code
- * there is no form and no Submit. Printing it here would describe an action
- * the customer is not taking, which is inaccurate rather than merely
- * redundant.
+ * THE REGISTERED TEXT, VERBATIM. This is the wording filed with Telnyx for the
+ * campaign, so it is the authority — a live CTA that differs from the
+ * registered one is a misdeclared campaign, which is a worse finding than any
+ * wording question.
  *
- * This is the QR's honest job: tell someone what the rewards program INVOLVES
- * before they scan. The full disclosure appears in the app, at the moment
- * consent is actually given, where every clause of it is true.
+ * I proposed a shortened, medium-adapted version here on the grounds that "by
+ * providing your name and phone number and clicking 'Submit'" describes a form
+ * that is not on this page. The operator's ruling (2026-09-10) is that the
+ * registered text ships everywhere, and that is the right call: matching the
+ * declaration is the thing carriers actually check.
  *
- * Deliberately no "Reply STOP" either: nobody here has opted in to anything,
- * so an opt-out instruction is noise at best and implies an enrolment that has
- * not happened.
+ * ⚠ THIS TEXT IS DUPLICATED. The canonical copy is
+ * `packages/shared/src/sms/loyalty-consent.ts` in the dialtone repo, which the
+ * checkout and the kiosk render and whose LOYALTY_CONSENT_VERSION is stamped
+ * onto every stored consent. A cross-repo package cannot be imported here, so
+ * the two must be changed TOGETHER — and dialtone#1583 tracks moving the text
+ * into the menu payload so there is one source instead of two.
+ *
+ * The version marker below is the tripwire in the meantime: if it stops
+ * matching LOYALTY_CONSENT_VERSION, these have drifted.
  */
+const LOYALTY_CONSENT_VERSION = '2026-09-10.v1';
+
 function renderQrConsentNote(restaurantName) {
   const name = normalizeText(restaurantName, 120) || 'this restaurant';
   return (
-    `<p class="app-qr-consent">Rewards includes SMS from ${escapeHtml(name)}. ` +
-    `Message frequency may vary; message and data rates may apply. ` +
-    `Consent is not a condition of purchase. ` +
-    `<a href="https://dialtone.menu/privacy" target="_blank" rel="noopener noreferrer">Privacy policy</a>.</p>`
+    `<p class="app-qr-consent" data-consent-version="${escapeHtml(LOYALTY_CONSENT_VERSION)}">` +
+    `By providing your name and phone number and clicking 'Submit,' you agree to receive ` +
+    `SMS loyalty from ${escapeHtml(name)}. Message frequency may vary. Standard Message and ` +
+    `Data Rates may apply. Reply STOP to opt out. Reply HELP for help. Consent is not a ` +
+    `condition of purchase. Your mobile information will not be sold or shared with third ` +
+    `parties for promotional or marketing purposes. Visit ` +
+    `<a href="https://dialtone.menu/privacy" target="_blank" rel="noopener noreferrer">https://dialtone.menu/privacy</a> ` +
+    `to view our privacy policy.</p>`
   );
 }
+
 
 // ---- the ctx normalizer (the seam) ----
 // Verbatim from worker.js buildMenuSuccessResponse lines 430-451: everything
