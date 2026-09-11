@@ -271,11 +271,15 @@ export const APP_QR_PANEL_STYLES =
  * The version marker below is the tripwire in the meantime: if it stops
  * matching LOYALTY_CONSENT_VERSION, these have drifted.
  */
-// v2 (operator, 2026-09-10) — the opening clause now describes the QR →
+// v3 — adds the marketing sentence Telnyx REQUIRES for a marketing use case
+// (Guide to the 10DLC Message Flow field). Loyalty SMS is one, and the word
+// was absent from v1 and v2 entirely.
+//
+// v2 — the opening clause now describes the QR →
 // install → provide-details flow instead of "clicking 'Submit'". MUST match
 // packages/shared in the dialtone repo; this marker is the only tripwire that
 // makes a cross-repo divergence visible.
-const LOYALTY_CONSENT_VERSION = '2026-09-10.v2';
+const LOYALTY_CONSENT_VERSION = '2026-09-10.v3';
 
 function renderConsentParagraph(restaurantName) {
   const name = normalizeText(restaurantName, 120) || 'this restaurant';
@@ -287,7 +291,8 @@ function renderConsentParagraph(restaurantName) {
     `<p class="app-qr-consent-label">Disclosure Statement</p>` +
     `<p class="app-qr-consent" data-consent-version="${escapeHtml(LOYALTY_CONSENT_VERSION)}">` +
     `By clicking the QR Code, installing the app, and providing your name and phone number, ` +
-    `you agree to receive SMS loyalty messages from ${escapeHtml(name)}. Message frequency ` +
+    `you agree to receive SMS loyalty messages from ${escapeHtml(name)}. You are opting in ` +
+    `to receive marketing sms from ${escapeHtml(name)}. Message frequency ` +
     `may vary. Standard Message and Data Rates may apply. Reply STOP to opt out. Reply HELP ` +
     `for help. Consent is not a condition of purchase. Your mobile information will not be ` +
     `sold or shared with third parties for promotional or marketing purposes. Visit ` +

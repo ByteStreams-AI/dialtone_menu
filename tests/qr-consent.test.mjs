@@ -58,7 +58,10 @@ for (const template of ['standard', 'cards', 'lacquer']) {
   //    imported — so the marker is how a divergence becomes visible.
   //    dialtone#1583 moves the text into the menu payload so there is one
   //    source instead of two.
-  assert.match(html, /data-consent-version="2026-09-10\.v2"/,
+  // Telnyx requires marketing be MENTIONED for a marketing use case.
+  assert.ok(html.includes('You are opting in to receive marketing sms from'),
+    `${template} states the marketing use case`);
+  assert.match(html, /data-consent-version="2026-09-10\.v3"/,
     `${template} stamps the version it rendered`);
 
   // 3b. ONE collapsible, and the full text is IN THE SOURCE either way.
