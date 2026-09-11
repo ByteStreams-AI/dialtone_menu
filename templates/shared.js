@@ -271,7 +271,11 @@ export const APP_QR_PANEL_STYLES =
  * The version marker below is the tripwire in the meantime: if it stops
  * matching LOYALTY_CONSENT_VERSION, these have drifted.
  */
-const LOYALTY_CONSENT_VERSION = '2026-09-10.v1';
+// v2 (operator, 2026-09-10) — the opening clause now describes the QR →
+// install → provide-details flow instead of "clicking 'Submit'". MUST match
+// packages/shared in the dialtone repo; this marker is the only tripwire that
+// makes a cross-repo divergence visible.
+const LOYALTY_CONSENT_VERSION = '2026-09-10.v2';
 
 function renderConsentParagraph(restaurantName) {
   const name = normalizeText(restaurantName, 120) || 'this restaurant';
@@ -282,11 +286,11 @@ function renderConsentParagraph(restaurantName) {
   return (
     `<p class="app-qr-consent-label">Disclosure Statement</p>` +
     `<p class="app-qr-consent" data-consent-version="${escapeHtml(LOYALTY_CONSENT_VERSION)}">` +
-    `By providing your name and phone number and clicking 'Submit,' you agree to receive ` +
-    `SMS loyalty from ${escapeHtml(name)}. Message frequency may vary. Standard Message and ` +
-    `Data Rates may apply. Reply STOP to opt out. Reply HELP for help. Consent is not a ` +
-    `condition of purchase. Your mobile information will not be sold or shared with third ` +
-    `parties for promotional or marketing purposes. Visit ` +
+    `By clicking the QR Code, installing the app, and providing your name and phone number, ` +
+    `you agree to receive SMS loyalty messages from ${escapeHtml(name)}. Message frequency ` +
+    `may vary. Standard Message and Data Rates may apply. Reply STOP to opt out. Reply HELP ` +
+    `for help. Consent is not a condition of purchase. Your mobile information will not be ` +
+    `sold or shared with third parties for promotional or marketing purposes. Visit ` +
     `<a href="https://dialtone.menu/privacy" target="_blank" rel="noopener noreferrer">https://dialtone.menu/privacy</a> ` +
     `to view our privacy policy.</p>`
   );

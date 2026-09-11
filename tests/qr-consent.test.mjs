@@ -33,7 +33,7 @@ for (const template of ['standard', 'cards', 'lacquer']) {
   const html = renderMenu({ ...ctxFor(template), menuUrl: '/menu' });
 
   // 1. Present on every template, naming the restaurant rather than the slug.
-  assert.match(html, /SMS loyalty from Shorty&#39;s|SMS loyalty from Shorty's/,
+  assert.match(html, /SMS loyalty messages from Shorty&#39;s|SMS loyalty messages from Shorty's/,
     `${template} names the restaurant`);
   assert.ok(!html.includes('from shortys.'), `${template} does not print the slug`);
   assert.match(html, /\.app-qr-consent/, `${template} carries the shared styles`);
@@ -46,7 +46,9 @@ for (const template of ['standard', 'cards', 'lacquer']) {
   //
   //    A shortened, medium-adapted version was proposed and rejected. Matching
   //    the declaration is what carriers check.
-  assert.ok(html.includes("clicking &#39;Submit,&#39;") || html.includes("clicking 'Submit,'"),
+  // v2 opening (operator, 2026-09-10): the QR → install → provide-details
+  // flow, replacing "clicking 'Submit'".
+  assert.ok(html.includes('By clicking the QR Code, installing the app'),
     `${template} carries the registered opening`);
   assert.ok(html.includes('Reply STOP to opt out'), `${template} carries STOP`);
   assert.ok(html.includes('Reply HELP for help'), `${template} carries HELP`);
@@ -56,7 +58,7 @@ for (const template of ['standard', 'cards', 'lacquer']) {
   //    imported — so the marker is how a divergence becomes visible.
   //    dialtone#1583 moves the text into the menu payload so there is one
   //    source instead of two.
-  assert.match(html, /data-consent-version="2026-09-10\.v1"/,
+  assert.match(html, /data-consent-version="2026-09-10\.v2"/,
     `${template} stamps the version it rendered`);
 
   // 3b. ONE collapsible, and the full text is IN THE SOURCE either way.
@@ -118,8 +120,8 @@ for (const template of ['standard', 'cards', 'lacquer']) {
   // Never an empty sender. buildMenuCtx's wordmark fallback supplies whatever
   // the rest of the page is calling this restaurant, so the disclosure agrees
   // with the heading above it rather than inventing a second name.
-  assert.ok(!html.includes('SMS loyalty from .'), 'never an empty sender');
-  assert.match(html, /SMS loyalty from \S+/, 'always names a sender');
+  assert.ok(!html.includes('SMS loyalty messages from .'), 'never an empty sender');
+  assert.match(html, /SMS loyalty messages from \S+/, 'always names a sender');
 }
 
 console.log('qr-consent.test.mjs — 5 checks passed');
