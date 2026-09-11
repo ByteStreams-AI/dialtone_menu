@@ -59,20 +59,31 @@ for (const template of ['standard', 'cards', 'lacquer']) {
   assert.match(html, /data-consent-version="2026-09-10\.v1"/,
     `${template} stamps the version it rendered`);
 
-  // 3b. COLLAPSIBLE, and the full text is IN THE SOURCE either way.
+  // 3b. ONE collapsible, and the full text is IN THE SOURCE either way.
   //
-  //     `<details>` rather than a link to a popup: a carrier or crawler
-  //     reviewing the CTA finds the registered wording whether or not anyone
-  //     opened it, and it needs no JavaScript. A popup would move the
-  //     disclosure off the page, which is the version closest to hiding it.
-  assert.match(html, /<details class="app-qr-consent"/, `${template} is collapsible`);
-  assert.match(html, /<summary>Rewards SMS terms/, `${template} summarises rather than labels`);
+  //     The disclosure now lives inside the "Order via App" panel, SHOWN
+  //     plainly rather than behind a second `<details>` (operator, follow-up
+  //     2). Two taps to reach a consent notice is the version closest to
+  //     hiding it.
+  //
+  //     `<details>` for the panel rather than a popup, for the original
+  //     reason: a carrier or crawler reviewing the CTA finds the registered
+  //     wording whether or not anyone opened it, and it needs no JavaScript.
+  assert.match(html, /<details class="app-qr-panel/, `${template} panel is collapsible`);
+  assert.match(html, /<summary>Order via App<\/summary>/, `${template} labels the panel`);
 
-  //     The summary is not a bare label — the two clauses checked first stay
-  //     visible without a tap.
-  const summary = html.slice(html.indexOf('<summary>'), html.indexOf('</summary>'));
-  assert.ok(summary.includes('rates may apply'), `${template} shows rates unopened`);
-  assert.ok(summary.includes('Reply STOP'), `${template} shows STOP unopened`);
+  //     The disclosure must sit INSIDE that panel, below the QR — not
+  //     somewhere else on the page, and not behind another tap.
+  {
+    const panel = html.slice(html.indexOf('<details class="app-qr-panel'));
+    const body = panel.slice(0, panel.indexOf('</details>') + 10);
+    assert.ok(body.includes('Standard Message and Data Rates'),
+      `${template} keeps the disclosure inside the app panel`);
+    assert.ok(!/<details/.test(body.slice(body.indexOf('app-qr-consent'))),
+      `${template} does not bury the disclosure behind a second collapsible`);
+    assert.ok(body.indexOf('<svg') < body.indexOf('Standard Message and'),
+      `${template} shows the QR above the disclosure`);
+  }
 
   //     And it is NOT called "Privacy policy": that is a different document,
   //     already linked inside, and a tap that promises one and delivers the

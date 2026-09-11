@@ -126,11 +126,27 @@ async function run() {
   assert.match(html, /Visit our site/, 'Website CTA should render when website_url exists');
   assert.match(html, /target="_blank"/, 'Website CTA should open in a new tab');
   assert.match(html, /rel="noopener noreferrer"/, 'Website CTA should enforce safe rel attributes');
-  // App-download QR on the right of the header + its bold caption.
-  assert.match(html, /class="app-qr"[^>]*href="https:\/\/dialtone\.menu"/, 'App QR should link to dialtone.menu (retargets to app stores later)');
-  assert.match(html, /class="app-qr-code"><svg[^>]*viewBox="0 0 25 25"/, 'App QR should render the self-contained SVG');
-  assert.match(html, /class="app-qr-caption">Earn points! Download to order\./, 'QR caption should render');
-  assert.match(html, /\.app-qr-caption \{[^}]*font-weight: 700/, 'QR caption should be bold');
+  // The app QR moved OUT of the middle of the page and into a footer
+  // collapsible that also carries the 10DLC disclosure (follow-up 2). Asserted
+  // as the REQUIREMENT — QR and disclosure in one panel — rather than as a
+  // class name, so a restyle does not fail here but a separated disclosure
+  // does.
+  assert.match(html, /<details class="app-qr-panel[^"]*">/, 'App QR lives in a collapsible panel');
+  assert.match(html, /<summary>Order via App<\/summary>/, 'Panel is labelled Order via App');
+  assert.match(html, /app-qr-panel__qr[^>]*href="https:\/\/dialtone\.menu"/, 'QR still links to dialtone.menu');
+  assert.match(html, /<svg[^>]*viewBox="0 0 25 25"/, 'QR renders the self-contained SVG');
+  assert.doesNotMatch(html, /class="app-qr"/, 'the old centred QR block is gone');
+  {
+    // The disclosure must sit INSIDE the same panel as the QR it discloses —
+    // a consent notice somewhere else is the version closest to hiding it.
+    const panel = html.slice(html.indexOf('<details class="app-qr-panel'));
+    const body = panel.slice(0, panel.indexOf('</details>') + 10);
+    assert.match(body, /Standard Message and Data Rates/, 'disclosure is inside the panel');
+    assert.ok(
+      body.indexOf('<svg') < body.indexOf('Standard Message and'),
+      'QR appears above the disclosure, per the operator layout',
+    );
+  }
   assert.match(html, /\.tagline \{[^}]*font-style: italic/, 'Tagline is an italic serif in the hero (Phase 1 redesign)');
   assert.match(html, /Served 7:00 AM-11:00 AM/, 'Serving window label should be rendered');
   // Special item: a "Special" label + the special price, no strikethrough.
@@ -356,7 +372,7 @@ async function runSiteSurfaces() {
   const homeRoot = await serve(withSite('home_and_menu'), 'https://main-street.m.dialtone.menu/');
   assert.match(homeRoot, /class="site-header"/, 'home mode renders the home page at the root');
   assert.match(homeRoot, /Fire, salt, time/, 'the story headline renders');
-  assert.match(homeRoot, /View the menu/, 'the home page always links to the menu');
+  assert.match(homeRoot, /View Menu/, 'the home page always links to the menu');
   assert.match(homeRoot, /restaurant-gallery\/r1\/a\.webp/, 'gallery paths become URLs on the storage origin');
   assert.match(homeRoot, /11:00 AM/, 'hours render from the admin, not re-entered content');
   assert.match(homeRoot, /rel="canonical" href="https:\/\/main-street\.m\.dialtone\.menu\/"/, 'the home page is canonical for itself');
@@ -421,7 +437,7 @@ async function runSiteSurfaces() {
     p.restaurant.menu_template = template;
     const home = await serve(p, 'https://main-street.m.dialtone.menu/');
     assert.match(home, signature, `${template} renders its own home surface`);
-    assert.match(home, /View the menu/, `${template} home always links to the menu`);
+    assert.match(home, /View Menu/, `${template} home always links to the menu`);
     assert.match(home, /Fire, salt, time/, `${template} home renders the story`);
     assert.match(home, /restaurant-gallery\/r1\/a\.webp/, `${template} home renders the gallery`);
     assert.match(home, /11:00 AM/, `${template} home renders hours from the admin`);

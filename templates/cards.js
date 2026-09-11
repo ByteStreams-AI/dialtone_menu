@@ -1,17 +1,27 @@
 // templates/cards.js — the photo-forward 'cards' template (#914).
 // Body + CSS + item/section renderers, extracted verbatim from worker.js.
 import {
-  escapeHtml, normalizeText, normalizeCents, formatCurrency, hexToRgba,
+  escapeHtml,
+  normalizeText,
+  normalizeCents,
+  formatCurrency,
+  hexToRgba,
   readableInkOn,
-  safeLogoUrl, isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay,
+  safeLogoUrl,
+  isValidServingTime,
+  formatServingRange,
+  renderAppQrPanel,
+  formatPhoneForDisplay,
   orderItemAttrs,
   renderOrderButton,
   renderMenuDataIsland,
   renderOrderScript,
   ORDER_STYLES,
+  APP_QR_PANEL_STYLES,
   CATERING_LINK_STYLES,
-  renderCateringLink,
+  HERO_PILL_STYLES,
   QR_CONSENT_STYLES,
+  renderCateringLink,
   renderStopBanner,
   STOP_STYLES,
 } from './shared.js';
@@ -221,7 +231,6 @@ function renderCardsMenuBody(ctx) {
     '            <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg><input id="q" type="search" placeholder="Search" aria-label="Search the menu"></div>',
     '          </div>',
     '        </div>',
-    `        ${renderAppQr(ctx.orderingEnabled, ctx.wordmark)}`,
     '      </div>'
   ].filter(Boolean).join('\n');
 
@@ -255,6 +264,8 @@ function renderCardsMenuBody(ctx) {
     ctx.orderingEnabled ? ORDER_STYLES : '',
     ctx.usesStops ? STOP_STYLES : '',
     QR_CONSENT_STYLES,
+    APP_QR_PANEL_STYLES,
+    HERO_PILL_STYLES,
     '  </style>',
     '</head>',
     '<body>',
@@ -267,7 +278,7 @@ function renderCardsMenuBody(ctx) {
     `        ${sections || '<p class="empty" style="display:block">No menu items are currently available.</p>'}`,
     '        <p class="empty" id="empty">No items match your search.</p>',
     '      </main>',
-    `      <footer><span>${escapeHtml(ctx.wordmark)} · Menu by <a href="https://dialtone.menu">DialTone</a></span></footer>`,
+    `      <footer><span>${escapeHtml(ctx.wordmark)} · Menu by <a href="https://dialtone.menu">DialTone</a></span>${renderAppQrPanel(ctx.orderingEnabled, ctx.wordmark, true)}</footer>`,
     '    </div>',
     '  </div>',
     '  <script>',
@@ -387,6 +398,9 @@ function renderCardsHomeBody(ctx) {
     '    .brand-wordmark{font-family:var(--font-display);font-weight:800;font-size:clamp(1.5rem,4vw,2rem);line-height:1.1;margin:0;color:var(--gold);}',
     '    .tagline{margin:.2rem 0 0;color:#ece3d7;}',
     CATERING_LINK_STYLES,
+    APP_QR_PANEL_STYLES,
+    HERO_PILL_STYLES,
+    QR_CONSENT_STYLES,
     '    .menu-cta{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:800;padding:.85rem 1.6rem;border-radius:999px;background:var(--primary);color:#fff;white-space:nowrap;}',
     '    main{max-width:1120px;margin:0 auto;padding:1rem 1rem 3rem;display:grid;gap:1.5rem;}',
     '    .story{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.6rem;}',
@@ -416,7 +430,8 @@ function renderCardsHomeBody(ctx) {
     logoUrl
       ? `    <img class="brand-logo" src="${escapeHtml(logoUrl)}" alt="${escapeHtml(wordmark)} logo"><div><h1 class="brand-wordmark">${escapeHtml(wordmark)}</h1>${tagline ? `<p class="tagline">${escapeHtml(tagline)}</p>` : ''}</div>`
       : `    <div><h1 class="brand-wordmark">${escapeHtml(wordmark)}</h1>${tagline ? `<p class="tagline">${escapeHtml(tagline)}</p>` : ''}</div>`,
-    `    <div class="header-actions">${renderCateringLink(ctx)}<a class="menu-cta" href="${escapeHtml(menuUrl || '/menu')}">View the menu</a></div>`,
+    `    <div class="header-actions"><a class="hero-pill" href="${escapeHtml(menuUrl || '/menu')}">View Menu</a>${renderCateringLink(ctx)}</div>`,
+    `    <div class="header-app">${renderAppQrPanel(ctx.orderingEnabled, ctx.wordmark)}</div>`,
     '  </div>',
     '  <main>',
     renderStopBanner(ctx),
