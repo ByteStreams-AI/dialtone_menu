@@ -33,7 +33,7 @@ for (const template of ['standard', 'cards', 'lacquer']) {
   const html = renderMenu({ ...ctxFor(template), menuUrl: '/menu' });
 
   // 1. Present on every template, naming the restaurant rather than the slug.
-  assert.match(html, /SMS loyalty from Shorty&#39;s|SMS loyalty from Shorty's/,
+  assert.match(html, /SMS loyalty messages from Shorty&#39;s|SMS loyalty messages from Shorty's/,
     `${template} names the restaurant`);
   assert.ok(!html.includes('from shortys.'), `${template} does not print the slug`);
   assert.match(html, /\.app-qr-consent/, `${template} carries the shared styles`);
@@ -46,7 +46,9 @@ for (const template of ['standard', 'cards', 'lacquer']) {
   //
   //    A shortened, medium-adapted version was proposed and rejected. Matching
   //    the declaration is what carriers check.
-  assert.ok(html.includes("clicking &#39;Submit,&#39;") || html.includes("clicking 'Submit,'"),
+  // v2 opening (operator, 2026-09-10): the QR → install → provide-details
+  // flow, replacing "clicking 'Submit'".
+  assert.ok(html.includes('By clicking the QR Code, installing the app'),
     `${template} carries the registered opening`);
   assert.ok(html.includes('Reply STOP to opt out'), `${template} carries STOP`);
   assert.ok(html.includes('Reply HELP for help'), `${template} carries HELP`);
@@ -56,23 +58,41 @@ for (const template of ['standard', 'cards', 'lacquer']) {
   //    imported — so the marker is how a divergence becomes visible.
   //    dialtone#1583 moves the text into the menu payload so there is one
   //    source instead of two.
-  assert.match(html, /data-consent-version="2026-09-10\.v1"/,
+  // This worker renders the APP opt-in channel only — the QR is the opt-in on
+  // both the home page and the menu footer — so it carries that entry's text.
+  assert.ok(html.includes('By clicking the QR Code, installing the app'),
+    `${template} carries the APP channel's registered opening`);
+  assert.match(html, /data-consent-version="2026-09-10\.v4"/,
     `${template} stamps the version it rendered`);
 
-  // 3b. COLLAPSIBLE, and the full text is IN THE SOURCE either way.
+  // 3b. ONE collapsible, and the full text is IN THE SOURCE either way.
   //
-  //     `<details>` rather than a link to a popup: a carrier or crawler
-  //     reviewing the CTA finds the registered wording whether or not anyone
-  //     opened it, and it needs no JavaScript. A popup would move the
-  //     disclosure off the page, which is the version closest to hiding it.
-  assert.match(html, /<details class="app-qr-consent"/, `${template} is collapsible`);
-  assert.match(html, /<summary>Rewards SMS terms/, `${template} summarises rather than labels`);
+  //     The disclosure now lives inside the "Order via App" panel, SHOWN
+  //     plainly rather than behind a second `<details>` (operator, follow-up
+  //     2). Two taps to reach a consent notice is the version closest to
+  //     hiding it.
+  //
+  //     `<details>` for the panel rather than a popup, for the original
+  //     reason: a carrier or crawler reviewing the CTA finds the registered
+  //     wording whether or not anyone opened it, and it needs no JavaScript.
+  assert.match(html, /<details class="app-qr-panel/, `${template} panel is collapsible`);
+  assert.match(html, /<summary>Order via App<\/summary>/, `${template} labels the panel`);
 
-  //     The summary is not a bare label — the two clauses checked first stay
-  //     visible without a tap.
-  const summary = html.slice(html.indexOf('<summary>'), html.indexOf('</summary>'));
-  assert.ok(summary.includes('rates may apply'), `${template} shows rates unopened`);
-  assert.ok(summary.includes('Reply STOP'), `${template} shows STOP unopened`);
+  //     The disclosure must sit INSIDE that panel, below the QR — not
+  //     somewhere else on the page, and not behind another tap.
+  {
+    const panel = html.slice(html.indexOf('<details class="app-qr-panel'));
+    const body = panel.slice(0, panel.indexOf('</details>') + 10);
+    assert.ok(body.includes('Standard Message and Data Rates'),
+      `${template} keeps the Disclosure Statement inside the app panel`);
+    // Named, not an unlabelled block of small legal text a guest scrolls past.
+    assert.ok(body.includes('Disclosure Statement'),
+      `${template} labels the Disclosure Statement`);
+    assert.ok(!/<details/.test(body.slice(body.indexOf('app-qr-consent'))),
+      `${template} does not bury the disclosure behind a second collapsible`);
+    assert.ok(body.indexOf('<svg') < body.indexOf('Standard Message and'),
+      `${template} shows the QR above the disclosure`);
+  }
 
   //     And it is NOT called "Privacy policy": that is a different document,
   //     already linked inside, and a tap that promises one and delivers the
@@ -104,8 +124,8 @@ for (const template of ['standard', 'cards', 'lacquer']) {
   // Never an empty sender. buildMenuCtx's wordmark fallback supplies whatever
   // the rest of the page is calling this restaurant, so the disclosure agrees
   // with the heading above it rather than inventing a second name.
-  assert.ok(!html.includes('SMS loyalty from .'), 'never an empty sender');
-  assert.match(html, /SMS loyalty from \S+/, 'always names a sender');
+  assert.ok(!html.includes('SMS loyalty messages from .'), 'never an empty sender');
+  assert.match(html, /SMS loyalty messages from \S+/, 'always names a sender');
 }
 
 console.log('qr-consent.test.mjs — 5 checks passed');

@@ -175,17 +175,77 @@ export const APP_QR_SVG =
  *
  * The aria-label carries the same claim and moves with the caption.
  */
-export function renderAppQr(orderingEnabled = false, restaurantName = '') {
-  const [caption, label] = orderingEnabled
-    ? ['Earn points! Download the app.', 'Earn points — download the app']
-    : ['Earn points! Download to order.', 'Earn points — download the app to order'];
+/**
+ * "Order via App" — the QR and the 10DLC disclosure, together, behind one
+ * collapsible (dialtone#1581, follow-up 2).
+ *
+ * Replaces the bare QR block that sat in the middle of the menu page. Two
+ * reasons that is better, and neither is tidiness:
+ *
+ * 1. The disclosure and the thing it discloses are now in the SAME panel. A
+ *    consent notice that lives somewhere other than the call to action is the
+ *    version closest to hiding it, and a carrier reviewing the CTA should not
+ *    have to hunt.
+ * 2. The QR stops competing with ordering. With web ordering on, a big
+ *    "download the app" block above the Add buttons tells a guest to go
+ *    install something to do what the page already does.
+ *
+ * Still `<details>`, still no JavaScript: the full registered wording stays ON
+ * THE PAGE and in the source whether or not anyone opens it.
+ *
+ * `dropUp` renders the panel opening UPWARD, for the footer — a disclosure
+ * that expands off the bottom of the page makes the reader scroll to see what
+ * they just asked for.
+ */
+export function renderAppQrPanel(orderingEnabled = false, restaurantName = '', dropUp = false) {
+  // The app's pitch is what it still uniquely offers once the page can take an
+  // order: points and a saved history, not the order itself.
+  // Preserves the dialtone#1215 decision, which is about MEANING not wording:
+  // on a menu that cannot take an order, telling the guest to download in
+  // order to order is still true and useful; on one that can, it sends them
+  // away to do what the page already does, with the Add buttons right there.
+  const pitch = orderingEnabled
+    ? 'Earn points on every visit.'
+    : 'Download to order and earn points.';
+  const cls = dropUp ? 'app-qr-panel app-qr-panel--up' : 'app-qr-panel';
   return (
-    `<a class="app-qr" href="https://dialtone.menu" target="_blank" rel="noopener noreferrer" aria-label="${label}">` +
-    `<span class="app-qr-code">${APP_QR_SVG}</span>` +
-    `<span class="app-qr-caption">${caption}</span></a>` +
-    renderQrConsentNote(restaurantName)
+    `<details class="${cls}">` +
+    `<summary>Order via App</summary>` +
+    `<div class="app-qr-panel__body">` +
+    `<a class="app-qr-panel__qr" href="https://dialtone.menu" target="_blank" rel="noopener noreferrer" aria-label="Download the app">` +
+    `${APP_QR_SVG}</a>` +
+    `<p class="app-qr-panel__pitch">${pitch}</p>` +
+    // SHOWN, not nested behind a second collapsible (operator, follow-up 2).
+    // A disclosure two taps deep is the version closest to hiding it, and the
+    // panel is already the collapsible — the registered text is in the source
+    // either way, so a carrier or crawler reviewing the CTA still finds it.
+    renderConsentParagraph(restaurantName) +
+    `</div></details>`
   );
 }
+
+/**
+ * Styling for the panel above, shared so the three templates cannot drift.
+ * Painted in the brand tokens every template defines, so it reads correctly on
+ * Cards' dark ground as well as the two light ones.
+ */
+export const APP_QR_PANEL_STYLES =
+  '    .app-qr-panel{position:relative;max-width:20rem;border:1px solid color-mix(in srgb, currentColor 22%, transparent);border-radius:14px;background:var(--brand-soft,rgba(255,255,255,.06));}' +
+  '\n    .app-qr-panel > summary{cursor:pointer;list-style:none;padding:.55rem .9rem;font-size:.78rem;font-weight:700;letter-spacing:.01em;display:flex;align-items:center;justify-content:space-between;gap:.5rem;}' +
+  '\n    .app-qr-panel > summary::-webkit-details-marker{display:none;}' +
+  '\n    .app-qr-panel > summary::after{content:"\u25BE";font-size:.7em;opacity:.7;transition:transform .15s ease;}' +
+  '\n    .app-qr-panel[open] > summary::after{transform:rotate(180deg);}' +
+  '\n    .app-qr-panel__body{padding:0 .9rem .9rem;text-align:center;}' +
+  '\n    .app-qr-panel__qr{display:inline-block;background:#fff;padding:8px;border-radius:10px;line-height:0;}' +
+  '\n    .app-qr-panel__qr svg{display:block;width:104px;height:104px;}' +
+  '\n    .app-qr-panel__pitch{margin:.5rem 0 0;font-size:.74rem;font-weight:600;opacity:.9;}' +
+  '\n    .app-qr-panel .app-qr-consent{margin:.25rem auto 0;text-align:left;}' +
+  '\n    .app-qr-consent-label{margin:.6rem 0 0;font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.7;text-align:left;}' +
+  // Footer placement: expand UPWARD so the reader does not have to scroll to
+  // see what they just opened.
+  '\n    .app-qr-panel--up[open]{position:relative;}' +
+  '\n    .app-qr-panel--up[open] > .app-qr-panel__body{position:absolute;bottom:100%;left:auto;right:0;width:min(20rem,88vw);margin-bottom:.4rem;padding:.9rem;border:1px solid color-mix(in srgb, currentColor 22%, transparent);border-radius:14px;background:var(--panel-bg,#fff);color:inherit;box-shadow:0 -8px 24px rgba(0,0,0,.18);z-index:5;}' +
+  '\n    @media (max-width: 520px){ .app-qr-panel--up[open] > .app-qr-panel__body{position:static;box-shadow:none;border:0;padding:0 0 .9rem;} }';
 
 /**
  * The 10DLC SMS loyalty disclosure, beside the app QR (dialtone#1581).
@@ -211,34 +271,37 @@ export function renderAppQr(orderingEnabled = false, restaurantName = '') {
  * The version marker below is the tripwire in the meantime: if it stops
  * matching LOYALTY_CONSENT_VERSION, these have drifted.
  */
-const LOYALTY_CONSENT_VERSION = '2026-09-10.v1';
+// v4 — the REGISTERED wording for the APP opt-in channel, which is the only
+// channel this worker renders (home page and menu footer both show the QR).
+// There is now a campaign PER RESTAURANT and a Message Flow entry per channel
+// (operator, 2026-09-10), so each surface carries its own entry's text. The
+// v3 marketing sentence is removed: none of the three registered entries
+// contains it.
+//
+// v2 — the opening clause describes the QR →
+// install → provide-details flow instead of "clicking 'Submit'". MUST match
+// packages/shared in the dialtone repo; this marker is the only tripwire that
+// makes a cross-repo divergence visible.
+const LOYALTY_CONSENT_VERSION = '2026-09-10.v4';
 
-function renderQrConsentNote(restaurantName) {
+function renderConsentParagraph(restaurantName) {
   const name = normalizeText(restaurantName, 120) || 'this restaurant';
-  // COLLAPSIBLE, not a link to a popup (operator, 2026-09-10). `<details>`
-  // keeps the full registered wording ON THE PAGE and in the source — a
-  // carrier or crawler reviewing the CTA finds it whether or not anyone opened
-  // it — and needs no JavaScript. A popup moves the disclosure off the page,
-  // which is the version closest to hiding it.
-  //
-  // The summary is not a bare label: it carries the two clauses checked first,
-  // so something meaningful stays visible without anyone tapping. It is
-  // deliberately NOT called "Privacy policy" — that is a different document,
-  // already linked inside, and a tap that promises one and delivers the other
-  // is worse than no label.
+  // Labelled "Disclosure Statement" (operator, 2026-09-10). An unlabelled block
+  // of small legal text is something a guest scrolls past; naming it says what
+  // it is before they decide whether to read it. The label sits ABOVE the
+  // registered wording and changes not one character of it.
   return (
-    `<details class="app-qr-consent" data-consent-version="${escapeHtml(LOYALTY_CONSENT_VERSION)}">` +
-    `<summary>Rewards SMS terms &middot; Msg &amp; data rates may apply &middot; Reply STOP to opt out</summary>` +
-    `<p>By providing your name and phone number and clicking 'Submit,' you agree to receive ` +
-    `SMS loyalty from ${escapeHtml(name)}. Message frequency may vary. Standard Message and ` +
-    `Data Rates may apply. Reply STOP to opt out. Reply HELP for help. Consent is not a ` +
-    `condition of purchase. Your mobile information will not be sold or shared with third ` +
-    `parties for promotional or marketing purposes. Visit ` +
+    `<p class="app-qr-consent-label">Disclosure Statement</p>` +
+    `<p class="app-qr-consent" data-consent-version="${escapeHtml(LOYALTY_CONSENT_VERSION)}">` +
+    `By clicking the QR Code, installing the app, and providing your name and phone number, ` +
+    `you agree to receive SMS loyalty messages from ${escapeHtml(name)}. Message frequency ` +
+    `may vary. Standard Message and Data Rates may apply. Reply STOP to opt out. Reply HELP ` +
+    `for help. Consent is not a condition of purchase. Your mobile information will not be ` +
+    `sold or shared with third parties for promotional or marketing purposes. Visit ` +
     `<a href="https://dialtone.menu/privacy" target="_blank" rel="noopener noreferrer">https://dialtone.menu/privacy</a> ` +
-    `to view our privacy policy.</p></details>`
+    `to view our privacy policy.</p>`
   );
 }
-
 
 
 // ---- the ctx normalizer (the seam) ----
@@ -1013,10 +1076,36 @@ export function renderStopBanner(ctx) {
  * jobs. Empty when the operator has not switched catering on, so a restaurant
  * that does not cater never advertises it.
  */
-export function renderCateringLink(ctx, className = 'catering-link') {
+export function renderCateringLink(ctx, className = 'hero-pill hero-pill--ghost') {
   if (!ctx || !ctx.cateringEnabled) return '';
-  return `<a class="${escapeHtml(className)}" href="/catering">Catering &amp; events</a>`;
+  return `<a class="${escapeHtml(className)}" href="/catering">Catering &amp; Events</a>`;
 }
+
+/**
+ * The two home-page pills, shared so the three templates cannot drift on size.
+ *
+ * Both are the SAME size (operator, follow-up 2). The earlier design made
+ * catering a secondary LINK on the reasoning that two equal calls to action
+ * make a person choose before they have read anything — the operator's ruling
+ * reverses that, and it is a defensible call: a visitor who came to book an
+ * event should not have to find a smaller link to do it.
+ *
+ * Title Case on both, per the button convention.
+ */
+export const HERO_PILL_STYLES =
+  '    .hero-pill{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:700;font-size:.82rem;line-height:1;padding:.6rem 1.1rem;border-radius:999px;white-space:nowrap;background:var(--brand-secondary,var(--brand-primary,#111));color:var(--brand-ink,#fff);}' +
+  '\n    .hero-pill--ghost{background:transparent;color:inherit;border:1px solid color-mix(in srgb, currentColor 45%, transparent);}' +
+  '\n    .hero-pill:hover{opacity:.9;}' +
+  // Upper-right of the hero, with the app panel stacked beneath (operator,
+  // follow-up 2). Absolute so it clears the centred brand mark instead of
+  // pushing it down.
+  '\n    .hero-corner{position:absolute;top:1rem;right:1rem;z-index:3;display:flex;flex-direction:column;align-items:flex-end;gap:.5rem;}' +
+  '\n    .hero-corner__pills{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end;}' +
+  // Sits directly under the hero's corner pills, reading as the same group,
+  // but outside the hero's overflow clip.
+  '\n    .hero-app-strip{max-width:var(--maxw,1100px);margin:.75rem auto 0;padding:0 1.5rem;display:flex;justify-content:flex-end;}' +
+  '\n    @media (max-width: 620px){ .hero-app-strip{justify-content:center;} }' +
+  '\n    @media (max-width: 620px){ .hero-corner{position:static;align-items:center;margin:0 auto 1rem;} .hero-corner__pills{justify-content:center;} }';
 
 /** Styling for the link above, shared so the three templates cannot drift. */
 export const CATERING_LINK_STYLES =

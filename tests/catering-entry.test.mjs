@@ -42,7 +42,7 @@ for (const template of ['standard', 'cards', 'lacquer']) {
   const ctx = { ...ctxFor(template), menuUrl: '/menu' };
   const on = renderHome(ctx);
   assert.match(on, /href="\/catering"/, `${template} home links to catering`);
-  assert.match(on, /\.catering-link/, `${template} carries the shared styles`);
+  assert.match(on, /\.hero-pill/, `${template} carries the shared pill styles`);
 
   const off = renderHome({ ...ctx, cateringEnabled: false });
   assert.ok(!off.includes('href="/catering"'), `${template} hides it when off`);
@@ -54,7 +54,10 @@ for (const template of ['standard', 'cards', 'lacquer']) {
 {
   const html = renderHome({ ...ctxFor('standard'), menuUrl: '/menu' });
   const header = html.slice(html.indexOf('header-actions'), html.indexOf('</div>', html.indexOf('header-actions')));
-  assert.match(header, /class="catering-link"/);
+  // A PILL BUTTON the same size as View Menu now (operator, follow-up 2),
+  // not a secondary link.
+  assert.match(header, /class="hero-pill hero-pill--ghost"/);
+  assert.match(header, /Catering &amp; Events/);
   assert.ok(!/class="menu-cta"[^>]*href="\/catering"/.test(header), 'catering is not styled as the primary CTA');
 }
 

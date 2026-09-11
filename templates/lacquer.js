@@ -3,17 +3,26 @@
 // wrapped as renderLacquerMenuBody(ctx), body construction verbatim. Lacquer
 // stays the default the registry falls back to.
 import {
-  escapeHtml, normalizeText, normalizeCents, formatCurrency, hexToRgba,
+  escapeHtml,
+  normalizeText,
+  normalizeCents,
+  formatCurrency,
+  hexToRgba,
   readableInkOn,
-  isValidServingTime, formatServingRange, renderAppQr, formatPhoneForDisplay,
+  isValidServingTime,
+  formatServingRange,
+  renderAppQrPanel,
+  formatPhoneForDisplay,
   orderItemAttrs,
   renderOrderButton,
   renderMenuDataIsland,
   renderOrderScript,
   ORDER_STYLES,
+  APP_QR_PANEL_STYLES,
   CATERING_LINK_STYLES,
-  renderCateringLink,
+  HERO_PILL_STYLES,
   QR_CONSENT_STYLES,
+  renderCateringLink,
   renderStopBanner,
   STOP_STYLES,
 } from './shared.js';
@@ -210,7 +219,9 @@ function renderLacquerMenuBody(ctx) {
       ? `<a class="home-link" href="${escapeHtml(ctx.homeUrl)}">Home</a>`
       : '';
 
-  const appQrMarkup = renderAppQr(ctx.orderingEnabled, ctx.wordmark);
+  // No longer in the middle of the page (operator, follow-up 2) — the QR and
+  // its disclosure now sit together in a footer collapsible that opens UPWARD.
+  const appQrMarkup = renderAppQrPanel(ctx.orderingEnabled, ctx.wordmark, true);
 
   // Hero band — brand mark + tagline + CTA + the app QR, over a lacquer ground
   // (and the operator's hero photo, when set, behind a scrim).
@@ -225,7 +236,6 @@ function renderLacquerMenuBody(ctx) {
     homeCtaMarkup || websiteCtaMarkup
       ? `      <div class="hero-actions">${homeCtaMarkup}${websiteCtaMarkup}</div>`
       : '',
-    `      ${appQrMarkup}`,
     '    </div>',
     '  </header>'
   ].filter(Boolean).join('\n');
@@ -234,6 +244,7 @@ function renderLacquerMenuBody(ctx) {
     '  <footer>',
     `    <span>${escapeHtml(wordmark)} · Menu by <a href="https://dialtone.menu">DialTone</a></span>`,
     '    <span>Prices and availability may change.</span>',
+    `    ${appQrMarkup}`,
     '  </footer>'
   ].join('\n');
 
@@ -272,6 +283,8 @@ function renderLacquerMenuBody(ctx) {
     ctx.orderingEnabled ? ORDER_STYLES : '',
     ctx.usesStops ? STOP_STYLES : '',
     QR_CONSENT_STYLES,
+    APP_QR_PANEL_STYLES,
+    HERO_PILL_STYLES,
     '  </style>',
     '</head>',
     '<body>',
@@ -451,6 +464,9 @@ function renderLacquerHomeBody(ctx) {
     '    .tagline { margin: 0.1rem 0 0; color: rgba(251, 243, 230, 0.82); font-size: clamp(1rem, 2.4vw, 1.15rem); font-style: italic; font-family: var(--font-display); }',
     '    .hero-actions { margin-top: 1.5rem; display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }',
     CATERING_LINK_STYLES,
+    APP_QR_PANEL_STYLES,
+    HERO_PILL_STYLES,
+    QR_CONSENT_STYLES,
     '    .menu-cta { display: inline-flex; align-items: center; text-decoration: none; font-weight: 700; font-size: 1rem; padding: 0.8rem 1.6rem; border-radius: 999px; background: var(--brand-secondary); color: #241206; }',
     '    main { max-width: var(--maxw); margin: 0 auto; padding: clamp(2rem, 6vh, 3.5rem) 1.5rem 4rem; display: grid; gap: clamp(2rem, 6vh, 3rem); }',
     '    .home-story { text-align: center; }',
@@ -482,9 +498,18 @@ function renderLacquerHomeBody(ctx) {
     '      <hr class="hero-rule">',
     tagline ? `      <p class="tagline">${escapeHtml(tagline)}</p>` : '',
     // Always present: the emptiest home page is still a route to the menu.
-    `      <div class="hero-actions"><a class="menu-cta" href="${escapeHtml(menuUrl || '/menu')}">View the menu</a>${renderCateringLink(ctx)}</div>`,
     '    </div>',
+    // Upper-right of the hero, not the middle of it (operator, follow-up 2).
+    // The hero photo is the thing being looked at; two pills in the corner read
+    // as navigation, where a centred block reads as an interruption.
+    `    <div class="hero-corner">` +
+      `<div class="hero-corner__pills"><a class="hero-pill" href="${escapeHtml(menuUrl || '/menu')}">View Menu</a>${renderCateringLink(ctx)}</div></div>`,
     '  </header>',
+    // OUTSIDE the hero on purpose. `.menu-hero` is `overflow: hidden` for the
+    // photo and the gradient, which CLIPS the expanded panel — the disclosure
+    // was visibly cut off mid-sentence, which is a compliance problem rather
+    // than a cosmetic one. Caught by rendering it; no test here can see it.
+    `  <div class="hero-app-strip">${renderAppQrPanel(ctx.orderingEnabled, ctx.wordmark)}</div>`,
     '  <main>',
     renderStopBanner(ctx),
     storyMarkup,
