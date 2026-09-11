@@ -78,7 +78,10 @@ for (const template of ['standard', 'cards', 'lacquer']) {
     const panel = html.slice(html.indexOf('<details class="app-qr-panel'));
     const body = panel.slice(0, panel.indexOf('</details>') + 10);
     assert.ok(body.includes('Standard Message and Data Rates'),
-      `${template} keeps the disclosure inside the app panel`);
+      `${template} keeps the Disclosure Statement inside the app panel`);
+    // Named, not an unlabelled block of small legal text a guest scrolls past.
+    assert.ok(body.includes('Disclosure Statement'),
+      `${template} labels the Disclosure Statement`);
     assert.ok(!/<details/.test(body.slice(body.indexOf('app-qr-consent'))),
       `${template} does not bury the disclosure behind a second collapsible`);
     assert.ok(body.indexOf('<svg') < body.indexOf('Standard Message and'),

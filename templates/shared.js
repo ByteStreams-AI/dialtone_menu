@@ -239,7 +239,8 @@ export const APP_QR_PANEL_STYLES =
   '\n    .app-qr-panel__qr{display:inline-block;background:#fff;padding:8px;border-radius:10px;line-height:0;}' +
   '\n    .app-qr-panel__qr svg{display:block;width:104px;height:104px;}' +
   '\n    .app-qr-panel__pitch{margin:.5rem 0 0;font-size:.74rem;font-weight:600;opacity:.9;}' +
-  '\n    .app-qr-panel .app-qr-consent{margin:.55rem auto 0;text-align:left;}' +
+  '\n    .app-qr-panel .app-qr-consent{margin:.25rem auto 0;text-align:left;}' +
+  '\n    .app-qr-consent-label{margin:.6rem 0 0;font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.7;text-align:left;}' +
   // Footer placement: expand UPWARD so the reader does not have to scroll to
   // see what they just opened.
   '\n    .app-qr-panel--up[open]{position:relative;}' +
@@ -274,7 +275,12 @@ const LOYALTY_CONSENT_VERSION = '2026-09-10.v1';
 
 function renderConsentParagraph(restaurantName) {
   const name = normalizeText(restaurantName, 120) || 'this restaurant';
+  // Labelled "Disclosure Statement" (operator, 2026-09-10). An unlabelled block
+  // of small legal text is something a guest scrolls past; naming it says what
+  // it is before they decide whether to read it. The label sits ABOVE the
+  // registered wording and changes not one character of it.
   return (
+    `<p class="app-qr-consent-label">Disclosure Statement</p>` +
     `<p class="app-qr-consent" data-consent-version="${escapeHtml(LOYALTY_CONSENT_VERSION)}">` +
     `By providing your name and phone number and clicking 'Submit,' you agree to receive ` +
     `SMS loyalty from ${escapeHtml(name)}. Message frequency may vary. Standard Message and ` +
