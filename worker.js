@@ -824,8 +824,22 @@ function appleAppSiteAssociation(env) {
  * fails the same silent way.
  */
 function androidAssetLinks(env) {
-  const sha256 = normalizeText(env.ANDROID_CERT_SHA256 || '', 200).toUpperCase();
-  if (!/^(?:[A-F0-9]{2}:){31}[A-F0-9]{2}$/.test(sha256)) return notFoundResponse();
+  // A comma-separated LIST. One app legitimately has several valid signers: the
+  // Play app signing key, a PREVIOUS Play key (a rotated key can still be the
+  // identity Android reports), and our upload key, which signs every build
+  // installed outside Play. Android accepts a match on ANY of them.
+  //
+  // All-or-nothing on purpose: one malformed entry 404s the whole file rather
+  // than being dropped, because a silently shortened list is the same silent
+  // failure this file exists to avoid — and the dropped entry is, by
+  // construction, the one somebody just added.
+  const entries = String(env.ANDROID_CERT_SHA256 || '')
+    .split(',')
+    .map((v) => normalizeText(v, 200).toUpperCase())
+    .filter(Boolean);
+  const valid = entries.filter((v) => /^(?:[A-F0-9]{2}:){31}[A-F0-9]{2}$/.test(v));
+  if (entries.length === 0 || valid.length !== entries.length) return notFoundResponse();
+  const fingerprints = [...new Set(valid)];
 
   return new Response(
     JSON.stringify([
@@ -834,7 +848,7 @@ function androidAssetLinks(env) {
         target: {
           namespace: 'android_app',
           package_name: APP_BUNDLE_ID,
-          sha256_cert_fingerprints: [sha256]
+          sha256_cert_fingerprints: fingerprints
         }
       }
     ]),

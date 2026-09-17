@@ -152,7 +152,12 @@ APPLE_TEAM_ID = "L33JGV8X8L"
 # The CLASSICAL app signing key, copied from Play Console 2026-09-17 after the
 # first (internal testing) upload created it. Play also shows a post-quantum key
 # (beta); Android does not verify links against it today.
-ANDROID_CERT_SHA256 = "9F:4E:0F:2C:F2:6D:0B:2D:18:68:78:82:A7:B5:3A:44:52:CE:34:47:BD:8B:48:1D:AD:5F:05:D6:F8:CB:EF:AB"
+# A comma-separated list — Android accepts a match on ANY entry:
+#   1. Play app signing key, Classical (current, "In use").
+#   2. EAS upload key — signs every build installed OUTSIDE Play (preview and
+#      production-apk builds), so test installs open links too. Read from a built
+#      APK with `apksigner verify --print-certs`.
+ANDROID_CERT_SHA256 = "9F:4E:0F:2C:F2:6D:0B:2D:18:68:78:82:A7:B5:3A:44:52:CE:34:47:BD:8B:48:1D:AD:5F:05:D6:F8:CB:EF:AB,C4:66:EC:CA:AC:AB:1A:D0:CF:10:15:0E:83:2F:88:F3:85:5E:87:2A:F9:2E:59:F6:BF:8D:A4:8B:71:64:A4:CA"
 # APP_STORE_URL = "https://apps.apple.com/app/id…"
 # PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.bytestreams.dialtoneapp"
 
