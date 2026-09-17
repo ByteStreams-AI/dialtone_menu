@@ -120,7 +120,10 @@ TURNSTILE_SITE_KEY = "0x4AAAAAAERQOWbRPlMLVDLj"
 # opens it at that restaurant; not installed -> a branded page with the stores.
 # The guest never types a slug.
 #
-# All four are DELIBERATELY UNSET, and each degrades honestly while it is:
+# Each of the four degrades honestly while UNSET. Set so far: APPLE_TEAM_ID
+# (2026-08-18) and ANDROID_CERT_SHA256 (2026-09-17). The two store URLs stay
+# unset until a listing is PUBLIC — an internal-testing listing 404s for everyone
+# who is not a tester.
 #
 #   APPLE_TEAM_ID        10 chars, developer.apple.com -> Membership details.
 #                        The association file 404s until this is a valid team
@@ -129,8 +132,10 @@ TURNSTILE_SITE_KEY = "0x4AAAAAAERQOWbRPlMLVDLj"
 #                        the browser, no error on the device, nothing in a log.
 #                        A 404 is the honest state and iOS refetches later.
 #
-#   ANDROID_CERT_SHA256  Play Console -> Setup -> App signing -> the **App
-#                        signing key** SHA-256, NOT the upload key. Both are on
+#   ANDROID_CERT_SHA256  Play Console -> Protected with Play -> Play Store
+#                        protection -> Play app signing (the old "Setup -> App
+#                        signing" no longer exists) -> the **App signing key**,
+#                        Classical, SHA-256 — NOT the upload key. Both are on
 #                        that page and look identical. With Play App Signing it
 #                        is Google's certificate that signs what users install,
 #                        so the upload key fails the same silent way.
@@ -144,7 +149,10 @@ TURNSTILE_SITE_KEY = "0x4AAAAAAERQOWbRPlMLVDLj"
 # in the dialtone repo).
 #
 APPLE_TEAM_ID = "L33JGV8X8L"
-# ANDROID_CERT_SHA256 = "AB:CD:…:EF"
+# The CLASSICAL app signing key, copied from Play Console 2026-09-17 after the
+# first (internal testing) upload created it. Play also shows a post-quantum key
+# (beta); Android does not verify links against it today.
+ANDROID_CERT_SHA256 = "9F:4E:0F:2C:F2:6D:0B:2D:18:68:78:82:A7:B5:3A:44:52:CE:34:47:BD:8B:48:1D:AD:5F:05:D6:F8:CB:EF:AB"
 # APP_STORE_URL = "https://apps.apple.com/app/id…"
 # PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.bytestreams.dialtoneapp"
 
