@@ -103,6 +103,19 @@ async function run() {
     assert.deepEqual(body[0].target.sha256_cert_fingerprints, [SHA256]);
     assert.deepEqual(body[0].relation, ['delegate_permission/common.handle_all_urls']);
   }
+  {
+    // Several signers, one file: Play's key, a previous Play key, the upload key.
+    const SECOND = SHA256.replace(/^../, SHA256.startsWith('00') ? '11' : '00');
+    const env = makeEnv({ ANDROID_CERT_SHA256: ` ${SHA256} , ${SECOND.toLowerCase()},${SHA256}` });
+    const body = await (await worker.fetch(req('/.well-known/assetlinks.json'), env, {})).json();
+    // Trimmed, upper-cased, de-duplicated, order kept.
+    assert.deepEqual(body[0].target.sha256_cert_fingerprints, [SHA256, SECOND]);
+  }
+  {
+    // One bad entry 404s the WHOLE file — never a silently shortened list.
+    const env = makeEnv({ ANDROID_CERT_SHA256: `${SHA256},AB:CD` });
+    assert.equal((await worker.fetch(req('/.well-known/assetlinks.json'), env, {})).status, 404);
+  }
 
   // ── landing page ──────────────────────────────────────────────────────────
   {
