@@ -3,6 +3,8 @@
 // single seam: worker's buildMenuSuccessResponse computed these bindings then
 // branched; now every template's render(ctx) consumes the same object.
 
+import { qrSvg } from './qr.js';
+
 // ---- fallbacks (mirror worker.js) ----
 export const FALLBACK_PRIMARY = '#06234B';
 export const FALLBACK_SECONDARY = '#E8A020';
@@ -152,15 +154,31 @@ export function normalizeText(value, maxLength) {
   return String(value || '').trim().slice(0, maxLength);
 }
 
-// ---- app-download QR (shared by both templates) ----
-// App-download QR. Static, self-contained SVG — encodes https://dialtone.menu
-// for now; will retarget the App Store / Play Store once the app ships.
-// Regenerate with:
-//   npx qrcode -e M -t svg -o qr.svg "<url>"   (margin:0; framed by CSS quiet zone)
-// Shared by BOTH templates — it lived inline in the lacquer body, which sits
-// after the 'cards' early-return, so a cards tenant silently lost the app CTA.
-export const APP_QR_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" shape-rendering="crispEdges"><path fill="#ffffff" d="M0 0h25v25H0z"/><path stroke="#000000" d="M0 0.5h7m1 0h5m1 0h1m3 0h7M0 1.5h1m5 0h1m1 0h1m3 0h2m4 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h2m3 0h2m3 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m3 0h1m1 0h2m1 0h2m1 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h1m2 0h1m2 0h1m3 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m4 0h1m2 0h1m3 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M10 7.5h2m1 0h1m2 0h1M0 8.5h1m2 0h6m1 0h1m3 0h4m2 0h1m1 0h3M0 9.5h2m1 0h1m1 0h1m2 0h1m1 0h1m1 0h4m3 0h5M0 10.5h1m2 0h7m1 0h3m1 0h1m1 0h1m2 0h2m2 0h1M0 11.5h1m2 0h1m3 0h6m2 0h1m2 0h2m1 0h4M1 12.5h1m1 0h1m1 0h2m2 0h4m3 0h1m1 0h2m4 0h1M0 13.5h1m6 0h1m1 0h1m3 0h1m1 0h2m3 0h1m2 0h1M0 14.5h2m1 0h5m2 0h6m2 0h1m1 0h5M0 15.5h1m1 0h1m1 0h1m6 0h1m3 0h1m1 0h3m1 0h2m1 0h1M0 16.5h1m1 0h1m2 0h4m1 0h1m3 0h1m1 0h5m1 0h2M8 17.5h2m1 0h3m2 0h1m3 0h1m1 0h2M0 18.5h7m1 0h4m4 0h1m1 0h1m1 0h1m3 0h1M0 19.5h1m5 0h1m1 0h1m3 0h1m1 0h3m3 0h1m2 0h2M0 20.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h9m2 0h2M0 21.5h1m1 0h3m1 0h1m1 0h2m4 0h1m1 0h3m4 0h2M0 22.5h1m1 0h3m1 0h1m3 0h1m1 0h1m1 0h1m2 0h1m2 0h5M0 23.5h1m5 0h1m2 0h2m3 0h2m3 0h2m1 0h3M0 24.5h7m1 0h3m2 0h2m1 0h3m2 0h1m2 0h1"/></svg>';
+// ---- app-download QR (shared by all three templates) ----
+// The code is GENERATED per tenant (dialtone_menu#125), because it carries
+// `app.dialtone.menu/r/<slug>` and that differs per restaurant. It used to be
+// one static hand-generated SVG encoding https://dialtone.menu — the marketing
+// site — which sent a guest scanning a table tent to a page selling DialTone
+// to restaurant owners.
+//
+// `/r/<slug>` is the right target rather than a store URL: with the app
+// installed the OS opens it AT THAT RESTAURANT, and without it the guest gets
+// the branded landing page and its store buttons. A raw store link loses the
+// restaurant, which is the one thing this is for. It also means iOS costs no
+// reprint — the landing page grows a second button and every printed code
+// keeps working.
+//
+// The host is deliberately hardcoded to production. App links are verified
+// against `app.dialtone.menu` only, so a preview or demo deploy encoding its
+// own hostname would produce codes that open a browser instead of the app —
+// and QR codes outlive the deploy that rendered them.
+const APP_LINK_ORIGIN = 'https://app.dialtone.menu';
+
+/** The URL a tenant's QR carries, or '' when there is no slug to point at. */
+export function appLinkUrl(slug) {
+  const clean = String(slug || '').trim().toLowerCase();
+  return clean ? `${APP_LINK_ORIGIN}/r/${clean}` : '';
+}
 
 /**
  * The app QR, whose pitch depends on whether this page can take an order
@@ -197,7 +215,13 @@ export const APP_QR_SVG =
  * that expands off the bottom of the page makes the reader scroll to see what
  * they just asked for.
  */
-export function renderAppQrPanel(orderingEnabled = false, restaurantName = '', dropUp = false) {
+export function renderAppQrPanel(ctx = {}, dropUp = false) {
+  const { orderingEnabled = false, wordmark: restaurantName = '', slug = '' } = ctx;
+  // No slug means no restaurant to point at, so the panel falls back to the
+  // marketing site rather than minting a link that 404s: `/r/` with no slug is
+  // not a route.
+  const target = appLinkUrl(slug) || 'https://dialtone.menu';
+  const code = qrSvg(target);
   // The app's pitch is what it still uniquely offers once the page can take an
   // order: points and a saved history, not the order itself.
   // Preserves the dialtone#1215 decision, which is about MEANING not wording:
@@ -212,8 +236,11 @@ export function renderAppQrPanel(orderingEnabled = false, restaurantName = '', d
     `<details class="${cls}">` +
     `<summary>Order via App</summary>` +
     `<div class="app-qr-panel__body">` +
-    `<a class="app-qr-panel__qr" href="https://dialtone.menu" target="_blank" rel="noopener noreferrer" aria-label="Download the app">` +
-    `${APP_QR_SVG}</a>` +
+    // The anchor carries the same URL as the code. On a phone already viewing
+    // this menu the QR is unscannable, so the anchor is the real affordance —
+    // and it must not disagree with the image beside it.
+    `<a class="app-qr-panel__qr" href="${escapeHtml(target)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeHtml(restaurantName || 'the restaurant')} in the app">` +
+    `${code}</a>` +
     `<p class="app-qr-panel__pitch">${pitch}</p>` +
     // SHOWN, not nested behind a second collapsible (operator, follow-up 2).
     // A disclosure two taps deep is the version closest to hiding it, and the

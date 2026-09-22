@@ -133,8 +133,20 @@ async function run() {
   // does.
   assert.match(html, /<details class="app-qr-panel[^"]*">/, 'App QR lives in a collapsible panel');
   assert.match(html, /<summary>Order via App<\/summary>/, 'Panel is labelled Order via App');
-  assert.match(html, /app-qr-panel__qr[^>]*href="https:\/\/dialtone\.menu"/, 'QR still links to dialtone.menu');
-  assert.match(html, /<svg[^>]*viewBox="0 0 25 25"/, 'QR renders the self-contained SVG');
+  // The QR and its anchor carry THIS restaurant's app link, not the marketing
+  // site (#125). A guest scanning a table tent is trying to order, and
+  // `/r/<slug>` opens the app at that restaurant — or, uninstalled, the
+  // branded landing page with the store button.
+  assert.match(
+    html,
+    /app-qr-panel__qr[^>]*href="https:\/\/app\.dialtone\.menu\/r\/main-street"/,
+    'QR anchor points at this tenant app link'
+  );
+  assert.doesNotMatch(html, /app-qr-panel__qr[^>]*href="https:\/\/dialtone\.menu"/, 'never the marketing site');
+  // Still one inline, self-contained SVG — no request, no image host. 29x29 is
+  // version 3, which is what this tenant's 39-character app link needs; the
+  // old static code was 25x25 because it encoded the shorter marketing URL.
+  assert.match(html, /<svg[^>]*viewBox="0 0 29 29"/, 'QR renders the self-contained SVG');
   assert.doesNotMatch(html, /class="app-qr"/, 'the old centred QR block is gone');
   {
     // The disclosure must sit INSIDE the same panel as the QR it discloses —
