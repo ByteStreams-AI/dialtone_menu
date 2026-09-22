@@ -784,7 +784,15 @@ async function routeAppHost(request, env, url) {
   if (url.pathname === ASSETLINKS_PATH) return androidAssetLinks(env);
 
   if (url.pathname.startsWith(APP_LINK_PREFIX)) {
-    const slug = normalizeText(url.pathname.slice(APP_LINK_PREFIX.length), 120).toLowerCase();
+    // One trailing slash is tolerated, exactly as `extractMenuSlug` tolerates it
+    // on `/m/<slug>/` and for the same reason: this is a QR target printed on
+    // tables and receipts, and browsers, link shorteners and people append a
+    // slash without being asked. A slug that arrives with one 404s the same way
+    // an unknown restaurant does, which is the version nobody can diagnose from
+    // the page. Only ONE is stripped, so `/r/a/b/` stays a 404 — the regex below
+    // is still the thing that decides what a slug is.
+    const raw = url.pathname.slice(APP_LINK_PREFIX.length).replace(/\/$/, '');
+    const slug = normalizeText(raw, 120).toLowerCase();
     if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(slug)) {
       return notFoundResponse();
     }
