@@ -64,12 +64,18 @@ create policy "waitlist_insert_authenticated"
   to authenticated
   with check (true);
 
--- Optional: allow authenticated reads for operators in dashboard contexts.
-drop policy if exists "waitlist_select_authenticated" on public.waitlist_submissions;
-create policy "waitlist_select_authenticated"
-  on public.waitlist_submissions
-  for select
-  to authenticated
-  using (true);
+-- REMOVED 2026-09-22 — see 02_waitlist_lock_select.sql.
+-- This was "Optional: allow authenticated reads for operators in dashboard
+-- contexts", and the dashboard was never built. What it actually did was grant
+-- every account on the project a full read of every name, email, restaurant
+-- name and comment ever submitted. If a dashboard is built later, scope its
+-- policy to that dashboard's identity rather than restoring `using (true)`.
+--
+-- drop policy if exists "waitlist_select_authenticated" on public.waitlist_submissions;
+-- create policy "waitlist_select_authenticated"
+--   on public.waitlist_submissions
+--   for select
+--   to authenticated
+--   using (true);
 
 commit;
