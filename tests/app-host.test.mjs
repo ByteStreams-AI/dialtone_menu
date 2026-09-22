@@ -155,6 +155,47 @@ async function run() {
     assert.equal((await worker.fetch(req('/r/shortys/menu'), makeEnv(), {})).status, 404);
   }
 
+  // Installing loses the restaurant — Android has no deferred deep link — so
+  // the page hands the guest back: an intent:// link that opens the app at
+  // this slug, plus the scan-again hint. Asserted as the REQUIREMENT (a way
+  // back that names the restaurant), not as markup.
+  {
+    stubBranding([BRANDING]);
+    const env = makeEnv({ PLAY_STORE_URL: 'https://play.google.com/store/apps/details?id=' + BUNDLE });
+    const html = await (await worker.fetch(req('/r/shortys'), env, {})).text();
+    assert.match(html, /intent:\/\/app\.dialtone\.menu\/r\/shortys#Intent;/, 'hands off to the app');
+    assert.match(html, /package=com\.bytestreams\.dialtoneapp/, 'aimed at this app, not whoever claims the host');
+    assert.match(html, /S\.browser_fallback_url=/, 'a guest without the app loses nothing');
+    assert.match(html, /Scan the code again/, 'tells them how to get back');
+    // The https URL cannot be the hand-off: a browser already ON that URL
+    // treats a link to it as a navigation and reloads the page.
+    assert.doesNotMatch(html, /class="btn btn--ghost" href="https:/, 'never the plain https form');
+  }
+
+  // Play carries the restaurant through the install as `referrer`. Nothing
+  // reads it yet (#127) — it is inert, and shipping it now means printed codes
+  // start resolving the day the app can.
+  {
+    stubBranding([BRANDING, BRANDING]);
+    const env = makeEnv({ PLAY_STORE_URL: 'https://play.google.com/store/apps/details?id=' + BUNDLE });
+    const html = await (await worker.fetch(req('/r/shortys'), env, {})).text();
+    assert.match(html, /referrer=slug%3Dshortys/, 'the slug rides the Play link');
+
+    // An operator-supplied referrer is left alone rather than overwritten.
+    const preset = makeEnv({ PLAY_STORE_URL: 'https://play.google.com/store/apps/details?id=' + BUNDLE + '&referrer=utm_source%3Dprint' });
+    const html2 = await (await worker.fetch(req('/r/shortys'), preset, {})).text();
+    assert.match(html2, /referrer=utm_source%3Dprint/);
+    assert.doesNotMatch(html2, /referrer=slug/);
+  }
+
+  // With no store link at all there is nothing to install, so "open it" is
+  // advice about something the guest cannot have.
+  {
+    stubBranding([BRANDING]);
+    const html = await (await worker.fetch(req('/r/shortys'), makeEnv(), {})).text();
+    assert.doesNotMatch(html, /Open in the App|intent:\/\//, 'no app, no hand-off');
+  }
+
   // A store with no listing yet is OMITTED, never dead-linked.
   {
     stubBranding([BRANDING]);
