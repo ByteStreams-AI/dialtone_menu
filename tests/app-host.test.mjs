@@ -135,6 +135,26 @@ async function run() {
     assert.match(html, /shortys\.m\.dialtone\.menu\/menu/, 'links through to the menu');
   }
 
+  // A trailing slash is the SAME page, not a 404. A QR printed on a table is
+  // permanent, and a bare "Not Found" is indistinguishable from an unknown
+  // restaurant — the one failure nobody can diagnose from the page. Matches
+  // how `/m/<slug>/` has always behaved.
+  {
+    stubBranding([BRANDING, BRANDING]);
+    const bare = await worker.fetch(req('/r/shortys'), makeEnv(), {});
+    const slashed = await worker.fetch(req('/r/shortys/'), makeEnv(), {});
+    assert.equal(slashed.status, 200, 'trailing slash still renders');
+    assert.equal(await slashed.text(), await bare.text(), 'byte-identical to the bare form');
+  }
+
+  // ...but only ONE, and it never widens what a slug is: a nested path is
+  // still not a restaurant.
+  {
+    stubBranding([BRANDING, BRANDING]);
+    assert.equal((await worker.fetch(req('/r/shortys//'), makeEnv(), {})).status, 404);
+    assert.equal((await worker.fetch(req('/r/shortys/menu'), makeEnv(), {})).status, 404);
+  }
+
   // A store with no listing yet is OMITTED, never dead-linked.
   {
     stubBranding([BRANDING]);
