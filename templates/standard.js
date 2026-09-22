@@ -258,7 +258,7 @@ function renderStandardMenuBody(ctx) {
     '  </main>',
     // The QR left the middle of the page (operator, follow-up 2): it and its
     // disclosure now share one footer collapsible, opening UPWARD.
-    `  <footer class="menu-footer">${renderAppQrPanel(ctx.orderingEnabled, ctx.wordmark, true)}</footer>`,
+    `  <footer class="menu-footer">${renderAppQrPanel(ctx, true)}</footer>`,
     '  <script>',
     '    (() => {',
     '      const categories = document.querySelectorAll(".category[data-start][data-end]");',
@@ -452,7 +452,7 @@ function renderStandardHomeBody(ctx) {
     }</div>`,
     // Always present, even on an otherwise empty home page.
     `      <div class="header-actions"><a class="hero-pill" href="${escapeHtml(menuUrl || '/menu')}">View Menu</a>${renderCateringLink(ctx)}</div>`,
-    `      <div class="header-app">${renderAppQrPanel(ctx.orderingEnabled, ctx.wordmark)}</div>`,
+    `      <div class="header-app">${renderAppQrPanel(ctx)}</div>`,
     '    </header>',
     ctx.heroImageUrl
       ? `    <div class="hero" style="background-image: url('${escapeHtml(ctx.heroImageUrl)}')"></div>`

@@ -221,7 +221,7 @@ function renderLacquerMenuBody(ctx) {
 
   // No longer in the middle of the page (operator, follow-up 2) — the QR and
   // its disclosure now sit together in a footer collapsible that opens UPWARD.
-  const appQrMarkup = renderAppQrPanel(ctx.orderingEnabled, ctx.wordmark, true);
+  const appQrMarkup = renderAppQrPanel(ctx, true);
 
   // Hero band — brand mark + tagline + CTA + the app QR, over a lacquer ground
   // (and the operator's hero photo, when set, behind a scrim).
@@ -509,7 +509,7 @@ function renderLacquerHomeBody(ctx) {
     // photo and the gradient, which CLIPS the expanded panel — the disclosure
     // was visibly cut off mid-sentence, which is a compliance problem rather
     // than a cosmetic one. Caught by rendering it; no test here can see it.
-    `  <div class="hero-app-strip">${renderAppQrPanel(ctx.orderingEnabled, ctx.wordmark)}</div>`,
+    `  <div class="hero-app-strip">${renderAppQrPanel(ctx)}</div>`,
     '  <main>',
     renderStopBanner(ctx),
     storyMarkup,

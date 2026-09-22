@@ -278,7 +278,7 @@ function renderCardsMenuBody(ctx) {
     `        ${sections || '<p class="empty" style="display:block">No menu items are currently available.</p>'}`,
     '        <p class="empty" id="empty">No items match your search.</p>',
     '      </main>',
-    `      <footer><span>${escapeHtml(ctx.wordmark)} · Menu by <a href="https://dialtone.menu">DialTone</a></span>${renderAppQrPanel(ctx.orderingEnabled, ctx.wordmark, true)}</footer>`,
+    `      <footer><span>${escapeHtml(ctx.wordmark)} · Menu by <a href="https://dialtone.menu">DialTone</a></span>${renderAppQrPanel(ctx, true)}</footer>`,
     '    </div>',
     '  </div>',
     '  <script>',
@@ -431,7 +431,7 @@ function renderCardsHomeBody(ctx) {
       ? `    <img class="brand-logo" src="${escapeHtml(logoUrl)}" alt="${escapeHtml(wordmark)} logo"><div><h1 class="brand-wordmark">${escapeHtml(wordmark)}</h1>${tagline ? `<p class="tagline">${escapeHtml(tagline)}</p>` : ''}</div>`
       : `    <div><h1 class="brand-wordmark">${escapeHtml(wordmark)}</h1>${tagline ? `<p class="tagline">${escapeHtml(tagline)}</p>` : ''}</div>`,
     `    <div class="header-actions"><a class="hero-pill" href="${escapeHtml(menuUrl || '/menu')}">View Menu</a>${renderCateringLink(ctx)}</div>`,
-    `    <div class="header-app">${renderAppQrPanel(ctx.orderingEnabled, ctx.wordmark)}</div>`,
+    `    <div class="header-app">${renderAppQrPanel(ctx)}</div>`,
     '  </div>',
     '  <main>',
     renderStopBanner(ctx),
