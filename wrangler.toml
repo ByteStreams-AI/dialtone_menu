@@ -121,9 +121,14 @@ TURNSTILE_SITE_KEY = "0x4AAAAAAERQOWbRPlMLVDLj"
 # The guest never types a slug.
 #
 # Each of the four degrades honestly while UNSET. Set so far: APPLE_TEAM_ID
-# (2026-08-18) and ANDROID_CERT_SHA256 (2026-09-17). The two store URLs stay
-# unset until a listing is PUBLIC — an internal-testing listing 404s for everyone
-# who is not a tester.
+# (2026-08-18), ANDROID_CERT_SHA256 (2026-09-17) and PLAY_STORE_URL (2026-09-21,
+# the day the Play listing went public). APP_STORE_URL stays unset until an App
+# Store listing exists — no iOS build has ever run for this app.
+#
+# A store URL goes in only once the listing is PUBLIC: an internal-testing
+# listing 404s for everyone who is not a tester, which is the dead button this
+# whole arrangement exists to avoid. Verify before setting — `curl` the URL and
+# confirm a bogus package id 404s, or a 200 proves nothing.
 #
 #   APPLE_TEAM_ID        10 chars, developer.apple.com -> Membership details.
 #                        The association file 404s until this is a valid team
@@ -159,7 +164,7 @@ APPLE_TEAM_ID = "L33JGV8X8L"
 #      APK with `apksigner verify --print-certs`.
 ANDROID_CERT_SHA256 = "9F:4E:0F:2C:F2:6D:0B:2D:18:68:78:82:A7:B5:3A:44:52:CE:34:47:BD:8B:48:1D:AD:5F:05:D6:F8:CB:EF:AB,C4:66:EC:CA:AC:AB:1A:D0:CF:10:15:0E:83:2F:88:F3:85:5E:87:2A:F9:2E:59:F6:BF:8D:A4:8B:71:64:A4:CA"
 # APP_STORE_URL = "https://apps.apple.com/app/id…"
-# PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.bytestreams.dialtoneapp"
+PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.bytestreams.dialtoneapp"
 
 # Vars do NOT inherit into [env.preview], so set it in BOTH blocks. This one is
 # the LIVE key because the block above now reads the production app project —
