@@ -308,6 +308,34 @@ function isDemoHost(hostname) {
 // half-fail, for every restaurant. Nobody reads a URL they scanned off a table,
 // and the page itself is still fully branded.
 const APP_HOST = 'app.dialtone.menu';
+
+// The Play listing's package, used to aim the `intent://` hand-off at this app
+// specifically rather than at whatever else claims the host.
+const ANDROID_PACKAGE = 'com.bytestreams.dialtoneapp';
+
+/**
+ * Tag a Play URL with the restaurant, so Play can carry it THROUGH the install.
+ *
+ * Google Play preserves a `referrer` query parameter and hands it to the app on
+ * first launch via the Install Referrer API — the one mechanism Android offers
+ * for deferred deep linking. Nothing reads it yet: the app needs a native
+ * module and a new store build (#127). It is added now because it is inert
+ * until then and costs a query parameter, so the day that ships, every QR code
+ * already in the wild starts resolving without anyone reprinting anything.
+ *
+ * Left alone if the URL already carries a referrer, or is not parseable.
+ */
+function withInstallReferrer(playUrl, slug) {
+  if (!playUrl || !slug) return playUrl;
+  try {
+    const url = new URL(playUrl);
+    if (url.searchParams.has('referrer')) return playUrl;
+    url.searchParams.set('referrer', `slug=${slug}`);
+    return url.toString();
+  } catch {
+    return playUrl;
+  }
+}
 const APP_LINK_PREFIX = '/r/';
 const AASA_PATH = '/.well-known/apple-app-site-association';
 const ASSETLINKS_PATH = '/.well-known/assetlinks.json';
@@ -882,8 +910,22 @@ async function handleAppLanding(env, slug) {
   const primary = /^#[0-9a-f]{6}$/i.test(info?.primary_color || '') ? info.primary_color : '#10b981';
   const logo = info?.logo_url ? escapeHtml(info.logo_url) : '';
   const appStore = normalizeText(env.APP_STORE_URL || '', 500);
-  const play = normalizeText(env.PLAY_STORE_URL || '', 500);
+  const play = withInstallReferrer(normalizeText(env.PLAY_STORE_URL || '', 500), slug);
   const menuUrl = `https://${slug}${MENU_HOST_SUFFIX}/menu`;
+
+  // Installing LOSES the restaurant: Play launches the app cold and it asks
+  // the guest to type a slug, which is the exact step this page exists to
+  // remove. Android has no native deferred deep link, so the guest is handed
+  // back instead — the link they already followed opens the app once it is
+  // installed, and so does another scan of the same code.
+  //
+  // `intent://` rather than the https URL: a browser sitting ON that URL
+  // treats a link to it as an ordinary navigation and reloads the page, so it
+  // is the one form that cannot hand off. The fallback is this page, so a
+  // guest without the app taps it and loses nothing.
+  const openUrl =
+    `intent://${APP_HOST}/r/${slug}#Intent;scheme=https;package=${ANDROID_PACKAGE};` +
+    `S.browser_fallback_url=${encodeURIComponent(`https://${APP_HOST}/r/${slug}`)};end`;
 
   // Store buttons are omitted rather than dead-linked when a listing does not
   // exist yet — a button that goes nowhere is worse than one that is absent.
@@ -891,6 +933,13 @@ async function handleAppLanding(env, slug) {
     appStore ? `<a class="btn" href="${escapeHtml(appStore)}">Download for iPhone</a>` : '',
     play ? `<a class="btn" href="${escapeHtml(play)}">Download for Android</a>` : ''
   ].filter(Boolean).join('');
+
+  // Only worth offering where a store link exists — with no app to install,
+  // "open it" is advice about something the guest cannot have.
+  const returnPath = (appStore || play)
+    ? `<a class="btn btn--ghost" href="${escapeHtml(openUrl)}">Open in the App</a>` +
+      `<p class="hint">Just installed? Scan the code again and it opens straight to ${name}.</p>`
+    : '';
 
   const body = `<!doctype html>
 <html lang="en"><head>
@@ -911,6 +960,8 @@ async function handleAppLanding(env, slug) {
   p.lede { margin:0 0 28px; color:#44403c; line-height:1.5; }
   .btn { display:block; padding:15px 20px; margin-bottom:12px; border-radius:12px;
          background:var(--brand); color:#fff; text-decoration:none; font-weight:600; }
+  .btn--ghost { background:transparent; color:var(--brand); border:1px solid var(--brand); }
+  .hint { margin:0 0 4px; color:#57534e; font-size:13px; line-height:1.45; }
   .alt { display:inline-block; margin-top:12px; color:#57534e; font-size:14px; }
 </style>
 </head><body><div class="card">
@@ -919,6 +970,7 @@ ${logo ? `<img class="logo" src="${logo}" alt="">` : ''}
 ${tagline ? `<p class="tag">${tagline}</p>` : ''}
 <p class="lede">Order ahead, skip the line, and earn points every time you visit.</p>
 ${buttons}
+${returnPath}
 <a class="alt" href="${escapeHtml(menuUrl)}">Just view the menu</a>
 </div></body></html>`;
 
