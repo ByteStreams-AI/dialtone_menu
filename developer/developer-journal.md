@@ -1,5 +1,10 @@
 # Developer Journal
 
+## 2026-09-29
+
+- Added [public/features/youtube.html](public/features/youtube.html), a standalone four-tier feature comparison based on the pricing table layout, with monthly amounts, fees, and Enterprise custom-pricing copy excluded.
+- Added the new feature comparison URL to [public/sitemap.xml](public/sitemap.xml).
+
 ## 2026-07-25
 
 - Fixed `/sitemap.xml` drift by serving [public/sitemap.xml](public/sitemap.xml) through the Worker assets binding instead of maintaining a second hardcoded marketing sitemap in [worker.js](worker.js).
